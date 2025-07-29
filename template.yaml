@@ -23,7 +23,7 @@ machineClass:
 patches:
   - name: kubespan-enabled
     file: patches/kubespan.yml
-  - name: no-cni # we will install cilium in extraManifests
+  - name: no-cni
     file: patches/cni.yml
   - name: cilium
     file: patches/cilium_install.yml
