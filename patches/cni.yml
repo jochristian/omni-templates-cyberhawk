@@ -1,0 +1,9 @@
+cluster:
+  allowSchedulingOnControlPlanes: true
+  discovery:
+    enabled: true
+  network:
+    cni:
+      name: none
+  proxy:
+    disabled: true

@@ -1,0 +1,35 @@
+kind: Cluster
+name: cyberhawk-talos-k8s
+labels:
+  template: true
+  cni: none
+  kubespan: enabled
+kubernetes:
+  version: v1.33.3
+talos:
+  version: v1.10.5
+features:
+  enableWorkloadProxy: false
+#patches:
+systemExtensions:
+  - siderolabs/qemu-guest-agent
+  - siderolabs/i915-ucode
+  - siderolabs/intel-ucode
+---
+kind: ControlPlane
+machineClass:
+  name: role-controlplane
+  size: 3
+patches:
+  - name: kubespan-enabled
+    file: patches/kubespan.yml
+  - name: no-cni # we will install cilium in extraManifests
+    file: patches/cni.yml
+  - name: cilium
+    file: patches/cilium_install.yml
+  - name: extraManifests
+    file: patches/extraManifests.yml
+  - name: monitoring
+    file: patches/monitoring.yaml
+---
+kind: Workers
