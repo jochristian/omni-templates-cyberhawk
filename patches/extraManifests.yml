@@ -1,6 +1,8 @@
 cluster:
   extraManifests:
    - https://raw.githubusercontent.com/jochristian/omni-templates-cyberhawk/main/manifests/install_cilium.yaml
+   - https://raw.githubusercontent.com/jochristian/omni-templates-cyberhawk/main/manifests/cilium-bgp-policy.yml
+   - https://raw.githubusercontent.com/jochristian/omni-templates-cyberhawk/main/manifests/cilium-bgp-ippool.yml
    - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
    - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.3.0/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
