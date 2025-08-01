@@ -7,3 +7,7 @@ cluster:
       name: none
   proxy:
     disabled: true
+machine:
+  features:
+    hostDNS:
+      forwardKubeDNSToHost: false
