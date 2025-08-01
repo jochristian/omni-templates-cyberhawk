@@ -18,7 +18,7 @@ These templates are designed to bootstrap a Kubernetes cluster with a robust net
 ## File Structure
 
 ```
-/home/jochristian/omni-templates-cyberhawk/
+omni-templates-cyberhawk/
 ├───cilium_values.yaml
 ├───machineclass.yaml
 ├───README.md
@@ -40,6 +40,7 @@ These templates are designed to bootstrap a Kubernetes cluster with a robust net
 - **Sidero Omni:** An operational Sidero Omni environment.
 - **Helm:** Used for templating the Cilium and NFS CSI driver charts.
 - **kubectl:** The Kubernetes command-line tool for interacting with the cluster.
+- **omnictl:** The omnictl command-line tool for interacting with Omni dashboard.
 
 ## Installation
 
