@@ -35,6 +35,33 @@ These templates are designed to bootstrap a Kubernetes cluster with a robust net
     └───monitoring.yaml
 ```
 
+## Requirements
+
+- **Sidero Omni:** An operational Sidero Omni environment.
+- **Helm:** Used for templating the Cilium and NFS CSI driver charts.
+- **kubectl:** The Kubernetes command-line tool for interacting with the cluster.
+
+## Installation
+
+1. **Install Helm required repositories:**
+   ```bash
+   helm repo add cilium https://helm.cilium.io/
+   helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+   helm repo update
+   ```
+2. **Template the charts:**
+   ```bash
+   helm template cilium cilium/cilium --version 1.18.0 --namespace kube-system -f cilium_values.yaml > manifests/install_cilium.yaml
+   helm template csi-driver-nfs csi-driver-nfs/csi-driver-nfs --namespace kube-system --version v4.11.0 > manifests/install_nfs-csi-driver.yaml
+   ```
+3. **Apply the template to your Omni environment:**
+   ```bash
+   omnictl apply -f machineclass.yaml
+   omnictl cluster template sync --file template.yaml
+   ```
+
+
+
 ### Core Files
 
 -   `template.yaml`: The main Omni template file. It defines the cluster, control plane, and worker nodes, and orchestrates the application of patches and configurations.
