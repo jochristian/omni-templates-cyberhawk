@@ -1,6 +1,5 @@
 cluster:
   extraManifests:
-   - https://raw.githubusercontent.com/jochristian/omni-templates-cyberhawk/main/manifests/install_cilium.yaml
    - https://raw.githubusercontent.com/jochristian/omni-templates-cyberhawk/main/manifests/cilium-bgp-policy.yml
    - https://raw.githubusercontent.com/jochristian/omni-templates-cyberhawk/main/manifests/cilium-bgp-ippool.yml
    - https://raw.githubusercontent.com/jochristian/omni-templates-cyberhawk/main/manifests/install_nfs-csi-driver.yaml

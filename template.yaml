@@ -25,6 +25,8 @@ patches:
     file: patches/kubespan.yml
   - name: no-cni
     file: patches/cni.yml
+  - name: install-cilium
+    file: patches/install_cilium.yaml
   - name: extraManifests
     file: patches/extraManifests.yml
   - name: monitoring

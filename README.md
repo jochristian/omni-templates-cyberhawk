@@ -52,7 +52,12 @@ omni-templates-cyberhawk/
    ```
 2. **Template the charts:**
    ```bash
-   helm template cilium cilium/cilium --version 1.18.0 --namespace kube-system -f cilium_values.yaml > manifests/install_cilium.yaml
+   echo "cluster:" > patches/install_cilium.yaml
+   echo "  inlineManifests:" >> patches/install_cilium.yaml
+   echo "    - name: cilium" >> patches/install_cilium.yaml
+   echo "      contents: |" >> patches/install_cilium.yaml
+   helm template cilium cilium/cilium --version 1.18.0 --namespace kube-system -f cilium_values.yaml | sed 's/^/        /' >> patches/install_cilium.yaml
+
    helm template csi-driver-nfs csi-driver-nfs/csi-driver-nfs --namespace kube-system --version v4.11.0 > manifests/install_nfs-csi-driver.yaml
    ```
 3. **Apply the template to your Omni environment:**
