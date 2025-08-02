@@ -27,6 +27,10 @@ patches:
     file: patches/cni.yml
   - name: install-cilium
     file: patches/install_cilium.yaml
+  - name: bgp_configuration
+    file: patches/bgp-config.yaml
+  - name: nfs-csi-driver
+    file: patches/install_nfs-csi-driver.yaml
   - name: extraManifests
     file: patches/extraManifests.yml
   - name: monitoring

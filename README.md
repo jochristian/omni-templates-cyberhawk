@@ -50,17 +50,24 @@ omni-templates-cyberhawk/
    helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
    helm repo update
    ```
-2. **Template the charts:**
+2. **Template the charts for cilium:**
    ```bash
    echo "cluster:" > patches/install_cilium.yaml
    echo "  inlineManifests:" >> patches/install_cilium.yaml
    echo "    - name: cilium" >> patches/install_cilium.yaml
    echo "      contents: |" >> patches/install_cilium.yaml
    helm template cilium cilium/cilium --version 1.18.0 --namespace kube-system -f cilium_values.yaml | sed 's/^/        /' >> patches/install_cilium.yaml
-
-   helm template csi-driver-nfs csi-driver-nfs/csi-driver-nfs --namespace kube-system --version v4.11.0 > manifests/install_nfs-csi-driver.yaml
    ```
-3. **Apply the template to your Omni environment:**
+
+3. **Template the charts for nfs-csi-driver:**
+   ```bash
+   echo "cluster:" > patches/install_nfs-csi-driver.yaml
+   echo "  inlineManifests:" >> patches/install_nfs-csi-driver.yaml
+   echo "    - name: nfs-csi-driver" >> patches/install_nfs-csi-driver.yaml
+   echo "      contents: |" >> patches/install_nfs-csi-driver.yaml
+   helm template csi-driver-nfs csi-driver-nfs/csi-driver-nfs --namespace kube-system --version v4.11.0 | sed 's/^/        /' >> patches/install_nfs-csi-driver.yaml
+   ```
+4. **Apply the template to your Omni environment:**
    ```bash
    omnictl apply -f machineclass.yaml
    omnictl cluster template sync --file template.yaml
