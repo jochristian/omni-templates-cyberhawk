@@ -23,13 +23,11 @@ omni-templates-cyberhawk/
 ├───machineclass.yaml
 ├───README.md
 ├───template.yaml
-├───manifests/
-│   ├───cilium-bgp-ippool.yml
-│   ├───cilium-bgp-policy.yml
-│   ├───install_cilium.yaml
-│   └───install_nfs-csi-driver.yaml
 └───patches/
     ├───cni.yml
+    ├───install_cilium.yaml
+    ├───bgp-config.yaml
+    ├───install_nfs-csi-driver.yaml
     ├───extraManifests.yml
     ├───kubespan.yml
     └───monitoring.yaml
