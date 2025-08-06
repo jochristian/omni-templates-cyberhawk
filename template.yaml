@@ -27,6 +27,8 @@ patches:
     file: patches/cni.yml
   - name: install-cilium
     file: patches/install_cilium.yaml
+  - name: install-argocd
+    file: patches/install_argocd.yaml
   - name: bgp_configuration
     file: patches/bgp-config.yaml
   - name: nfs-csi-driver

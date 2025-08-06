@@ -79,15 +79,6 @@ omni-templates-cyberhawk/
 -   `cilium_values.yaml`: Contains the configuration values for the Cilium installation. This is where you can customize Cilium's behavior.
 -   `machineclass.yaml`: Defines the machine classes for control plane and worker nodes, specifying matching labels for machine discovery.
 
-### Manifests
-
-The `manifests/` directory contains the raw Kubernetes manifests that are applied to the cluster:
-
--   `install_cilium.yaml`: The primary manifest for installing Cilium and its components (agent, operator, Hubble, etc.).
--   `cilium-bgp-policy.yml`: Defines the BGP peering policies for Cilium.
--   `cilium-bgp-ippool.yml`:  Configures the IP address pool for Cilium's BGP load balancer.
--   `install_nfs-csi-driver.yaml`: Installs the NFS CSI driver for providing persistent storage from an NFS server.
-
 ### Patches
 
 The `patches/` directory contains Omni patches that modify the base cluster configuration:
