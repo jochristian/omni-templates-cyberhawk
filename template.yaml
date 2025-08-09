@@ -9,7 +9,7 @@ kubernetes:
 talos:
   version: v1.10.6
 features:
-  enableWorkloadProxy: false
+  enableWorkloadProxy: true
 #patches:
 systemExtensions:
   - siderolabs/qemu-guest-agent
