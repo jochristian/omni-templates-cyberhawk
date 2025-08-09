@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: common
+  name: default
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git
     targetRevision: main
-    path: GitOps/common
+    path: GitOps/default
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

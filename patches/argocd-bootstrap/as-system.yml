@@ -19,7 +19,7 @@ spec:
       project: "default"
       source:
         repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git
-        targetRevision: HEAD
+        targetRevision: main
         path: "{{.path.path}}"
         plugin:
           name: argocd-vault-plugin-kustomize
