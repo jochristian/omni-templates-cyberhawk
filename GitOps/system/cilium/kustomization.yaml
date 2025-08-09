@@ -1,0 +1,18 @@
+# kubernetes/cilium/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+#  - announce.yaml
+#  - ip-pool.yaml
+# -  cilium-bgp-ippool.yml
+# -  cilium-bgp-policy.yml
+
+helmCharts:
+  - name: cilium
+    repo: https://helm.cilium.io
+    version: 1.18.0
+    releaseName: "cilium"
+    includeCRDs: true
+    namespace: kube-system
+    valuesFile: values.yaml
