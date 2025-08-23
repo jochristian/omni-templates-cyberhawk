@@ -5,7 +5,7 @@ labels:
   cni: none
   kubespan: enabled
 kubernetes:
-  version: v1.33.3
+  version: v1.33.4
 talos:
   version: v1.10.6
 features:
