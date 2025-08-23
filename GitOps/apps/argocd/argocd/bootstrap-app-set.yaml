@@ -9,7 +9,7 @@ spec:
           - list:
               elements:
                 - repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git
-                  revision: main
+                  revision: HEAD
                   repoPath: GitOps/apps/*/*
           - git:
               repoURL: '{{ repoURL }}'
