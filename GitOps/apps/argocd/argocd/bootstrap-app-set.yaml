@@ -20,7 +20,7 @@ spec:
     preserveResourcesOnDeletion: true
   template:
     metadata:
-      name: '{{ path[3] }}-{{ path.basenameNormalized }}'
+      name: '{{ path[2] }}-{{ path.basenameNormalized }}'
       namespace: argocd
     spec:
       project: default
