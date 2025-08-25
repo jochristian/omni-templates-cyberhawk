@@ -4,30 +4,33 @@ metadata:
   name: cyberhawk-talos-k8s
   namespace: argocd
 spec:
+  goTemplate: true
   generators:
+    # CORRECTED: This generator now discovers directories instead of files.
     - git:
         repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git # CHANGE THIS TO YOUR REPO URL
         revision: HEAD
-        # This will find any .yaml file that defines an Application or Kustomization
-        files:
-          - path: "GitOps/clusters/cyberhawk-talos-k8s/*/*/*.yaml"
-          - path: "GitOps/clusters/cyberhawk-talos-k8s/*/*/*/*.yaml" # For Cilium's nested structure
+        directories:
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/1-system/*"
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/2-services/*"
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/3-apps/*"
   template:
     metadata:
-      # Name will be like "system-traefik", "services-vault"
-      name: '{{ path.segments[3] }}-{{ path.basenameNormalized | replace ".yaml" "" }}'
+      # The name is now correctly derived from the directory structure.
+      # e.g., "1-system-argocd", "2-services-vault"
+      name: '{{- printf "%s-%s" (index .path.segments 3) .path.basename | lower -}}'
       namespace: argocd
     spec:
       project: default
       source:
         repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git # CHANGE THIS TO YOUR REPO URL
         targetRevision: HEAD
-        # The path to the directory containing the file
-        path: '{{ path.directory }}'
+        # The source path is the directory discovered by the generator.
+        path: '{{ .path.path }}'
       destination:
         server: https://kubernetes.default.svc
-        # Namespace is taken from the directory name (e.g., "vault", "kube-system")
-        namespace: '{{ path.segments[4] }}'
+        # The namespace is the basename of the directory (e.g., "argocd", "vault").
+        namespace: '{{ .path.basename }}'
       syncPolicy:
         automated:
           prune: true
