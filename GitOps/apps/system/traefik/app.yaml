@@ -10,6 +10,7 @@ spec:
       - CreateNamespace=true
   destination:
     server: https://kubernetes.default.svc
+    namespace: system
   source:
     repoURL: https://traefik.github.io/charts
     targetRevision: 36.3.0
