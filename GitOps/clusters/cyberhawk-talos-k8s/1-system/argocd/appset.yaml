@@ -10,12 +10,25 @@ spec:
         repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git
         revision: HEAD
         directories:
+          # Scan for namespace directories (level 1) - these become apps deployed to their own namespace
           - path: "GitOps/clusters/cyberhawk-talos-k8s/1-system/*"
           - path: "GitOps/clusters/cyberhawk-talos-k8s/2-services/*"
           - path: "GitOps/clusters/cyberhawk-talos-k8s/3-apps/*"
+          # Scan for app directories under namespaces (level 2) - these are deployed to parent namespace
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/1-system/*/*"
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/2-services/*/*"
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/3-apps/*/*"
   template:
     metadata:
-      name: '{{- printf "%s-%s" (index .path.segments 3) .path.basename | lower -}}'
+      # Generate unique names: layer-namespace or layer-namespace-app
+      name: |
+        {{- $segments := splitList "/" .path.path -}}
+        {{- $layer := index $segments 3 -}}
+        {{- if gt (len $segments) 5 -}}
+          {{- printf "%s-%s-%s" $layer (index $segments 4) .path.basename | lower -}}
+        {{- else -}}
+          {{- printf "%s-%s" $layer .path.basename | lower -}}
+        {{- end -}}
       namespace: argocd
     spec:
       project: default
@@ -24,13 +37,12 @@ spec:
         targetRevision: HEAD
         path: '{{ .path.path }}'
       destination:
-        server: https://kubernetes.default.svc
-        # Handle special namespace cases
+        name: in-cluster
+        # Use parent directory as namespace for nested apps, basename for top-level
         namespace: |
-          {{- if contains "kube-system" .path.path -}}
-            kube-system
-          {{- else if eq .path.basename "argocd" -}}
-            argocd
+          {{- $segments := splitList "/" .path.path -}}
+          {{- if gt (len $segments) 5 -}}
+            {{- index $segments 4 -}}
           {{- else -}}
             {{ .path.basename }}
           {{- end -}}
