@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cyberhawk-talos-k8s
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git
+        revision: HEAD
+        directories:
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/1-system/*"
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/2-services/*"
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/3-apps/*"
+  template:
+    metadata:
+      name: '{{- printf "%s-%s" (index .path.segments 3) .path.basename | lower -}}'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git
+        targetRevision: HEAD
+        path: '{{ .path.path }}'
+      destination:
+        server: https://kubernetes.default.svc
+        # Handle special namespace cases
+        namespace: |
+          {{- if contains "kube-system" .path.path -}}
+            kube-system
+          {{- else if eq .path.basename "argocd" -}}
+            argocd
+          {{- else -}}
+            {{ .path.basename }}
+          {{- end -}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
