@@ -40,12 +40,22 @@ spec:
         name: in-cluster
         # Use parent directory as namespace for nested apps, basename for top-level
         namespace: |
-          {{- $segments := splitList "/" .path.path -}}
-          {{- if gt (len $segments) 5 -}}
-            {{- index $segments 4 -}}
-          {{- else -}}
-            {{ .path.basename }}
-          {{- end -}}
+           {{- if eq .path.basename "namespaces" -}}
+            default
+           {{- else -}}
+             {{- $segments := splitList "/" .path.path -}}
+             {{- if gt (len $segments) 5 -}}
+               {{- index $segments 4 -}}
+             {{- else -}}
+               {{ .path.basename }}
+             {{- end -}}
+           {{- end -}}
+#          {{- $segments := splitList "/" .path.path -}}
+#          {{- if gt (len $segments) 5 -}}
+#            {{- index $segments 4 -}}
+#          {{- else -}}
+#            {{ .path.basename }}
+#          {{- end -}}
       syncPolicy:
         automated:
           prune: true
