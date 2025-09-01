@@ -10,7 +10,10 @@ talos:
   version: v1.11.0
 features:
   enableWorkloadProxy: true
-#patches:
+patches:
+  - name: zswap
+    file: patches/zswap.yaml
+
 systemExtensions:
   - siderolabs/qemu-guest-agent
   - siderolabs/i915-ucode
@@ -37,7 +40,5 @@ patches:
     file: patches/extraManifests.yml
   - name: monitoring
     file: patches/monitoring.yaml
-  - name: zswap
-    file: patches/zswap.yaml
 ---
 kind: Workers
