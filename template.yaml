@@ -7,7 +7,7 @@ labels:
 kubernetes:
   version: v1.33.4
 talos:
-  version: v1.10.6
+  version: v1.11.0
 features:
   enableWorkloadProxy: true
 #patches:
@@ -37,5 +37,7 @@ patches:
     file: patches/extraManifests.yml
   - name: monitoring
     file: patches/monitoring.yaml
+  - name: zswap
+    file: patches/zswap.yaml
 ---
 kind: Workers
