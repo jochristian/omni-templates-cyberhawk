@@ -1,12 +1,11 @@
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: production
   labels:
-    name: production
     environment: production
     team: web-dev
     networking-zone: frontend
-
 ---
 apiVersion: "cilium.io/v2"
 kind: CiliumNetworkPolicy
