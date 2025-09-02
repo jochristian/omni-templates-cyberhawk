@@ -1,7 +1,31 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: production
-  environment: production
-  team: web-dev
-  networking-zone: frontend
+  labels:
+    name: production
+    environment: production
+    team: web-dev
+    networking-zone: frontend
+
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-external-deny-internal
+  namespace: production
+spec:
+  # This policy applies to all pods in the 'production' namespace.
+  # An empty podSelector selects all pods.
+  endpointSelector: {}
+  ingress:
+    # This is the first ingress rule.
+    # It allows traffic from any source outside the cluster.
+    - fromEntities:
+        - world
+    # This is the second ingress rule.
+    # It explicitly allows traffic from pods within the same namespace.
+    # While the goal is to block other namespaces, we still want
+    # services within the 'production' namespace to communicate.
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": "production"
