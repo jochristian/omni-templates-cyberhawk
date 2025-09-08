@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: install-sops
+          image: ghcr.io/getsops/sops:v3.10.2
+          command: ["sh", "-c", "cp /usr/local/bin/sops /custom-tools/"]
+          volumeMounts:
+            - name: custom-tools
+              mountPath: /custom-tools
+      containers:
+        - name: argocd-repo-server
+          volumeMounts:
+            - name: custom-tools
+              mountPath: /usr/local/bin/sops
+              subPath: sops
+      volumes:
+        - name: custom-tools
+          emptyDir: {}
