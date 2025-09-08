@@ -5,6 +5,29 @@ metadata:
 spec:
   template:
     spec:
+      containers:
+        - name: argocd-repo-server
+          env:
+            - name: SOPS_AGE_KEY_FILE
+              value: /etc/sops/keys/age.key
+          volumeMounts:
+            # Mount 1: The shared volume for the sops binary (from initContainer)
+            - name: custom-tools
+              mountPath: /usr/local/bin/sops
+              subPath: sops
+            # Mount 2: The volume containing the age key from our secret
+            - name: sops-age-key
+              mountPath: /etc/sops/keys/age.key
+              subPath: age.key
+              readOnly: true
+            # Mount 3: PRESERVE THE ORIGINAL MOUNT FOR THE argocd-cm CONFIGMAP
+            - name: argocd-cm
+              mountPath: /app/config/cm
+            # Mount 4: PRESERVE THE ORIGINAL MOUNT FOR TLS CERTS
+            - name: argocd-repo-server-tls
+              mountPath: /app/config/tls
+
+      # The initContainer for installing sops remains the same.
       initContainers:
         - name: install-sops
           image: ghcr.io/getsops/sops:v3.10.2
@@ -12,12 +35,19 @@ spec:
           volumeMounts:
             - name: custom-tools
               mountPath: /custom-tools
-      containers:
-        - name: argocd-repo-server
-          volumeMounts:
-            - name: custom-tools
-              mountPath: /usr/local/bin/sops
-              subPath: sops
+      # The volumes list must now define all the volumes we are mounting.
       volumes:
         - name: custom-tools
           emptyDir: {}
+        - name: sops-age-key
+          secret:
+            secretName: argocd-sops-age-key
+        # PRESERVE THE ORIGINAL VOLUME for argocd-cm (points to the ConfigMap)
+        - name: argocd-cm
+          configMap:
+            name: argocd-cm
+        # PRESERVE THE ORIGINAL VOLUME for TLS certs (points to a secret)
+        - name: argocd-repo-server-tls
+          secret:
+            secretName: argocd-repo-server-tls
+            optional: true
