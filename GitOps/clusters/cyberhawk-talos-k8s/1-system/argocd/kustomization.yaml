@@ -11,8 +11,8 @@ patches:
   - path: config.yaml
   - path: params.yaml
   - path: service.yaml
-#  - path: argocd-repo-server-patch.yaml
-#    target:
-#      kind: Deployment
-#      name: argocd-repo-server
-#      version: v1
+  - path: argocd-repo-server-patch.yaml
+    target:
+      kind: Deployment
+      name: argocd-repo-server
+      version: v1
