@@ -9,7 +9,7 @@ spec:
         - name: XDG_CONFIG_HOME
           value: /.config
         - name: SOPS_AGE_KEY_FILE
-          value: /.config/sops/age/keys.txt
+          value: /.config/sops/age/age.key
       # 1. Define an emptyDir volume which will hold the custom binaries
       volumes:
         - name: custom-tools
