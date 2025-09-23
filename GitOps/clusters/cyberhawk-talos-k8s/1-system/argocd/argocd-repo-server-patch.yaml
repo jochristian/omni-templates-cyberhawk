@@ -5,11 +5,6 @@ metadata:
 spec:
   template:
     spec:
-      env:
-        - name: XDG_CONFIG_HOME
-          value: /.config
-        - name: SOPS_AGE_KEY_FILE
-          value: /.config/sops/age/age.key
       volumes:
         - name: custom-tools
           emptyDir: {}
@@ -29,6 +24,11 @@ spec:
               name: custom-tools
       containers:
         - name: argocd-repo-server
+          env:
+            - name: XDG_CONFIG_HOME
+              value: /.config
+            - name: SOPS_AGE_KEY_FILE
+              value: /.config/sops/age/age.key
           volumeMounts:
             - mountPath: /usr/local/bin/kustomize
               name: custom-tools
