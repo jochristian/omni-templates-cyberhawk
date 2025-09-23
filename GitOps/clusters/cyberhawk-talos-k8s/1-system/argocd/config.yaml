@@ -4,8 +4,8 @@ metadata:
   name: argocd-cm
 data:
   application.resourceTrackingMethod: annotation
-  configManagementPlugins: |
-    - name: sops
-      generate:
-        command: ["sh", "-c"]
-        args: ["sops --decrypt /dev/stdin"]
+#  configManagementPlugins: |
+#    - name: sops
+#      generate:
+#        command: ["sh", "-c"]
+#        args: ["sops --decrypt /dev/stdin"]
