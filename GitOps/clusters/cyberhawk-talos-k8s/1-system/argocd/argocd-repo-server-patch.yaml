@@ -9,7 +9,7 @@ spec:
         - name: custom-tools
           emptyDir: {}
         - name: argocd-sops-age-key
-          secret:
+          secret: argocd-sops-age-key
       initContainers:
         - name: install-ksops
           image: viaductoss/ksops:v4.3.3
