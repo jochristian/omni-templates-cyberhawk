@@ -10,13 +10,11 @@ spec:
           value: /.config
         - name: SOPS_AGE_KEY_FILE
           value: /.config/sops/age/age.key
-      # 1. Define an emptyDir volume which will hold the custom binaries
       volumes:
         - name: custom-tools
           emptyDir: {}
         - name: argocd-sops-age-key
           secret:
-      # 2. Use an init container to download/copy custom binaries into the emptyDir
       initContainers:
         - name: install-ksops
           image: viaductoss/ksops:v4.3.3
@@ -29,7 +27,6 @@ spec:
           volumeMounts:
             - mountPath: /custom-tools
               name: custom-tools
-      # 3. Volume mount the custom binary to the bin directory (overriding the existing version)
       containers:
         - name: argocd-repo-server
           volumeMounts:
