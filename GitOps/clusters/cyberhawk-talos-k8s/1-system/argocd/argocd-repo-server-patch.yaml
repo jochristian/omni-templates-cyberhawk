@@ -14,7 +14,7 @@ spec:
       volumes:
         - name: custom-tools
           emptyDir: {}
-        - name: sops-age
+        - name: argocd-sops-age-key
           secret:
       # 2. Use an init container to download/copy custom binaries into the emptyDir
       initContainers:
@@ -40,4 +40,4 @@ spec:
               name: custom-tools
               subPath: ksops
             - mountPath: /.config/sops/age
-              name: sops-age
+              name: argocd-sops-age-key
