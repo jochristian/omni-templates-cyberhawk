@@ -36,8 +36,8 @@ spec:
         repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git
         targetRevision: HEAD
         path: '{{ .path.path }}'
-        plugin:
-          name: sops
+       # plugin:
+       #   name: sops
       destination:
         name: in-cluster
         # Use parent directory as namespace for nested apps, basename for top-level
