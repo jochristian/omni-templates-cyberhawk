@@ -52,11 +52,10 @@ cilium:
     enabled: true
 
   encryption:
-    enabled: true
-    type: "wireguard"
+    enabled: false
 
   bpf:
-      masquerade: true
+      masquerade: false
 
   externalIPs:
     enabled: true
