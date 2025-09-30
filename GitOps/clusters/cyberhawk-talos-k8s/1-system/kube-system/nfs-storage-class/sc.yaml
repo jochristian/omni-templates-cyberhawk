@@ -14,3 +14,34 @@ allowVolumeExpansion: true
 mountOptions:
   - nfsvers=4.1
   - nolock
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: pv-nfs
+  namespace: default
+spec:
+  storageClassName: "nfs-csi" # Storage class for nfs storage.
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 10.50.1.200
+    path: /files/kubernetes_csi/pv
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nfs-static
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: pv-nfs
+  storageClassName: nfs-csi

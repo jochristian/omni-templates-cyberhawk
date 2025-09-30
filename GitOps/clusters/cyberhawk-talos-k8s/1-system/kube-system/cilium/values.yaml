@@ -33,7 +33,7 @@ cilium:
   ipam:
     mode: kubernetes
 
-  l7Proxy: true
+ # l7Proxy: true
 
   nodePort:
       enabled: true
@@ -50,6 +50,10 @@ cilium:
 
   l2announcements:
     enabled: true
+
+  encryption:
+    enabled: true
+    type: "wireguard"
 
   bpf:
       masquerade: true
