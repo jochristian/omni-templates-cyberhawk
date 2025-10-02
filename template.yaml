@@ -3,7 +3,7 @@ name: cyberhawk-talos-k8s
 labels:
   template: true
   cni: none
-  kubespan: true
+  kubespan: false
 kubernetes:
   version: v1.34.1
 talos:
@@ -25,8 +25,8 @@ patches:
     file: patches/kubespan.yml
   - name: no-cni
     file: patches/cni.yml
-  - name: install-cilium
-    file: patches/install_cilium.yaml
+  #- name: install-cilium
+  #  file: patches/install_cilium.yaml
   - name: install-argocd
     file: patches/install_argocd.yaml
   - name: bgp_configuration

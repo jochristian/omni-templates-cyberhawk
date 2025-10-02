@@ -1,3 +1,5 @@
+cat keys.txt | kubectl -n argocd create secret generic argocd-sops-age-key --from-file=keys.txt=/dev/stdin
+
 # Sidero Omni Templates for Cilium and Custom Manifests
 
 This project provides a set of templates for [Sidero Omni](https://www.sidero.dev/omni/) to automate the creation of Talos clusters with Cilium as the CNI. It also includes configurations for BGP, Hubble, NFS CSI driver, and other useful components.
