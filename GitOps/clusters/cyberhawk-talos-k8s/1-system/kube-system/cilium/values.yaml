@@ -34,6 +34,9 @@ cilium:
     mode: kubernetes
 
  # l7Proxy: true
+  encryption:
+    enabled: true
+    type: "wireguard"
 
   nodePort:
       enabled: true
@@ -55,7 +58,7 @@ cilium:
     enabled: false
 
   bpf:
-      masquerade: false
+      masquerade: true
 
   externalIPs:
     enabled: true

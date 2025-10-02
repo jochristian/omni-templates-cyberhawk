@@ -1,132 +1,112 @@
-cluster:
+  cluster:
   name: talos
   id: 1
 
-kubeProxyReplacement: true
-
-# Talos specific
-k8sServiceHost: localhost
-k8sServicePort: 7445
-securityContext:
-  capabilities:
-    ciliumAgent: [ CHOWN, KILL, NET_ADMIN, NET_RAW, IPC_LOCK, SYS_ADMIN, SYS_RESOURCE, DAC_OVERRIDE, FOWNER, SETGID, SETUID ]
-    cleanCiliumState: [ NET_ADMIN, SYS_ADMIN, SYS_RESOURCE ]
-
-livenessProbe:
-  requireK8sConnectivity: true
-
-cgroup:
-  autoMount:
-    enabled: false
-  hostRoot: /sys/fs/cgroup
-
-cni:
-  exclusive: false
-
-# https://docs.cilium.io/en/stable/network/concepts/ipam/
-ipam:
-  mode: kubernetes
-
-l7Proxy: true
-
-nodePort:
-    enabled: true
-
-forceDeviceDetection: true
-
-operator:
-  rollOutPods: true
-  resources:
-    limits:
-      cpu: 500m
-      memory: 256Mi
-    requests:
-      cpu: 50m
-      memory: 128Mi
-
-# Roll out cilium agent pods automatically when ConfigMap is updated.
-rollOutCiliumPods: true
-resources:
-  limits:
-    cpu: 1000m
-    memory: 1Gi
-  requests:
-    cpu: 200m
-    memory: 512Mi
-
-#debug:
-#  enabled: true
-
-# Increase rate limit when doing L2 announcements
-k8sClientRateLimit:
-  qps: 20
-  burst: 100
-
-l2announcements:
-  enabled: true
-
-bpf:
-    masquerade: true
-
-externalIPs:
-  enabled: true
-
-#devices: "br+ eth+"
-
-forwardKubeDNSToHost: false
-
-bgpControlPlane:
-  enabled: true
-
-loadBalancer:
-  # https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/#maglev-consistent-hashing
-  algorithm: maglev
-
-gatewayAPI:
-  enabled: true
-
-envoy:
+  kubeProxyReplacement: true
+  # Talos specific
+  k8sServiceHost: localhost
+  k8sServicePort: 7445
   securityContext:
     capabilities:
-      keepCapNetBindService: true
-      envoy: [ NET_ADMIN, PERFMON, BPF ]
+      ciliumAgent:
+        - CHOWN
+        - KILL
+        - NET_ADMIN
+        - NET_RAW
+        - IPC_LOCK
+        - SYS_ADMIN
+        - SYS_RESOURCE
+        - DAC_OVERRIDE
+        - FOWNER
+        - SETUID
+        - SETGID
+      cleanCiliumState:
+        - NET_ADMIN
+        - SYS_ADMIN
+        - SYS_RESOURCE
+  cgroup:
+    autoMount:
+      enabled: false
+    hostRoot: /sys/fs/cgroup
 
-ingressController:
-  enabled: true
-  default: true
-  loadbalancerMode: dedicated
-  service:
-    type: LoadBalancer
-    allocateLoadBalancerNodePorts: false
-    annotations:
-      io.cilium/lb-ipam-ips: 10.50.2.1
+  cni:
+    exclusive: false
 
-prometheus:
+  encryption:
     enabled: true
-    serviceMonitor:
-        enabled: false
+    type: "wireguard"
 
-hubble:
+  # https://docs.cilium.io/en/stable/network/concepts/ipam/
+  ipam:
+    mode: kubernetes
+
+#  l7Proxy: true
+
+  nodePort:
+      enabled: true
+
+  forceDeviceDetection: true
+
+    #debug:
+  #  enabled: true
+
+  # Increase rate limit when doing L2 announcements
+  k8sClientRateLimit:
+    qps: 20
+    burst: 100
+
+  l2announcements:
     enabled: true
-    metrics:
-        enabled:
-            - dns:query;ignoreAAAA
-            - drop
-            - tcp
-            - flow
-            - port-distribution
-            - icmp
-            - http
-        serviceMonitor:
-            enabled: false
-    relay:
+
+  bpf:
+      masquerade: true
+
+  externalIPs:
+    enabled: true
+
+  #devices: "br+ eth+"
+
+  forwardKubeDNSToHost: false
+
+  bgpControlPlane:
+    enabled: true
+
+  loadBalancer:
+    # https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/#maglev-consistent-hashing
+    algorithm: maglev
+
+  gatewayAPI:
+    enabled: true
+
+  envoy:
+    securityContext:
+      capabilities:
+        keepCapNetBindService: true
+        envoy: [ NET_ADMIN, PERFMON, BPF ]
+
+  ingressController:
+    enabled: true
+    default: true
+    loadbalancerMode: dedicated
+    service:
+      type: LoadBalancer
+      allocateLoadBalancerNodePorts: false
+      annotations:
+        io.cilium/lb-ipam-ips: 10.50.2.1
+
+  prometheus:
+      enabled: true
+      serviceMonitor:
+          enabled: false
+
+  # Enable Hubble
+  hubble:
+      relay:
         enabled: true
-        rollOutPods: true
-        prometheus:
-            serviceMonitor:
-                enabled: false
-    ui:
+      ui:
         enabled: true
-        rollOutPods: true
-        ingress:
-            enabled: false
+        service:
+          annotations:
+            # Enable Omni Workload Proxying for this service
+            omni-kube-service-exposer.sidero.dev/port: "50080"
+            omni-kube-service-exposer.sidero.dev/label: Hubble

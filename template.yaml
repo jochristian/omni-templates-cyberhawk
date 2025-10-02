@@ -3,16 +3,13 @@ name: cyberhawk-talos-k8s
 labels:
   template: true
   cni: none
-  kubespan: enabled
+  kubespan: true
 kubernetes:
   version: v1.34.1
 talos:
   version: v1.11.2
 features:
   enableWorkloadProxy: true
-patches:
-  - name: zswap
-    file: patches/zswap.yaml
 
 systemExtensions:
   - siderolabs/qemu-guest-agent
