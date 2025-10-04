@@ -34,6 +34,7 @@ cilium:
     mode: kubernetes
 
  # l7Proxy: true
+
   encryption:
     enabled: true
     type: "wireguard"
@@ -53,9 +54,6 @@ cilium:
 
   l2announcements:
     enabled: true
-
-  encryption:
-    enabled: false
 
   bpf:
       masquerade: true
