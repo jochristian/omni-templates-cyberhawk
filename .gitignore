@@ -1,3 +1,4 @@
 patches/install_cilium.yaml
 patches/install_nfs-csi-driver.yaml
 patches/install_argocd.yaml
+charts/*

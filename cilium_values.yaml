@@ -1,7 +1,4 @@
-  cluster:
-  name: talos
-  id: 1
-
+cilium:
   kubeProxyReplacement: true
   # Talos specific
   k8sServiceHost: localhost

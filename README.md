@@ -1,3 +1,4 @@
+
 cat keys.txt | kubectl -n argocd create secret generic argocd-sops-age-key --from-file=keys.txt=/dev/stdin
 
 # Sidero Omni Templates for Cilium and Custom Manifests
@@ -56,7 +57,7 @@ omni-templates-cyberhawk/
    echo "  inlineManifests:" >> patches/install_cilium.yaml
    echo "    - name: cilium" >> patches/install_cilium.yaml
    echo "      contents: |" >> patches/install_cilium.yaml
-   helm template cilium cilium/cilium --version 1.18.0 --namespace kube-system -f cilium_values.yaml | sed 's/^/        /' >> patches/install_cilium.yaml
+   helm template cilium GitOps/clusters/cyberhawk-talos-k8s/1-system/kube-system/cilium --namespace kube-system | yq -i 'with(.cluster.inlineManifests.[] | select(.name=="cilium"); .contents=load_str("/dev/stdin"))' patches/install_cilium.yaml
    ```
 
 3. **Template the charts for nfs-csi-driver:**

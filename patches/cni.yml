@@ -1,7 +1,7 @@
 cluster:
   allowSchedulingOnControlPlanes: true
   discovery:
-    enabled: true
+    enabled: false
   network:
     cni:
       name: none
