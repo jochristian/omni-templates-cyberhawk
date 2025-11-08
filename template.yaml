@@ -7,7 +7,7 @@ labels:
 kubernetes:
   version: v1.34.1
 talos:
-  version: v1.11.2
+  version: v1.11.5
 patches:
   - name: cni
     file: patches/cni.yml
@@ -27,8 +27,6 @@ machineClass:
 patches:
   - name: kubespan-enabled
     file: patches/kubespan.yml
-#  - name: no-cni
-#    file: patches/cni.yml
   - name: install-cilium
     file: patches/install_cilium.yaml
   - name: install-argocd
