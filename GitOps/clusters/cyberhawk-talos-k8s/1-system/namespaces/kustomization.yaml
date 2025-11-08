@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - production.yaml
   - development.yaml
+  - media.yaml
