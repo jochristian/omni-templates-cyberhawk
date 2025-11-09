@@ -11,3 +11,4 @@ data:
   DB_USER: "jochristian"
   DB_PORT: "5432"
   DB_SSL_MODE: "require"
+  WEB_CONCURRENCY: "4"

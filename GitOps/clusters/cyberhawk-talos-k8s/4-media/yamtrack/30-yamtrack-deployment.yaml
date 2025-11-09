@@ -23,6 +23,11 @@ spec:
                 configMapKeyRef:
                   name: yamtrack-config
                   key: TZ
+            - name: WEB_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: WEB_CONCURRENCY
             - name: REDIS_URL
               valueFrom:
                 configMapKeyRef:
