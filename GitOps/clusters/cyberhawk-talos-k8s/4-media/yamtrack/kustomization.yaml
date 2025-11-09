@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: media
+
+generators:
+- 01-secret.yaml
+resources:
+- 02-configmap.yaml
+- 03-db-host-config.yaml
+- 10-db-external-service.yaml
+- 20-redis-statefulset.yaml
+- 21-redis-service.yaml
+- 30-yamtrack-deployment.yaml
+- 31-yamtrack-service.yaml
+
+
+replacements:
+- source:
+    fieldPath: data.external_db_ip
+    kind: ConfigMap
+    name: db-host-config
+  targets:
+  - fieldPaths:
+    - endpoints.0.addresses.0
+    select:
+      kind: EndpointSlice
+      name: db-external-slice
+labels:
+- includeSelectors: true
+  pairs:
+    app.kubernetes.io/name: yamtrack

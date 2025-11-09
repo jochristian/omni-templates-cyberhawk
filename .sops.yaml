@@ -1,5 +1,5 @@
 # .sops.yaml
 creation_rules:
-  - path_regex: .*.yaml$
-    # Paste your AGE public key here
+  - path_regex: '.*secret.*\.yaml$'
+    encrypted_regex: '^(data|stringData)$'
     age: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk

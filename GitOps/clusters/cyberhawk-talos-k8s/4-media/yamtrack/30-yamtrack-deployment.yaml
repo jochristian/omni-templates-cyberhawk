@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yamtrack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yamtrack
+  template:
+    metadata:
+      labels:
+        app: yamtrack
+    spec:
+      containers:
+        - name: yamtrack
+          image: ghcr.io/fuzzygrim/yamtrack
+          ports:
+            - containerPort: 8000
+          env:
+            - name: TZ
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: TZ
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: REDIS_URL
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: DB_USER
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: DB_PORT
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yamtrack-secret
+                  key: DB_PASSWORD
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: yamtrack-secret
+                  key: APP_SECRET
+            - name: TMDB_API
+              valueFrom:
+                secretKeyRef:
+                  name: yamtrack-secret
+                  key: TMDB_API
+            - name: DB_SSL_MODE
+              value: "disable"
+          # Add readiness and liveness probes here for a production setup
+          readinessProbe:
+            httpGet:
+              path: / # Assuming '/' is a valid health check path
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10

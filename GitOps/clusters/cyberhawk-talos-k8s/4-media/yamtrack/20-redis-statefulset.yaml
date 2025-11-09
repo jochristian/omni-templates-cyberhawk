@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  serviceName: "redis"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      # --- START ADDITIONS ---
+      securityContext:
+        # Ensures the volume is writable by the redis group
+        fsGroup: 999 
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          securityContext:
+            # Tells container to run as user 999 (redis)
+            runAsUser: 999 
+            # Tells container to run as group 999 (redis)
+            runAsGroup: 999 
+            # Required by "restricted" policy
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: "RuntimeDefault"
+            capabilities:
+              drop:
+                - "ALL"
+          # --- END ADDITIONS ---
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi # Adjust storage as needed
