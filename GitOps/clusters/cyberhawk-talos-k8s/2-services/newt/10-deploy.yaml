@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: newt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: newt
+  template:
+    metadata:
+      labels:
+        app: newt
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 3000
+        seccompProfile:
+          type: "RuntimeDefault"
+      containers:
+      - name: newt
+        image: fosrl/newt:0.0.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: PANGOLIN_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: newt-secret
+              key: PANGOLIN_ENDPOINT
+        - name: NEWT_ID
+          valueFrom:
+            secretKeyRef:
+              name: newt-secret
+              key: NEWT_ID
+        - name: NEWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: newt-secret
+              key: NEWT_SECRET
+        securityContext:
+         allowPrivilegeEscalation: false
+         capabilities:
+           drop:
+           - "ALL"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /.config
+      volumes:
+      - name: config-volume
+        emptyDir: {}

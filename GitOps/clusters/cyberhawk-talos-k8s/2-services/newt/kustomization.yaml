@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: newt
+generators:
+  - 01-secret.yaml
+resources:
+  - 10-deploy.yaml
+
+images:
+  - name: fosrl/newt
+    newTag: 1.6.0
