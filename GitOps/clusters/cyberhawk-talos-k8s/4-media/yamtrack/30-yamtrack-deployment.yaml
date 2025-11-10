@@ -23,6 +23,16 @@ spec:
                 configMapKeyRef:
                   name: yamtrack-config
                   key: TZ
+            - name: SOCIAL_PROVIDERS
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: SOCIAL_PROVIDERS
+            - name: SOCIALACCOUNT_PROVIDERS
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: SOCIALACCOUNT_PROVIDERS
             - name: WEB_CONCURRENCY
               valueFrom:
                 configMapKeyRef:

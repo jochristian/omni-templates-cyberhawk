@@ -12,3 +12,6 @@ data:
   DB_PORT: "5432"
   DB_SSL_MODE: "require"
   WEB_CONCURRENCY: "4"
+  SOCIAL_PROVIDERS: "allauth.socialaccount.providers.github"
+  SOCIALACCOUNT_PROVIDERS: "{"github":{"SCOPE":["user","repo","read:org"]}}"
+
