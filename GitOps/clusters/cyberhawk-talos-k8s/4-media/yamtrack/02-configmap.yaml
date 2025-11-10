@@ -14,4 +14,3 @@ data:
   WEB_CONCURRENCY: "4"
   SOCIAL_PROVIDERS: "allauth.socialaccount.providers.github"
   SOCIALACCOUNT_PROVIDERS: "{"github":{"SCOPE":["user","repo","read:org"]}}"
-
