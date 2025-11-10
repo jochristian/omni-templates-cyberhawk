@@ -68,6 +68,11 @@ spec:
                 secretKeyRef:
                   name: yamtrack-secret
                   key: TMDB_API
+            - name: TRAKT_API
+              valueFrom:
+                secretKeyRef:
+                  name: yamtrack-secret
+                  key: TRAKT_API
             - name: DB_SSL_MODE
               value: "disable"
           # Add readiness and liveness probes here for a production setup
