@@ -3,7 +3,6 @@ kind: ConfigMap
 metadata:
   name: yamtrack-config
 data:
-  # For yamtrack service
   TZ: "Europe/Oslo"
   REDIS_URL: "redis://redis:6379"
   DB_HOST: "db" # This resolves to the service defined below
@@ -12,5 +11,5 @@ data:
   DB_PORT: "5432"
   DB_SSL_MODE: "require"
   WEB_CONCURRENCY: "4"
-  SOCIAL_PROVIDERS: "allauth.socialaccount.providers.github"
-  SOCIALACCOUNT_PROVIDERS: "{"github":{"SCOPE":["user","repo","read:org"]}}"
+  SOCIAL_PROVIDERS: 'allauth.socialaccount.providers.github'
+  SOCIALACCOUNT_PROVIDERS: '{"github":{"SCOPE":["user","repo","read:org"]}}'
