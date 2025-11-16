@@ -18,6 +18,11 @@ spec:
           ports:
             - containerPort: 8000
           env:
+            - name: ADMIN_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: yamtrack-config
+                  key: ADMIN_ENABLED
             - name: TZ
               valueFrom:
                 configMapKeyRef:
