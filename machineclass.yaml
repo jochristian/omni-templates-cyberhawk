@@ -13,3 +13,22 @@ metadata:
 spec:
   matchlabels:
     - role = worker
+---
+metadata:
+  namespace: default
+  type: MachineClasses.omni.sidero.dev
+  id: proxmox-auto
+spec:
+  matchlabels: []
+  autoprovision:
+    providerid: proxmox
+    kernelargs: []
+    metavalues: []
+    providerdata: |
+      cores: 4
+      sockets: 1
+      memory: 4096
+      disk_size: 20
+      network_bridge: vmbr3
+      storage_selector: name == "local-zfs"
+    grpctunnel: 0
