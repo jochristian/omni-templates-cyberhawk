@@ -1,0 +1,12 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: media
+resources:
+  - ./deployment.yaml
+  - ./persistentvolumeclaim.yaml
+  - ./service.yaml
+
+images:
+  - name: lscr.io/linuxserver/tautulli
+    newTag: 2.16.0

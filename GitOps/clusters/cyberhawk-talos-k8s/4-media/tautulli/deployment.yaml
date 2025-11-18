@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tautulli
+  name: tautulli
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tautulli
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tautulli
+    spec:
+      containers:
+        - env:
+            - name: PUID
+              value: '1001'
+            - name: PGID
+              value: '1001'
+            - name: TZ
+              value: UTC
+          image: lscr.io/linuxserver/tautulli:latest
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /status
+              port: 8181
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          name: tautulli
+          ports:
+            - containerPort: 8181
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 8181
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            limits:
+              memory: &memory 135Mi
+            requests:
+              cpu: 10m
+              memory: *memory
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+          volumeMounts:
+            - mountPath: /config
+              name: tautulli-config
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tautulli-config
+          persistentVolumeClaim:
+            claimName: tautulli-config
