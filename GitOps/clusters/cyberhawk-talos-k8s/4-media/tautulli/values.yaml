@@ -1,0 +1,27 @@
+image:
+  repository: home-operations/tautulli
+  tag: 2.16.0
+  registry: ghcr.io
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop: ["ALL"]
+resources:
+  requests:
+    cpu: 1m
+    memory: 135Mi
+  limits:
+    # cpu: 500m
+    memory: 500Mi
+service:
+  port: 8181
+media:
+  enabled: true
+persistentVolume:
+  type: longhorn
+  size: 2Gi
