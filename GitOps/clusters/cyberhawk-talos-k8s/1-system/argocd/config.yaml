@@ -8,3 +8,10 @@ metadata:
 data:
   application.resourceTrackingMethod: annotation
   kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
+  resource.inclusions: |
+    - apiGroups:
+      - discovery.k8s.io
+      kinds:
+      - EndpointSlice
+      clusters:
+      - "*"
