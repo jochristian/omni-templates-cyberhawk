@@ -8,20 +8,31 @@ spec:
       port: 5432
       targetPort: 5432
 ---
-apiVersion: discovery.k8s.io/v1
-kind: EndpointSlice
+#apiVersion: discovery.k8s.io/v1
+#kind: EndpointSlice
+#metadata:
+#  name: db-external-slice
+#  labels:
+#    # This label is MANDATORY.
+#    # It links this slice to the "db" Service.
+#    kubernetes.io/service-name: db
+#addressType: IPv4
+#ports:
+#  - name: postgres
+#    appProtocol: tcp
+#    protocol: TCP
+#    port: 5432
+#endpoints:
+#  - addresses:
+#      - "PLACEHOLDER_IP"
+---
+apiVersion: v1
+kind: Endpoints
 metadata:
-  name: db-external-slice
-  labels:
-    # This label is MANDATORY.
-    # It links this slice to the "db" Service.
-    kubernetes.io/service-name: db
-addressType: IPv4
-ports:
-  - name: postgres
-    appProtocol: tcp
-    protocol: TCP
-    port: 5432
-endpoints:
+  name: db # MUST match the Service name exactly
+subsets:
   - addresses:
-      - "PLACEHOLDER_IP"
+      - ip: "PLACEHOLDER_IP"
+    ports:
+      - name: postgres
+        port: 5432
