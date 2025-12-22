@@ -61,7 +61,7 @@ cilium:
   externalIPs:
     enabled: true
 
-  devices: "kubespan"
+#  devices: "eth0"
   routingMode: tunnel
   tunnelProtocol: vxlan
 
