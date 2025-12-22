@@ -3,6 +3,7 @@ cilium:
   # Talos specific
   k8sServiceHost: localhost
   k8sServicePort: 7445
+  tunnel: vxlan
   securityContext:
     capabilities:
       ciliumAgent:
