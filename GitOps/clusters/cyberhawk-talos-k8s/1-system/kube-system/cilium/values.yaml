@@ -36,7 +36,7 @@ cilium:
  # l7Proxy: true
 
   encryption:
-    enabled: true
+    enabled: false
     type: "wireguard"
 
   nodePort:
