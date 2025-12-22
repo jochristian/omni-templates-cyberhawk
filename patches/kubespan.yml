@@ -10,4 +10,4 @@ machine:
           - rw
   network:
     kubespan:
-      enabled: false
+      enabled: true
