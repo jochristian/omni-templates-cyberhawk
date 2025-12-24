@@ -14,7 +14,7 @@ helmCharts:
       installCRDs: true
       global:
         leaderElection:
-          namespace: cert-manage
+          namespace: cert-manager
       extraArgs:
         - --dns01-recursive-nameservers-only=true
         - --dns01-recursive-nameservers=1.1.1.1:53,1.0.0.1:53
