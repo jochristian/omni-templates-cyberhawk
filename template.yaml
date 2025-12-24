@@ -1,5 +1,5 @@
 kind: Cluster
-name: cyberhawk-talos-k8s
+name: cyberhawk-talos-k8s-01
 labels:
   template: true
   cni: none

@@ -4,3 +4,4 @@ resources:
   - production.yaml
   - development.yaml
   - media.yaml
+  - cert-manager.yaml

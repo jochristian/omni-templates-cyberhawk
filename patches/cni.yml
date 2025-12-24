@@ -1,11 +1,7 @@
 cluster:
   allowSchedulingOnControlPlanes: true
   discovery:
-    enabled: true
-    registries:
-        kubernetes: # Kubernetes registry is problematic with KubeSpan, if the control plane endpoint is routeable itself via KubeSpan.
-          disabled: true
-        service: {}
+    enabled: false
   network:
     cni:
       name: none
