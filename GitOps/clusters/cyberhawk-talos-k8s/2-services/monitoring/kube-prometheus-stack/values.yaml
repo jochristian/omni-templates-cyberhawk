@@ -1,0 +1,48 @@
+kube-prometheus-stack:
+  kubeEtcd:
+   endpoints:
+     - 10.50.1.50
+     - 10.50.1.51
+     - 10.50.1.52
+  kubeControllerManager:
+    service:
+      selector:
+        k8s-app: kube-controller-manager
+  kubeScheduler:
+    service:
+      selector:
+        k8s-app: kube-scheduler
+  alertmanager:
+    alertmanagerspec:
+      storage:
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+  prometheus:
+    prometheusSpec:
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 20Gi
+  grafana:
+    grafana.ini:
+      auth:
+        disable_login_form: true
+        disable_signout_menu: true
+      auth.basic:
+        enabled: false
+      auth.anonymous:
+        enabled: true
+    # Allow Omni Workload Proxying for this service
+    service:
+      annotations:
+        omni-kube-service-exposer.sidero.dev/port: "50082"
+        omni-kube-service-exposer.sidero.dev/label: Grafana
