@@ -56,6 +56,15 @@ helmCharts:
             enabled: false
           auth.anonymous:
             enabled: true
+        additionalDataSources:
+          - name: Prometheus
+            type: prometheus
+            uid: prometheus
+            access: proxy
+            url: http://monitoring-kube-prometheus-prometheus.monitoring:9090
+            isDefault: true
+            jsonData:
+              timeInterval: 30
         service:
           annotations:
             omni-kube-service-exposer.sidero.dev/port: "50082"
