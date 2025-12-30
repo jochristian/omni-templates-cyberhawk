@@ -11,6 +11,12 @@ helmCharts:
     namespace: monitoring
     includeCRDs: true
     valuesInline:
+      kubeEtcd:
+        enabled: true
+        endpoints:
+          - 10.50.1.50
+          - 10.50.1.51
+          - 10.50.1.52
       kubeControllerManager:
         service:
           selector:
