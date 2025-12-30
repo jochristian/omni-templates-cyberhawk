@@ -5,3 +5,4 @@ resources:
   - development.yaml
   - media.yaml
   - cert-manager.yaml
+  - monitoring.yaml
