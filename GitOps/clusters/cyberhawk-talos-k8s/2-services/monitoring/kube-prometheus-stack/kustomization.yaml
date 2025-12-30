@@ -10,4 +10,43 @@ helmCharts:
     releaseName: monitoring
     namespace: monitoring
     includeCRDs: true
-    valuesFile: values.yaml
+    valuesInline:
+      kubeControllerManager:
+        service:
+          selector:
+            k8s-app: kube-controller-manager
+      kubeScheduler:
+        service:
+          selector:
+            k8s-app: kube-scheduler
+      alertmanager:
+        alertmanagerSpec:
+          storage:
+            volumeClaimTemplate:
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 10Gi
+      prometheus:
+        prometheusSpec:
+          storageSpec:
+            volumeClaimTemplate:
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 40Gi
+      grafana:
+        grafana.ini:
+          auth:
+            disable_login_form: true
+            disable_signout_menu: true
+          auth.basic:
+            enabled: false
+          auth.anonymous:
+            enabled: true
+        service:
+          annotations:
+            omni-kube-service-exposer.sidero.dev/port: "50082"
+            omni-kube-service-exposer.sidero.dev/label: Grafana
