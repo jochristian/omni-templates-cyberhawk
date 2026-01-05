@@ -6,3 +6,4 @@ resources:
   - media.yaml
   - cert-manager.yaml
   - monitoring.yaml
+  - it-tools.yaml
