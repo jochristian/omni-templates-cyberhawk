@@ -3,8 +3,7 @@ kind: Kustomization
 namespace: monitoring
 
 resources:
-#  - ingress.yaml
-#  - secrets.yaml
+  - service.yaml
 
 helmCharts:
   - name: librenms
