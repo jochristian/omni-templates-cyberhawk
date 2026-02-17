@@ -1,6 +1,6 @@
 librenms:
 #  existingSecret: librenms
-  timezone: UTC
+  timezone: Europe/Oslo
   configuration: |
     $config['distributed_poller_group']          = '0';
     $config['distributed_poller']                = true;
@@ -28,8 +28,6 @@ librenms:
       rrdcached:
         size: 10Gi
     envs:
-    - name: TZ
-      value: "Europe/Oslo"
     - name: WRITE_JITTER
       value: '1800'
     - name: WRITE_TIMEOUT
