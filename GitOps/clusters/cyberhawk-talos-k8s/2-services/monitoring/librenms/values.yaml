@@ -44,7 +44,11 @@ mysql:
 
 redis:
   enabled: true
+
 service:
+  type: ClusterIP
+  port: 80             # The port the Service exposes inside the cluster
+  targetPort: 8000     # The port the LibreNMS container is actually listening on
   annotations:
     omni-kube-service-exposer.sidero.dev/port: "8000"
     omni-kube-service-exposer.sidero.dev/label: librenms
