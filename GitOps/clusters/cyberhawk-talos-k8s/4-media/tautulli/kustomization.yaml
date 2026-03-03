@@ -9,4 +9,4 @@ resources:
 
 images:
   - name: lscr.io/linuxserver/tautulli
-    newTag: 2.16.0
+    newTag: 2.16.1
