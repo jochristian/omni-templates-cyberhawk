@@ -1,0 +1,26 @@
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: backup-placeholder
+spec:
+  # The PVC to be backed up
+  sourcePVC: pvc-placeholder
+  trigger:
+    schedule: "0 5 * * *"
+  restic:
+    pruneIntervalDays: 3
+    repository: s3-backup-nas01-placeholder
+    retain:
+      daily: 7
+      weekly: 2
+    copyMethod: Direct
+    cacheCapacity: 5Gi
+    # Matches your cluster's storage setup
+    storageClassName: nfs-csi
+    cacheStorageClassName: nfs-csi
+    moverSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 100
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault

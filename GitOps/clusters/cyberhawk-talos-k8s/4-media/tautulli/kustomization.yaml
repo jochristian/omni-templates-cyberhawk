@@ -7,6 +7,24 @@ resources:
   - ./persistentvolumeclaim.yaml
   - ./service.yaml
 
+#components:
+#  - ../../base/volsync-backup
+
 images:
   - name: lscr.io/linuxserver/tautulli
     newTag: 2.16.1
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: tautulli-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: tautulli-config
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-nas01-tautulli
