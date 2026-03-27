@@ -5,9 +5,9 @@ labels:
   cni: none
   kubespan: true
 kubernetes:
-  version: v1.35.2
+  version: v1.35.3
 talos:
-  version: v1.12.5
+  version: v1.12.6
 patches:
   - name: cni
     file: patches/cni.yml
