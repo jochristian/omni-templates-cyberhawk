@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-vcluster
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: vcluster
+    repoURL: https://charts.loft.sh
+    targetRevision: 0.33.1
+    helm:
+      releaseName: my-vcluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vcluster-cyberhawk
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
