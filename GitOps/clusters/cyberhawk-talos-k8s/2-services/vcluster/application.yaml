@@ -14,7 +14,7 @@ spec:
       values: |
         controlPlane:
           distro:
-            k3s:
+            k8s:
               enabled: true
           coredns:
             embedded: true
