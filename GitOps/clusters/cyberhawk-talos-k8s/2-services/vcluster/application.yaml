@@ -11,6 +11,22 @@ spec:
     targetRevision: 0.33.1
     helm:
       releaseName: my-vcluster
+      values: |
+        controlPlane:
+          distro:
+            k3s:
+              enabled: true
+          coredns:
+            embedded: true
+        sync:
+          toHost:
+            ingresses:
+              enabled: true
+          fromHost:
+            nodes:
+              enabled: true
+            storageClasses:
+              enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: vcluster-cyberhawk
