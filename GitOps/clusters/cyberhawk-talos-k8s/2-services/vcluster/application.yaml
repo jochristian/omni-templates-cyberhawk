@@ -12,9 +12,6 @@ spec:
     helm:
       releaseName: my-vcluster
       values: |
-        controlPlane:
-          coredns:
-            embedded: true
         sync:
           toHost:
             ingresses:
