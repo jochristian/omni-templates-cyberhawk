@@ -12,10 +12,6 @@ spec:
     helm:
       releaseName: my-vcluster
       values: |
-        controlPlane:
-          statefulSet:
-            image:
-              repository: "loft-sh/vcluster-oss"
         sync:
           toHost:
             ingresses:
