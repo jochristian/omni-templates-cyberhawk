@@ -12,6 +12,15 @@ spec:
     helm:
       releaseName: my-vcluster
       values: |
+        controlPlane:
+          statefulSet:
+            resources:
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+              requests:
+                cpu: 100m
+                memory: 256Mi
         sync:
           toHost:
             ingresses:
@@ -19,6 +28,8 @@ spec:
           fromHost:
             nodes:
               enabled: true
+              selector:
+                all: true
             storageClasses:
               enabled: true
   destination:
