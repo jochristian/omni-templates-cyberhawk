@@ -13,9 +13,6 @@ spec:
       releaseName: my-vcluster
       values: |
         controlPlane:
-          distro:
-            k8s:
-              enabled: true
           coredns:
             embedded: true
         sync:
