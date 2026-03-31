@@ -33,8 +33,6 @@ cilium:
   ipam:
     mode: kubernetes
 
- # l7Proxy: true
-
   encryption:
     enabled: false
     type: ""
@@ -46,11 +44,6 @@ cilium:
 
     #debug:
   #  enabled: true
-
-  # Increase rate limit when doing L2 announcements
-  k8sClientRateLimit:
-    qps: 20
-    burst: 100
 
   l2announcements:
     enabled: false
