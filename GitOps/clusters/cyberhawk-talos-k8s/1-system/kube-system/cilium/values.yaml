@@ -40,7 +40,7 @@ cilium:
     type: ""
 
   nodePort:
-      enabled: true
+    enabled: true
 
   forceDeviceDetection: true
 
@@ -48,22 +48,24 @@ cilium:
   #  enabled: true
 
   # Increase rate limit when doing L2 announcements
-  k8sClientRateLimit:
-    qps: 20
-    burst: 100
+#  k8sClientRateLimit:
+#    qps: 20
+#    burst: 100
 
-  l2announcements:
-    enabled: true
+#  l2announcements:
+#    enabled: true
 
   bpf:
-      masquerade: true
+    masquerade: true
 
   externalIPs:
     enabled: true
 
 #  devices: "eth0"
-  routingMode: tunnel
-  tunnelProtocol: vxlan
+  routingMode: native
+  autoDirectNodeRoutes: true
+  ipv4NativeRoutingCIDR: "10.0.0.0/8"
+  #tunnelProtocol: vxlan
 
   forwardKubeDNSToHost: false
 
@@ -94,9 +96,9 @@ cilium:
         io.cilium/lb-ipam-ips: 10.50.2.1
 
   prometheus:
-      enabled: true
-      serviceMonitor:
-          enabled: false
+    enabled: true
+    serviceMonitor:
+        enabled: false
 
   # Enable Hubble
   hubble:
