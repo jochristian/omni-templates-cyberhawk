@@ -48,12 +48,12 @@ cilium:
   #  enabled: true
 
   # Increase rate limit when doing L2 announcements
-#  k8sClientRateLimit:
-#    qps: 20
-#    burst: 100
+  k8sClientRateLimit:
+    qps: 20
+    burst: 100
 
-#  l2announcements:
-#    enabled: true
+  l2announcements:
+    enabled: false
 
   bpf:
     masquerade: true
@@ -65,7 +65,7 @@ cilium:
   routingMode: native
   autoDirectNodeRoutes: true
   ipv4NativeRoutingCIDR: "10.0.0.0/8"
-  #tunnelProtocol: vxlan
+  tunnelProtocol: ~
 
   forwardKubeDNSToHost: false
 
