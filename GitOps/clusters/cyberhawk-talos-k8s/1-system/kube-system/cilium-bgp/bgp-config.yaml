@@ -66,7 +66,6 @@ spec:
       selector:
         matchExpressions:
           - { key: somekey, operator: NotIn, values: ["never-used-value"] }
-    - advertisementType: "PodCIDR"
 ---
 apiVersion: cilium.io/v2
 kind: CiliumLoadBalancerIPPool
