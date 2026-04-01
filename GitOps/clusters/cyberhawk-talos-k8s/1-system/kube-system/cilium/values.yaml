@@ -55,10 +55,10 @@ cilium:
     enabled: true
 
 #  devices: "eth0"
-  routingMode: native
-  autoDirectNodeRoutes: true
+  routingMode: tunnel
+  autoDirectNodeRoutes: false
   ipv4NativeRoutingCIDR: "10.0.0.0/8"
-  tunnelProtocol: ~
+  tunnelProtocol: vxlan
 
   forwardKubeDNSToHost: false
 

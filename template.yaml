@@ -31,8 +31,8 @@ patches:
     file: patches/install_cilium.yaml
   - name: install-argocd
     file: patches/install_argocd.yaml
-  - name: bgp_configuration
-    file: patches/bgp-config.yaml
+#  - name: bgp_configuration
+#    file: patches/bgp-config.yaml
   - name: nfs-csi-driver
     file: patches/install_nfs-csi-driver.yaml
   - name: extraManifests
