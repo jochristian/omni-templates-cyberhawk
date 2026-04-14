@@ -9,4 +9,4 @@ resources:
 
 images:
   - name: fosrl/newt
-    newTag: 1.10.1
+    newTag: 1.11.0
