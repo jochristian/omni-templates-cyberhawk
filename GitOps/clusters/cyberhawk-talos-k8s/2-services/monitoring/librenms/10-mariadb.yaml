@@ -18,6 +18,10 @@ spec:
 
   port: 3306
 
+  env:
+    - name: TZ
+      value: Europe/Oslo
+
   args:
     - --innodb-file-per-table=1
     - --lower-case-table-names=0
