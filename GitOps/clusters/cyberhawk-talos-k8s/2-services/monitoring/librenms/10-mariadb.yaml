@@ -9,13 +9,6 @@ spec:
     name: librenms-secret
     key: MARIADB_ROOT_PASSWORD
 
-  # Application database + user — reuses existing secret key
-  username: librenms
-  database: librenms
-  passwordSecretKeyRef:
-    name: librenms-secret
-    key: DB_PASSWORD
-
   replicas: 2
 
   replication:

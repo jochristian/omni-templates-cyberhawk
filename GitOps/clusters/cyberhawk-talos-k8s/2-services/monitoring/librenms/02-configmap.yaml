@@ -7,7 +7,7 @@ data:
   PUID: "1000"
   PGID: "1000"
   # Database
-  DB_HOST: mariadb
+  DB_HOST: mariadb-primary
   DB_NAME: librenms
   DB_USER: librenms
   DB_TIMEOUT: "60"

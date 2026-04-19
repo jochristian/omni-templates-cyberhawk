@@ -19,6 +19,7 @@ systemExtensions:
   - siderolabs/qemu-guest-agent
   - siderolabs/i915-ucode
   - siderolabs/intel-ucode
+  - siderolabs/iscsi-tools
 ---
 kind: ControlPlane
 machineClass:

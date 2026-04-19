@@ -8,6 +8,7 @@ generators:
 resources:
   - 02-configmap.yaml
   - 10-mariadb.yaml            # MariaDB CR — managed by mariadb-operator
+  - 11-mariadb-database.yaml  # Database, User, Grant CRs
   - 20-valkey-deployment.yaml
   - 21-valkey-service.yaml
   - 30-librenms-pvc.yaml

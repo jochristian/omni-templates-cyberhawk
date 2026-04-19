@@ -1,0 +1,40 @@
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Database
+metadata:
+  name: librenms
+  namespace: monitoring
+spec:
+  mariaDbRef:
+    name: mariadb
+  characterSet: utf8mb4
+  collate: utf8mb4_unicode_ci
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: User
+metadata:
+  name: librenms
+  namespace: monitoring
+spec:
+  mariaDbRef:
+    name: mariadb
+  passwordSecretKeyRef:
+    name: librenms-secret
+    key: DB_PASSWORD
+  host: "%"
+  maxUserConnections: 20
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Grant
+metadata:
+  name: librenms
+  namespace: monitoring
+spec:
+  mariaDbRef:
+    name: mariadb
+  privileges:
+    - ALL PRIVILEGES
+  database: librenms
+  table: "*"
+  username: librenms
+  host: "%"
+  grantOption: false
