@@ -16,8 +16,6 @@ spec:
     name: librenms-secret
     key: DB_PASSWORD
 
-  image: docker.io/mariadb:10.11
-
   port: 3306
 
   args:
