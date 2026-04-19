@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: democratic-csi-driver-config
+    namespace: kube-system
+type: Opaque
+stringData:
+    driver-config-file.yaml: ENC[AES256_GCM,data:/kVEN7yGMKBnUvyacnsh/B/K3ssb1A37AeipXymrROwTVz0H3IyrZT+wLYuypifcmBIaQeQAjKV27fpGVupWTueOjLfPueB7i3cs9jLlq0FQP0Juc21pXl95UJz8JGyMnorL3lruvBh2DiFKDLdxLOiCQfNQwHmut/+7PFpcXTqWxiEd2bcKqHZ9vixaz27Mun85v6lEOZ6JCn/WjodCJ11jGNUc9qqgBX+ZVdcyd1ll2hubKbkIpiy3ziJRJksMJLYozHdszEVA9wc70N/Il6YEKVyXnPs6on5GPTZGYKhZfYTsIC1JZomay6loQUmCceK1yHrE2NRghYcs46D4+egRUpcy23FQwOofkaczH/TL9erDSGuxJJrx8BCggqICgAELWIz3/BFSeI+g7kQFf8v+jXSoAaPYUh3ypuji9Bwg7kj+vw5CRvke+2LWwAACSEHHWA5zkx9K0zuBgHH5KDbUinJSejYFQ+VnlCir9S++A6cuH/v3GTK9AA/8K3KFa8sNUcagWwIWKCIEAGDxQaFRqPciIvCUDLwOXoxN78aD8VhhoVSHy81LxfH40HZR89nSIiYFhwvo4R9DffN/kOTJtgJSCZQ+l2qkDyhO4I8n0eU2blF6myyJW3c4prElO4388sidbVKgwI15wPqEq1o0c4xuTjajexfOpPWl0zB2UEqewgpNiCmzznWGRVfPFmdYBabPkMNjENnHtHq8xQNAfC4tnBcxGRQlsBhzdR0ynFyx5P+Gttiq42+CCaVVOrqO8J22dM+YuwJIx6syzqrqoIajb5H71wPcDQ63oaUs/ubQpoLKcpcE1zzcmRwDlKHSJBmBO1bXvK7y771sCq7l7HJV4PbHeoilzEcKeHe1DaftGzCnTchJ76l9bTHqSBu/9Tin5iQaMMQlqk169zIMRIXVWx0BOtj2HdfqM0/GDaTZ3Ura2fU1lbE+Vdo0otRgCiof0+e51PrZNJT1pHO7vy0hEQjVl6toUMVjTm9IMPFGaiJmVpE3RboJ4zOfkrNrb9scgRnLDH7OXKHh7C2oYKE/dwlKXLg2NXkFQ/0leAD805K3V+Dpn35nykaXwKEN1E+1sWiUnw==,iv:eemjj19KGXyMTgF/wqeHl1CLiJ/TNUamP363d8Ba/uc=,tag:DSkopMKi7e7vV4svRXjPXw==,type:str]
+sops:
+    age:
+        - recipient: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBPMEptSEM2K0I1UG1kc012
+            SXVDcjhIZ1N5b08rTm0vRXErdStCY1ZTNUcwCmhvWE1Lb0hJWFF5eUNsNDdwamx5
+            VzMrWDFxdTY3d01nTS9DQjZJalZUd3cKLS0tIHBHYzdZRmhMcWxyY2hia1JxTFJo
+            dTBZeWtyTGVlREE5aWs3T0F4WER4NFkKcMHM9jvKGzBqgL1L7R0Ic9yDlPgH84Gx
+            thKuKRZmfCwtIfI5aPTcYcaGE0IHopTYISfAj/1yR24h6XnhljXuyQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-11T14:43:23Z"
+    mac: ENC[AES256_GCM,data:FAXne5Ej7HWeMbHtuMy4NbaAO6GXuHSCl7E6o6OxW+SOVtOA9/yobJinhVHde11Y9ndFozyqS4IVvY2OULzT3tfYQK3vw2PI8wk9mr/tf97buGi4Voo69lVH1qn/4WE1/ysGKJL2UPH4e6EWMM4UeC+GoQ2yMtKLDxkGDERGkTo=,iv:4kYIQ6tQGNwZWPR2cNw25zPG+i2hPLiWe8EupPRfUTg=,tag:sZl4nIPwyvu0bXW4raP7qw==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: librenms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: librenms
+      component: web
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: librenms
+        component: web
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: librenms
+          image: librenms/librenms
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: librenms-config
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: librenms-secret
+                  key: DB_PASSWORD
+          securityContext:
+            capabilities:
+              add: [NET_ADMIN, NET_RAW]
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: librenms-data

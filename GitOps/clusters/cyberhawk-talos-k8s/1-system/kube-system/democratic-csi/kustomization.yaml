@@ -1,0 +1,64 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: kube-system
+
+generators:
+  - secret-generator.yaml
+
+helmCharts:
+  - name: democratic-csi
+    repo: https://democratic-csi.github.io/charts/
+    version: 0.15.1
+    releaseName: democratic-csi-iscsi
+    namespace: kube-system
+    valuesInline:
+      csiDriver:
+        name: "org.democratic-csi.iscsi"
+
+      storageClasses:
+        - name: democratic-csi-iscsi
+          defaultClass: false
+          reclaimPolicy: Retain          # Retain on PVC delete — safe default for DB storage
+          volumeBindingMode: Immediate
+          allowVolumeExpansion: true
+          parameters:
+            fsType: ext4
+          mountOptions: []
+
+      volumeSnapshotClasses: []
+
+      driver:
+        # Secret is managed by KSOPS — chart must not create its own
+        existingConfigSecret: democratic-csi-driver-config
+        # driver.config.driver must be set here so the chart picks the correct
+        # mount/unmount helpers — the actual sensitive config lives in the secret above
+        config:
+          driver: freenas-api-iscsi
+        # Pin to next tag — supports TrueNAS 25.10+, required until a stable release
+        # ships with WebSocket/JSON-RPC support (REST API removed in TrueNAS 26.04)
+        # Ref: https://github.com/democratic-csi/democratic-csi/issues/509
+        image:
+          tag: next
+
+      node:
+        hostPID: true                    # Required for nsenter on Talos
+        driver:
+          extraEnv:
+            - name: ISCSIADM_HOST_STRATEGY
+              value: nsenter
+            - name: ISCSIADM_HOST_PATH
+              value: /usr/local/sbin/iscsiadm   # Path provided by siderolabs/iscsi-tools extension
+          # Talos iscsi-tools extension places config under /usr/local/etc/iscsi, not /etc/iscsi
+          # /var/lib/iscsi exists (created by iscsi-tools) but is a bind mount — type "" skips
+          # the kubelet hostPath check which rejects mount points as "not a directory"
+          iscsiDirHostPath: /var/lib/iscsi
+          iscsiDirHostPathType: ""
+        # Only schedule on nodes where the iscsi-tools extension is active
+        # Extension label appears after node reboots with the extension installed
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: extensions.talos.dev/iscsi-tools
+                      operator: Exists

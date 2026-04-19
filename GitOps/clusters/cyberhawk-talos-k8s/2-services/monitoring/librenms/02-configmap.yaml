@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: librenms-config
+data:
+  TZ: Europe/Oslo
+  PUID: "1000"
+  PGID: "1000"
+  # Database
+  DB_HOST: mariadb
+  DB_NAME: librenms
+  DB_USER: librenms
+  DB_TIMEOUT: "60"
+  # Redis
+  REDIS_HOST: valkey
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  CACHE_DRIVER: redis
+  SESSION_DRIVER: redis
+  # PHP tuning
+  MEMORY_LIMIT: 256M
+  MAX_INPUT_VARS: "1000"
+  UPLOAD_MAX_SIZE: 16M
+  OPCACHE_MEM_SIZE: "128"
+  # Proxy headers (set REAL_IP_FROM to your load balancer CIDR)
+  REAL_IP_FROM: 0.0.0.0/32
+  REAL_IP_HEADER: X-Forwarded-For
+  LOG_IP_VAR: remote_addr

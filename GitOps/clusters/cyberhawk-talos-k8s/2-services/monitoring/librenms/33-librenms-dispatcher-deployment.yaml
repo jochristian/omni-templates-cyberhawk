@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: librenms-dispatcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: librenms
+      component: dispatcher
+  template:
+    metadata:
+      labels:
+        app: librenms
+        component: dispatcher
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dispatcher
+          image: librenms/librenms
+          envFrom:
+            - configMapRef:
+                name: librenms-config
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: librenms-secret
+                  key: DB_PASSWORD
+            - name: DISPATCHER_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: SIDECAR_DISPATCHER
+              value: "1"
+          securityContext:
+            capabilities:
+              add: [NET_ADMIN, NET_RAW]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: librenms-data

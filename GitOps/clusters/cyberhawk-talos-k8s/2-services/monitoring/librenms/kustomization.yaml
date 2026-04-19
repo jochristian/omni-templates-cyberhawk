@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+
+generators:
+  - 01-secret.yaml
+
+resources:
+  - 02-configmap.yaml
+  - 10-mariadb.yaml            # MariaDB CR — managed by mariadb-operator
+  - 20-valkey-deployment.yaml
+  - 21-valkey-service.yaml
+  - 30-librenms-pvc.yaml
+  - 31-librenms-deployment.yaml
+  - 32-librenms-service.yaml
+  - 33-librenms-dispatcher-deployment.yaml
+
+
+images:
+  - name: librenms/librenms
+    newTag: "26.3.1"
+  - name: valkey/valkey
+    newTag: "8.0-alpine"
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: librenms

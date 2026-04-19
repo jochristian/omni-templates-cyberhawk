@@ -1,0 +1,56 @@
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: mariadb
+  namespace: monitoring
+spec:
+  # Root password — add MARIADB_ROOT_PASSWORD key to librenms-secret SOPS file
+  rootPasswordSecretKeyRef:
+    name: librenms-secret
+    key: MARIADB_ROOT_PASSWORD
+
+  # Application database + user — reuses existing secret key
+  username: librenms
+  database: librenms
+  passwordSecretKeyRef:
+    name: librenms-secret
+    key: DB_PASSWORD
+
+  image: docker.io/mariadb:10.11
+
+  port: 3306
+
+  args:
+    - --innodb-file-per-table=1
+    - --lower-case-table-names=0
+    - --character-set-server=utf8mb4
+    - --collation-server=utf8mb4_unicode_ci
+
+  storage:
+    size: 10Gi
+    storageClassName: democratic-csi-iscsi
+    persistentVolumeClaimRetainPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+
+  # Pin to Blix DC nodes — ctrl-00 and ctrl-01 carry zone=blix label
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                  - blix
+
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
