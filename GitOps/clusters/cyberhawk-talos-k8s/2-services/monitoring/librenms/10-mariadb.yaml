@@ -29,9 +29,6 @@ spec:
   storage:
     size: 10Gi
     storageClassName: democratic-csi-iscsi
-    persistentVolumeClaimRetainPolicy:
-      whenDeleted: Retain
-      whenScaled: Retain
 
   # Pin to Blix DC nodes — ctrl-00 and ctrl-01 carry zone=blix label
   affinity:
