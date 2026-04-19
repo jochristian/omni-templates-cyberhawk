@@ -16,6 +16,14 @@ spec:
     name: librenms-secret
     key: DB_PASSWORD
 
+  replicas: 2
+
+  replication:
+    enabled: true
+    primary:
+      podIndex: 0
+      automaticFailover: true
+
   port: 3306
 
   env:
