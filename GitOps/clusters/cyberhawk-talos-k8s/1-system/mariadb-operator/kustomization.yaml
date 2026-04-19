@@ -3,15 +3,21 @@ kind: Kustomization
 namespace: mariadb-operator
 
 helmCharts:
+  # CRDs must be installed before the operator
+  - name: mariadb-operator-crds
+    repo: https://helm.mariadb.com/mariadb-operator
+    version: 26.3.0
+    releaseName: mariadb-operator-crds
+    namespace: mariadb-operator
+
   - name: mariadb-operator
-    repo: https://mariadb-operator.github.io/mariadb-operator
-    version: 0.36.0
+    repo: https://helm.mariadb.com/mariadb-operator
+    version: 26.3.0
     releaseName: mariadb-operator
     namespace: mariadb-operator
-    includeCRDs: true
     valuesInline:
       # Watch all namespaces so it manages the MariaDB CR in monitoring
-      clusterWide: true
+      currentNamespaceOnly: false
 
       metrics:
         enabled: false
