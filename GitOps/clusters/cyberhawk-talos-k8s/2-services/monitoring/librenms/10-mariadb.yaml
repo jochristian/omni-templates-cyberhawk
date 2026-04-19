@@ -22,7 +22,7 @@ spec:
     enabled: true
     primary:
       podIndex: 0
-      automaticFailover: true
+      autoFailover: true
 
   port: 3306
 
