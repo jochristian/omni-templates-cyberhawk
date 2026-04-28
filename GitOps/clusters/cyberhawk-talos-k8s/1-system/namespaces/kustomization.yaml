@@ -7,3 +7,4 @@ resources:
   - cert-manager.yaml
   - monitoring.yaml
   - it-tools.yaml
+  - karakeep.yaml

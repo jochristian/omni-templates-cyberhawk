@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: karakeep
+  labels:
+    environment: production
+    team: web-dev
+    networking-zone: frontend
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-external-deny-internal
+  namespace: karakeep
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - world
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": "karakeep"
