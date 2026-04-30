@@ -1,5 +1,4 @@
 cilium:
-  mtu: 1280
   kubeProxyReplacement: true
   # Talos specific
   k8sServiceHost: localhost
