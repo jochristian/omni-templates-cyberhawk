@@ -1,0 +1,5 @@
+cluster:
+  etcd:
+    extraArgs:
+      heartbeat-interval: "250"
+      election-timeout: "2500"

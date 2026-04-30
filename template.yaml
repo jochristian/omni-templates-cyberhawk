@@ -5,9 +5,9 @@ labels:
   cni: none
   kubespan: true
 kubernetes:
-  version: v1.35.3
+  version: v1.35.4
 talos:
-  version: v1.12.6
+  version: v1.12.7
 patches:
   - name: cni
     file: patches/cni.yml
@@ -40,6 +40,8 @@ patches:
     file: patches/extraManifests.yml
   - name: monitoring
     file: patches/monitoring.yaml
+  - name: etcd-timeouts
+    file: patches/etcd-timeouts.yaml
 ---
 kind: Workers
 machineClass:
