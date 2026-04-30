@@ -48,8 +48,8 @@ helmCharts:
               value: nsenter
             - name: ISCSIADM_HOST_PATH
               value: /usr/local/sbin/iscsiadm   # Path provided by siderolabs/iscsi-tools extension
-          # Talos iscsi-tools extension places config under /usr/local/etc/iscsi, not /etc/iscsi
-          iscsiDirHostPath: /usr/local/etc/iscsi
+          # Talos iscsi-tools extension mounts iscsi config as tmpfs at /etc/iscsi
+          iscsiDirHostPath: /etc/iscsi
           iscsiDirHostPathType: Directory
         # Only schedule on nodes where the iscsi-tools extension is active
         # Extension label appears after node reboots with the extension installed
