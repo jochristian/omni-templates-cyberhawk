@@ -3,6 +3,9 @@ kind: Kustomization
 
 namespace: monitoring
 
+resources:
+  - servicemonitors.yaml
+
 configMapGenerator:
   - name: grafana-dashboard-argocd
     options:
