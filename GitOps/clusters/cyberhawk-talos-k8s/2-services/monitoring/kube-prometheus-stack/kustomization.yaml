@@ -62,7 +62,6 @@ helmCharts:
             uid: prometheus
             access: proxy
             url: http://monitoring-kube-prometheus-prometheus.monitoring:9090
-            isDefault: true
             jsonData:
               timeInterval: 30
         service:
