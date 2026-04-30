@@ -54,7 +54,7 @@ cilium:
   externalIPs:
     enabled: true
 
-#  devices: "eth0"
+  devices: "eth0"
   routingMode: tunnel
   autoDirectNodeRoutes: false
   ipv4NativeRoutingCIDR: "10.0.0.0/8"
