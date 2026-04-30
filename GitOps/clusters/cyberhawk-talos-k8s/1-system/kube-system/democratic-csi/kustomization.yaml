@@ -49,10 +49,8 @@ helmCharts:
             - name: ISCSIADM_HOST_PATH
               value: /usr/local/sbin/iscsiadm   # Path provided by siderolabs/iscsi-tools extension
           # Talos iscsi-tools extension places config under /usr/local/etc/iscsi, not /etc/iscsi
-          # /var/lib/iscsi exists (created by iscsi-tools) but is a bind mount — type "" skips
-          # the kubelet hostPath check which rejects mount points as "not a directory"
-          iscsiDirHostPath: /var/lib/iscsi
-          iscsiDirHostPathType: ""
+          iscsiDirHostPath: /usr/local/etc/iscsi
+          iscsiDirHostPathType: Directory
         # Only schedule on nodes where the iscsi-tools extension is active
         # Extension label appears after node reboots with the extension installed
         affinity:
