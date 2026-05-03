@@ -7,7 +7,7 @@ labels:
 kubernetes:
   version: v1.35.4
 talos:
-  version: v1.12.7
+  version: v1.13.0
 patches:
   - name: cni
     file: patches/cni.yml
@@ -32,18 +32,36 @@ patches:
     file: patches/install_cilium.yaml
   - name: install-argocd
     file: patches/install_argocd.yaml
-#  - name: bgp_configuration
-#    file: patches/bgp-config.yaml
   - name: nfs-csi-driver
     file: patches/install_nfs-csi-driver.yaml
   - name: extraManifests
     file: patches/extraManifests.yml
   - name: monitoring
     file: patches/monitoring.yaml
+  - name: monitoring-controlplane
+    file: patches/monitoring-controlplane.yaml
   - name: etcd-timeouts
     file: patches/etcd-timeouts.yaml
 ---
 kind: Workers
+name: blix-workers
 machineClass:
   name: proxmox-auto-worker-blix
   size: 0
+---
+kind: Workers
+name: lorenskog-workers
+machineClass:
+  name: role-worker-lorenskog
+  size: 1
+patches:
+  - name: lorenskog-labels
+    inline:
+      machine:
+        nodeLabels:
+          topology.kubernetes.io/zone: lorenskog
+          topology.kubernetes.io/region: onprem
+  - name: kubespan-enabled
+    file: patches/kubespan.yml
+  - name: monitoring
+    file: patches/monitoring.yaml
