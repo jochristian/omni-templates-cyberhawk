@@ -32,8 +32,6 @@ patches:
     file: patches/install_cilium.yaml
   - name: install-argocd
     file: patches/install_argocd.yaml
-  - name: nfs-csi-driver
-    file: patches/install_nfs-csi-driver.yaml
   - name: extraManifests
     file: patches/extraManifests.yml
   - name: monitoring

@@ -11,3 +11,6 @@ helmCharts:
     valuesInline:
       externalSnapshotter:
         enabled: true
+      controller:
+        externalSnapshotter:
+          enabled: false
