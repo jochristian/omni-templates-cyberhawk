@@ -10,7 +10,6 @@ helmCharts:
     includeCRDs: true
     valuesInline:
       externalSnapshotter:
-        enabled: true
+        enabled: false
       controller:
-        externalSnapshotter:
-          enabled: false
+        enableSnapshotter: true
