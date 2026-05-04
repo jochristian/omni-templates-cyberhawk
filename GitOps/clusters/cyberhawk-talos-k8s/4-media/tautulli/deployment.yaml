@@ -16,6 +16,7 @@ spec:
       labels:
         app: tautulli
     spec:
+      runtimeClassName: gvisor
       containers:
         - env:
             - name: PUID
