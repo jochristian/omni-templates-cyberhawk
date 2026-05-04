@@ -28,7 +28,7 @@ spec:
           emptyDir: {}
         - name: nginx-run
           emptyDir: {}
-
+      runtimeClassName: gvisor
       containers:
         - name: it-tools
           image: corentinth/it-tools:2024.10.22-7ca5933 # renovate: docker=corentinth/it-tools
