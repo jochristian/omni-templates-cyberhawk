@@ -1,0 +1,9 @@
+cluster:
+  inlineManifests:
+    - name: gvisor-runtime-class
+      contents: |
+        apiVersion: node.k8s.io/v1
+        kind: RuntimeClass
+        metadata:
+          name: gvisor
+        handler: runsc

@@ -11,6 +11,8 @@ talos:
 patches:
   - name: cni
     file: patches/cni.yml
+  - name: gvisor-sysctl
+    file: patches/gvisor-sysctl.yaml
 
 features:
   enableWorkloadProxy: true
@@ -20,6 +22,7 @@ systemExtensions:
   - siderolabs/i915-ucode
   - siderolabs/intel-ucode
   - siderolabs/iscsi-tools
+  - siderolabs/gvisor
 ---
 kind: ControlPlane
 machineClass:
@@ -40,6 +43,8 @@ patches:
     file: patches/monitoring-controlplane.yaml
   - name: etcd-timeouts
     file: patches/etcd-timeouts.yaml
+  - name: gvisor-runtime-class
+    file: patches/gvisor-runtime-class.yaml
 ---
 kind: Workers
 name: blix-workers
