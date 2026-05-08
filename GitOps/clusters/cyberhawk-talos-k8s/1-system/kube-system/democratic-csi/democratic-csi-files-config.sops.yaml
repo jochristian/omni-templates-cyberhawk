@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: democratic-csi-files-config
+    namespace: kube-system
+type: Opaque
+stringData:
+    driver-config-file.yaml: ENC[AES256_GCM,data:9UWkngBh5wXGApzDruJEJyWbxzSUxgc5kc/3Bkt4+4JiEnZ0VqsuUsnBKfOKaUn7vXwcuQJFwhMuzXf1SabNAfGBlsE2bORR2aumAF/ESNSpRqebNsK/AIf9LZp1a+cROTdrbpsp10gCXyTv7SSvm6iGI3OOtBIOKFhOsqdoBrr9e2XkKbYVPWM+PHgIWvBeA3yhZM3gPRjnmH8sY1U8rqPpMW/6xiUVy4EGQypLLhj00CszVpLn2jObNsyhy56jkK6TZemG7b1XfDOeQM4hx7GkzPZz7RnT6prP48hksgVsomINibYc+uoqalU4zp+glQ4f9wPJxgJ48LUJxe0T8PcP9n3sAgQLH6yZgh8yKqgvAbUDT+qCoilZfmI0eQgYtIKrX4aQ1khYyFT4/PVin2X2I+d1HGho7UpcUzdpjIUxGa43ZyM71Z7hHN3zoYVSTu1EGZtuAjuYL1P6YOAV4bMutZb6vH4Zm0F8L/+RHvvUmc7D9WJzG4A4Sd+F0bb9EtXuzpdkCOWuj860it0TyYkHWHTfAYZlH8YPJ0HYCZzTa3KeYNvitr7OQ1K0Rz+iBqiN2GfJp+yNSZIUGj/COfSTE/QuJ9cMpMguZeKMXXFbJHP98HffAJeasyz7alHZleqGdqc0rGagyKqyXnfGPGLpk6UI1dBFK1O1ijW7lJvTlTp5Dd0UaZCRL65iM5TrF2lptXfGP6HxU2Di63y4Qq04MjMi/3JISrNZA43SZTaUHyk6eabuSemV2pRHCCWIliICIpnV1xa7Kzb5WD2/hepyty34Yomg+oF2ct7d8zjWCwq1na9G68KMbVAIbxz51xLJLJ0yIoJ7G+GKIXpybkyo60WY46KjeEpABX46oFT8RJBO1hMbbtjbqATrXRY92qxyizatLlnZ2lE0ceZsatgsbag4T819UG/Jcnk+WrSJ5ZupSldzMmdwwihAZRvXqe3orgvFNTBNhfmYU94yGPiDwlh313Pn2+ZuzXprgbU5NbqwgZOO//75JLk+4xsoGgdYep0gdH6pZDUKpi8Dm/M37jybCHQZQ9k9XeFBScoNyVKi6pWGvAq9A5otnBLmE8YfzuIy,iv:UqZ/ZFkzN5sqa9ef7fUvpzFUfWVYfeKdSbHjPIA5btY=,tag:H6WhVYONPHHhBYztEj4HMA==,type:str]
+sops:
+    age:
+        - recipient: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBmOGxiamJ3SWVtcVFkNEgw
+            WU9QMHlrRTVlOVR3bEFGZDFkOUI1czdjeUJnCll6Wkk3ZzVodmNlVFNnbGxDY0NL
+            U3ljNUovL0MzYmF0VEk3UlNtZTdLNmMKLS0tIE9ZUkRqSjRocFEzZityd3ZtaWhw
+            YmFUbGROWGFXVlVVeHlBSE52Q0tNRDgKk1INykmHyG6GOQqERK555HRdh4ofoabm
+            TUdMg+brXFPc2G3o89gesRrqnxMZNEwdLxtz638L72TQQnGPxFZPtA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-05-08T20:22:52Z"
+    mac: ENC[AES256_GCM,data:GuaoAMg8/qfa17DxWmtH2Q80oh6584h7N3jXX6i6MSwarG4KzeOYOEL1CPFtKXj6FPyK5Q64bXCm6B6o/Xwm/u5VFDK4S+m+p5gRVX1CENGMW+Hr3dJyWJ7kwM5rXTwExdiZyZti0AYs9wuNB9x/Rb81bI6gvhkiqXxDqNmu8Ss=,iv:k5Tgx6rWF5/crRKQHIZajlqbvFYSMmBtFQQYT8aKghM=,tag:ku3mTU34VuEoLunEQjr1Dw==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

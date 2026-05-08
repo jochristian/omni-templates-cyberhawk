@@ -61,3 +61,49 @@ helmCharts:
                 - matchExpressions:
                     - key: extensions.talos.dev/iscsi-tools
                       operator: Exists
+
+  - name: democratic-csi
+    repo: https://democratic-csi.github.io/charts/
+    version: 0.15.1
+    releaseName: democratic-csi-iscsi-files
+    namespace: kube-system
+    valuesInline:
+      csiDriver:
+        name: "org.democratic-csi.iscsi-files"
+
+      storageClasses:
+        - name: democratic-csi-iscsi-files
+          defaultClass: false
+          reclaimPolicy: Retain
+          volumeBindingMode: Immediate
+          allowVolumeExpansion: true
+          parameters:
+            fsType: ext4
+          mountOptions: []
+
+      volumeSnapshotClasses: []
+
+      driver:
+        existingConfigSecret: democratic-csi-files-config
+        config:
+          driver: freenas-api-iscsi
+        image:
+          tag: next
+
+      node:
+        hostPID: true
+        driver:
+          extraEnv:
+            - name: ISCSIADM_HOST_STRATEGY
+              value: nsenter
+            - name: ISCSIADM_HOST_PATH
+              value: /usr/local/sbin/iscsiadm
+          iscsiDirHostPath: /var/iscsi
+          iscsiDirHostPathType: ""
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: extensions.talos.dev/iscsi-tools
+                      operator: Exists
