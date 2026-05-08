@@ -17,7 +17,7 @@ resources:
 
 images:
 - name: ghcr.io/karakeep-app/karakeep
-  newTag: "0.31.0" # renovate: docker=ghcr.io/karakeep-app/karakeep
+  newTag: "0.32.0" # renovate: docker=ghcr.io/karakeep-app/karakeep
 - name: getmeili/meilisearch
   newTag: "v1.41.0" # renovate: docker=getmeili/meilisearch
 - name: gcr.io/zenika-hub/alpine-chrome
