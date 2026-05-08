@@ -5,6 +5,8 @@ metadata:
   namespace: karakeep
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: meilisearch
