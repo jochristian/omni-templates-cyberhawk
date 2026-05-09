@@ -22,7 +22,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: portfolio-db-credentials
+                  name: portfolio-db-app
                   key: uri
           resources:
             requests: { cpu: 50m, memory: 32Mi }
@@ -36,7 +36,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: portfolio-db-credentials
+                  name: portfolio-db-app
                   key: uri
           livenessProbe:
             httpGet: { path: /api/health, port: 8080 }

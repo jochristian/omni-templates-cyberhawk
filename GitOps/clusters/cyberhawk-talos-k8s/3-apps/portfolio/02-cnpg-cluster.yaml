@@ -13,8 +13,6 @@ spec:
     initdb:
       database: portfolio
       owner: portfolio
-      secret:
-        name: portfolio-db-credentials
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
