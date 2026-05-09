@@ -13,4 +13,3 @@ resources:
   - 08-positions-sync-job.yaml
   - 09-networkpolicies.yaml
   - 10-httproute.yaml
-  - 11-certificate.yaml

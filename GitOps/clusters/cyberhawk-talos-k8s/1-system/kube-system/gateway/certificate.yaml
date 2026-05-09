@@ -1,12 +1,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: portfolio-tls
-  namespace: portfolio
+  name: wildcard-cyberhawk-no
+  namespace: kube-system
 spec:
-  secretName: portfolio-tls
+  secretName: wildcard-cyberhawk-no-tls
   dnsNames:
-    - portfolio.cyberhawk.no
+    - "*.cyberhawk.no"
   issuerRef:
     name: ns1-letsencrypt-prod
     kind: ClusterIssuer
