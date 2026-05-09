@@ -11,6 +11,7 @@ spec:
     - fromEntities:
         - host
         - remote-node
+        - ingress
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: kube-system
@@ -37,6 +38,7 @@ spec:
     - fromEntities:
         - host
         - remote-node
+        - ingress
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: kube-system
