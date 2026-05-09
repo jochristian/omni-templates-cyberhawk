@@ -8,5 +8,5 @@ spec:
   dnsNames:
     - "*.cyberhawk.no"
   issuerRef:
-    name: ns1-letsencrypt-prod
+    name: letsencrypt-prod
     kind: ClusterIssuer
