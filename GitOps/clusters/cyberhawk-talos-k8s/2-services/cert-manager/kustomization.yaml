@@ -3,6 +3,12 @@ kind: Kustomization
 
 namespace: cert-manager
 
+generators:
+  - cloudflare-secret-generator.yaml
+
+resources:
+  - clusterissuer.yaml
+
 helmCharts:
   - name: cert-manager
     repo: https://charts.jetstack.io
