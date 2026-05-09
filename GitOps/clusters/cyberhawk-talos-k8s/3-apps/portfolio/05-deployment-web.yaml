@@ -14,6 +14,9 @@ spec:
         app: portfolio-web
     spec:
       automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: web
           image: jochristian/portfolio:web-latest
@@ -36,5 +39,7 @@ spec:
             runAsUser: 101
             readOnlyRootFilesystem: false
             allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
       imagePullSecrets:
         - name: dockerhub-pull

@@ -14,6 +14,9 @@ spec:
         app: portfolio-api
     spec:
       automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         - name: migrate
           image: jochristian/portfolio:api-latest
@@ -28,6 +31,12 @@ spec:
           resources:
             requests: { cpu: 50m, memory: 32Mi }
             limits: { cpu: 200m, memory: 64Mi }
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
       containers:
         - name: api
           image: jochristian/portfolio:api-latest
@@ -56,5 +65,7 @@ spec:
             runAsUser: 65532
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
       imagePullSecrets:
         - name: dockerhub-pull
