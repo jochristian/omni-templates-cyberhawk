@@ -8,3 +8,4 @@ resources:
   - monitoring.yaml
   - it-tools.yaml
   - karakeep.yaml
+  - portfolio.yaml

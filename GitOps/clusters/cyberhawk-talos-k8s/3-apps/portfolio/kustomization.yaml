@@ -4,7 +4,6 @@ namespace: portfolio
 generators:
   - 12-secret-generator.yaml
 resources:
-  - 01-namespace.yaml
   - 02-cnpg-cluster.yaml
   - 03-configmap-positions.yaml
   - 04-deployment-api.yaml
