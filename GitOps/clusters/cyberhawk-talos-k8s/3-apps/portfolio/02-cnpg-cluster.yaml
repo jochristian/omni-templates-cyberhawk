@@ -8,12 +8,22 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:17
   storage:
     size: 5Gi
+    storageClass: democratic-csi-iscsi
   bootstrap:
     initdb:
       database: portfolio
       owner: portfolio
       secret:
         name: portfolio-db-credentials
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                  - blix
   resources:
     requests:
       memory: 256Mi
