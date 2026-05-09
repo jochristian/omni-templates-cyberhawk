@@ -17,6 +17,7 @@ spec:
       containers:
         - name: web
           image: jochristian/portfolio:web-latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           livenessProbe:

@@ -17,6 +17,7 @@ spec:
       initContainers:
         - name: migrate
           image: jochristian/portfolio:api-latest
+          imagePullPolicy: Always
           command: ["/migrate", "-path=/migrations", "-database=$(DATABASE_URL)", "up"]
           env:
             - name: DATABASE_URL
@@ -30,6 +31,7 @@ spec:
       containers:
         - name: api
           image: jochristian/portfolio:api-latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
