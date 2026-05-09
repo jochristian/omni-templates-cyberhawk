@@ -5,4 +5,13 @@ metadata:
   namespace: portfolio
 data:
   positions.yaml: |
-    positions: []
+    positions:
+      - ticker: PANW
+        isin: US6974001049
+        name: Palo Alto Networks Inc
+        currency: USD
+        asset_type: stock
+        market: XNAS
+        quantity: 10
+        avg_cost: 180.00
+        provider: yahoo
