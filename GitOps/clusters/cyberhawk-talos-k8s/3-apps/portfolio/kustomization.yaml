@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: portfolio
+generators:
+  - 12-secret-generator.yaml
+resources:
+  - 01-namespace.yaml
+  - 02-cnpg-cluster.yaml
+  - 03-configmap-positions.yaml
+  - 04-deployment-api.yaml
+  - 05-deployment-web.yaml
+  - 06-services.yaml
+  - 07-cronjobs.yaml
+  - 08-positions-sync-job.yaml
+  - 09-networkpolicies.yaml
+  - 10-httproute.yaml
+  - 11-certificate.yaml

@@ -1,0 +1,33 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: portfolio
+  namespace: portfolio
+spec:
+  parentRefs:
+    - name: cilium-gateway
+      namespace: kube-system
+  hostnames:
+    - portfolio.cyberhawk.no
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      backendRefs:
+        - name: portfolio-api
+          port: 8080
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /metrics
+      backendRefs:
+        - name: portfolio-api
+          port: 8080
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: portfolio-web
+          port: 8080

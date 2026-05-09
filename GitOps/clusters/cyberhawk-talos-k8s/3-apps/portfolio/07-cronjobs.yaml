@@ -1,0 +1,113 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: price-fetcher-intraday
+  namespace: portfolio
+spec:
+  schedule: "*/15 9-16 * * 1-5"
+  timeZone: "Europe/Oslo"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          containers:
+            - name: fetcher
+              image: jochristian/portfolio:fetcher-latest
+              env:
+                - name: FETCH_MODE
+                  value: intraday
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: portfolio-db-credentials
+                      key: uri
+              resources:
+                requests: { cpu: 50m, memory: 128Mi }
+                limits: { cpu: 500m, memory: 256Mi }
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+          imagePullSecrets:
+            - name: dockerhub-pull
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: price-fetcher-nav
+  namespace: portfolio
+spec:
+  schedule: "0 22 * * *"
+  timeZone: "Europe/Oslo"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          containers:
+            - name: fetcher
+              image: jochristian/portfolio:fetcher-latest
+              env:
+                - name: FETCH_MODE
+                  value: nav
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: portfolio-db-credentials
+                      key: uri
+              resources:
+                requests: { cpu: 50m, memory: 128Mi }
+                limits: { cpu: 500m, memory: 256Mi }
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+          imagePullSecrets:
+            - name: dockerhub-pull
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fx-fetcher
+  namespace: portfolio
+spec:
+  schedule: "0 8 * * 1-5"
+  timeZone: "Europe/Oslo"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          containers:
+            - name: fetcher
+              image: jochristian/portfolio:fetcher-latest
+              env:
+                - name: FETCH_MODE
+                  value: fx
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: portfolio-db-credentials
+                      key: uri
+              resources:
+                requests: { cpu: 50m, memory: 64Mi }
+                limits: { cpu: 200m, memory: 128Mi }
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+          imagePullSecrets:
+            - name: dockerhub-pull

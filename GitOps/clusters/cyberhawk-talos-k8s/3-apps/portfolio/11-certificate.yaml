@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: portfolio-tls
+  namespace: portfolio
+spec:
+  secretName: portfolio-tls
+  dnsNames:
+    - portfolio.cyberhawk.no
+  issuerRef:
+    name: ns1-letsencrypt-prod
+    kind: ClusterIssuer
