@@ -7,7 +7,7 @@ labels:
 kubernetes:
   version: v1.35.4
 talos:
-  version: v1.13.0
+  version: v1.13.2
 patches:
   - name: cni
     file: patches/cni.yml
