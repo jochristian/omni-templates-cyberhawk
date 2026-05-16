@@ -4,13 +4,16 @@ set -euo pipefail
 # WARNING: Run this script ONLY on a fresh, uninitialized OpenBao cluster.
 # Verify state first: kubectl exec -n openbao openbao-0 -- bao status
 #
-# StatefulSet behaviour: pods start sequentially — pod N only starts after pod N-1
-# is Ready (unsealed). This script handles that by waiting for each pod before unsealing.
+# Flow: init pod 0 → unseal pod 0 → raft join + unseal pods 1 and 2.
+# StatefulSet is OrderedReady: pod N+1 only starts after pod N is Ready (unsealed).
 
 command -v kubectl >/dev/null 2>&1 || { echo "ERROR: kubectl not found"; exit 1; }
 command -v jq     >/dev/null 2>&1 || { echo "ERROR: jq not found (brew install jq / apt install jq)"; exit 1; }
 
 kubectl cluster-info >/dev/null 2>&1 || { echo "ERROR: cluster not reachable"; exit 1; }
+
+BAO_CACERT_PATH="/openbao/userconfig/openbao-tls/tls.crt"
+LEADER_ADDR="https://openbao-0.openbao-internal.openbao.svc.cluster.local:8200"
 
 wait_for_pod_running() {
   local pod="$1"
@@ -48,14 +51,17 @@ unseal_pod() {
   fi
 }
 
-# With Parallel pod management, all 3 pods start simultaneously.
-# Wait for all 3 before init so Raft can form quorum (2/3) and elect a leader.
-wait_for_pod_running openbao-0
-wait_for_pod_running openbao-1
-wait_for_pod_running openbao-2
+raft_join_pod() {
+  local pod="$1"
+  echo ""
+  echo "Joining $pod to Raft cluster..."
+  kubectl exec -n openbao "$pod" -- sh -c \
+    "bao operator raft join -leader-ca-cert=\"\$(cat ${BAO_CACERT_PATH})\" ${LEADER_ADDR}"
+  echo "  ✅ $pod joined Raft"
+}
 
-echo "Giving Raft 10 seconds to elect a leader..."
-sleep 10
+# Pod 0 starts first (OrderedReady)
+wait_for_pod_running openbao-0
 
 echo "Checking initialization state..."
 STATUS=$(kubectl exec -n openbao openbao-0 -- bao status -format=json 2>/dev/null || echo '{"initialized":false}')
@@ -97,9 +103,17 @@ if [[ "$CONFIRM" != "YES" ]]; then
   exit 1
 fi
 
-# All pods are already Running (Parallel management). Unseal sequentially.
+# Unseal pod 0 — becomes Ready, triggers pod 1 to start (OrderedReady)
 unseal_pod openbao-0
+
+# Pod 1 starts now that pod 0 is Ready; join it to the cluster then unseal
+wait_for_pod_running openbao-1
+raft_join_pod openbao-1
 unseal_pod openbao-1
+
+# Pod 2 starts now that pod 1 is Ready
+wait_for_pod_running openbao-2
+raft_join_pod openbao-2
 unseal_pod openbao-2
 
 echo ""

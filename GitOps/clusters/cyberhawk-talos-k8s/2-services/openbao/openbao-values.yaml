@@ -8,16 +8,12 @@ server:
     repository: "openbao/openbao"
     tag: ""
 
-  # All 3 pods must start simultaneously so Raft can reach quorum (2/3) and
-  # elect a leader before the HTTP server starts accepting requests.
-  # OrderedReady deadlocks: pod 0 needs quorum to start, pod 1 won't start until pod 0 is Ready.
-  podManagementPolicy: "Parallel"
-
   ha:
     enabled: true
     replicas: 3
     raft:
       enabled: true
+      setNodeId: true
       config: |
         ui = true
 
@@ -30,18 +26,6 @@ server:
 
         storage "raft" {
           path = "/openbao/data"
-          retry_join {
-            leader_api_addr     = "https://openbao-0.openbao-internal.openbao.svc.cluster.local:8200"
-            leader_ca_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
-          }
-          retry_join {
-            leader_api_addr     = "https://openbao-1.openbao-internal.openbao.svc.cluster.local:8200"
-            leader_ca_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
-          }
-          retry_join {
-            leader_api_addr     = "https://openbao-2.openbao-internal.openbao.svc.cluster.local:8200"
-            leader_ca_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
-          }
         }
 
         service_registration "kubernetes" {}
