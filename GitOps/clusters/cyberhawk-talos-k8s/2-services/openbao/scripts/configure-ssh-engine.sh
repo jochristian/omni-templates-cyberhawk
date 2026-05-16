@@ -3,7 +3,7 @@ set -euo pipefail
 
 BAO_EXEC="kubectl exec -n openbao openbao-0 --"
 
-for var in BAO_ADDR BAO_TOKEN BAO_CACERT; do
+for var in BAO_ADDR BAO_TOKEN; do
   [[ -n "${!var:-}" ]] || { echo "ERROR: $var is not set"; exit 1; }
 done
 echo "✅ env vars set"

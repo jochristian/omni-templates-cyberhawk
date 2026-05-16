@@ -7,5 +7,4 @@ metadata:
         exec:
           path: ksops
 files:
-  - openbao-tls.sops.yaml
   - openbao-unseal-keys.sops.yaml

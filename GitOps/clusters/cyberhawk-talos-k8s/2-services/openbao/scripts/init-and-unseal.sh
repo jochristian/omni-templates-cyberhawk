@@ -12,8 +12,7 @@ command -v jq     >/dev/null 2>&1 || { echo "ERROR: jq not found (brew install j
 
 kubectl cluster-info >/dev/null 2>&1 || { echo "ERROR: cluster not reachable"; exit 1; }
 
-BAO_CACERT_PATH="/openbao/userconfig/openbao-tls/tls.crt"
-LEADER_ADDR="https://openbao-0.openbao-internal.openbao.svc.cluster.local:8200"
+LEADER_ADDR="http://openbao-0.openbao-internal.openbao.svc.cluster.local:8200"
 
 wait_for_pod_running() {
   local pod="$1"
@@ -55,8 +54,7 @@ raft_join_pod() {
   local pod="$1"
   echo ""
   echo "Joining $pod to Raft cluster..."
-  kubectl exec -n openbao "$pod" -- sh -c \
-    "bao operator raft join -leader-ca-cert=\"\$(cat ${BAO_CACERT_PATH})\" ${LEADER_ADDR}"
+  kubectl exec -n openbao "$pod" -- bao operator raft join "$LEADER_ADDR"
   echo "  ✅ $pod joined Raft"
 }
 
@@ -122,12 +120,11 @@ echo "Initialization complete. Next steps:"
 echo "  1. Update openbao-unseal-keys.sops.yaml with keys 1-3 and the root token"
 echo "  2. sops 2-services/openbao/openbao-unseal-keys.sops.yaml  (opens in editor)"
 echo "  3. git add openbao-unseal-keys.sops.yaml && git commit && git push"
-echo "  4. export BAO_ADDR=https://openbao.openbao.svc.cluster.local:8200"
-echo "  5. export BAO_TOKEN=$ROOT_TOKEN"
-echo "  6. kubectl get secret -n openbao openbao-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > /tmp/openbao-tls.crt"
-echo "  7. export BAO_CACERT=/tmp/openbao-tls.crt"
-echo "  8. Run configure scripts: configure-k8s-auth.sh → configure-kv-engine.sh → configure-ssh-engine.sh"
-echo "  9. Edit configure-db-engine.sh (replace CHANGE_ME), then run it"
-echo " 10. bash scripts/verify.sh"
-echo " 11. Revoke root token: bao token revoke \$BAO_TOKEN"
+echo "  4. kubectl port-forward svc/openbao 8200:8200 -n openbao &"
+echo "  5. export BAO_ADDR=http://127.0.0.1:8200"
+echo "  6. export BAO_TOKEN=$ROOT_TOKEN"
+echo "  7. Run configure scripts: configure-k8s-auth.sh → configure-kv-engine.sh → configure-ssh-engine.sh"
+echo "  8. Edit configure-db-engine.sh (replace CHANGE_ME), then run it"
+echo "  9. bash scripts/verify.sh"
+echo " 10. Revoke root token: bao token revoke \$BAO_TOKEN"
 echo "=========================================="

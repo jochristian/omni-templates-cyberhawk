@@ -12,7 +12,7 @@ check() {
 ok()   { echo "✅"; ((PASS++)) || true; }
 fail() { echo "❌ ${*}"; ((FAIL++)) || true; }
 
-for var in BAO_ADDR BAO_TOKEN BAO_CACERT; do
+for var in BAO_ADDR BAO_TOKEN; do
   [[ -n "${!var:-}" ]] || { echo "ERROR: $var is not set"; exit 1; }
 done
 

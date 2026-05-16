@@ -1,6 +1,6 @@
 global:
   enabled: true
-  tlsDisable: false
+  tlsDisable: true
 
 server:
   image:
@@ -18,10 +18,9 @@ server:
         ui = true
 
         listener "tcp" {
+          tls_disable = 1
           address         = "[::]:8200"
           cluster_address = "[::]:8201"
-          tls_cert_file   = "/openbao/userconfig/openbao-tls/tls.crt"
-          tls_key_file    = "/openbao/userconfig/openbao-tls/tls.key"
         }
 
         storage "raft" {
@@ -29,14 +28,6 @@ server:
         }
 
         service_registration "kubernetes" {}
-
-  extraVolumes:
-    - type: secret
-      name: openbao-tls
-
-  extraEnvironmentVars:
-    VAULT_CACERT: /openbao/userconfig/openbao-tls/tls.crt
-    VAULT_ADDR: https://127.0.0.1:8200
 
   resources:
     requests:
@@ -68,9 +59,6 @@ server:
 injector:
   enabled: true
   replicas: 1
-  webhook:
-    annotations:
-      cert-manager.io/inject-ca-from: openbao/injector-tls-cert
 
 ui:
   enabled: true

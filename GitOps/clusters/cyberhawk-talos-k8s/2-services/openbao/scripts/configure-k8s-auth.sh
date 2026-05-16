@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Requires: BAO_ADDR, BAO_TOKEN, BAO_CACERT set in environment
-# Extract CA cert: kubectl get secret -n openbao openbao-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > /tmp/openbao-tls.crt
-# export BAO_CACERT=/tmp/openbao-tls.crt
+# Requires: BAO_ADDR, BAO_TOKEN set in environment
+# Example: kubectl port-forward svc/openbao 8200:8200 -n openbao
+#          export BAO_ADDR=http://127.0.0.1:8200
+#          export BAO_TOKEN=<root-token>
 
 BAO_EXEC="kubectl exec -n openbao openbao-0 --"
 
-for var in BAO_ADDR BAO_TOKEN BAO_CACERT; do
+for var in BAO_ADDR BAO_TOKEN; do
   [[ -n "${!var:-}" ]] || { echo "ERROR: $var is not set"; exit 1; }
 done
 echo "✅ env vars set"

@@ -6,8 +6,8 @@ set -euo pipefail
 if [[ -z "${BAO_ADDR:-}" || -z "${BAO_TOKEN:-}" ]]; then
   echo "ERROR: BAO_ADDR and BAO_TOKEN must be set."
   echo ""
-  echo "  export BAO_ADDR=https://openbao.cyberhawk.no"
-  echo "  # or: kubectl port-forward svc/openbao 8200:8200 -n openbao"
+  echo "  kubectl port-forward svc/openbao 8200:8200 -n openbao &"
+  echo "  export BAO_ADDR=http://127.0.0.1:8200"
   echo "  export BAO_TOKEN=<token from bao login>"
   exit 1
 fi
