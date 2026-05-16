@@ -17,10 +17,10 @@ metadata:
     annotations:
         openbao.cyberhawk.no/note: Revoke root-token after bootstrap. Keys for emergency manual unseal only.
 stringData:
-    unseal-key-1: ENC[AES256_GCM,data:o1ANlCaP7ZotWV8=,iv:TYYd9/MsELFWDD9r4IxosASRInrkjzDrd/GfrjLx12o=,tag:KWtQ5DEYtpC8SPh0zmzKGw==,type:str]
-    unseal-key-2: ENC[AES256_GCM,data:dDHZp3DVJA9O48A=,iv:+azC4aaUXBIVF2Y2YLyQOLl7EzaZ4QkvFJomDKmQ7Gw=,tag:2oSuwppfptNbyxDFSdC1IQ==,type:str]
-    unseal-key-3: ENC[AES256_GCM,data:dBYMtCISbkJQeRE=,iv:kczroSt7u/Xxd/IDM+nEOWDgtBhY+psYdV9bEP1YzeU=,tag:0XiMGoqZuCEAZqv21X/3tQ==,type:str]
-    root-token: ENC[AES256_GCM,data:iygVvZkX7MeqRi0=,iv:1ELVKzLlc0iCBJqJi1mttqhJLFo7SwiQzI0k4NaNDr4=,tag:q5EJAfBvvRcalKJpM5TdCA==,type:str]
+    unseal-key-1: ENC[AES256_GCM,data:yUYeR9LzKrXXO78nn7gETRLf9lOSvp6d+Ow2mERrAH76TbJUEQHNeE/4qFM=,iv:bYa8fUDW1H2EuGAEfPEri5AVZNCMVREr8HOai6IDQ6Y=,tag:GcIbBsLGaAECH0M/9BS7Hg==,type:str]
+    unseal-key-2: ENC[AES256_GCM,data:IDJxVEJ7r5xOUl5pLlPYSdhDIxEJ7ErbmITFFvBSL1ctrwx5IoIBng6Qynk=,iv:F6l74XkY1MlbKx7pIvErUc0ZpkpNvr/DGgiHEuS/rCI=,tag:kdIW3XFms0P3zByw9te/gA==,type:str]
+    unseal-key-3: ENC[AES256_GCM,data:jzGV0DJewMpwpoO5vzokyR/NoX/1IFopei/M50rWHYdd0zXVOMdAE0Wc1YQ=,iv:3H9rjUeU8nAZ7snLtfdpE3s3V4+59u6UT+g7HDZ/D00=,tag:UO8WTVAixWJL7a3vIqwxOA==,type:str]
+    root-token: ENC[AES256_GCM,data:yoG7e5VhLRML0A6wc7wtjSPAeAPlaTa5WVA=,iv:Op1Zuh/pUxR0PCgYBAWvslKZ0tXL97WcUaARH/8aj2g=,tag:SYSffURfhSeEPGYUZlJaPQ==,type:str]
 sops:
     age:
         - enc: |
@@ -33,6 +33,6 @@ sops:
             -----END AGE ENCRYPTED FILE-----
           recipient: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-05-16T08:17:58Z"
-    mac: ENC[AES256_GCM,data:HXG9lnTDkDdKzjd7X1gNi1NL/+PVBTRm+TIoCjjnCHfzLZv/kIc5/GU4lRNEkwb4D0+ajaGAFcdRg+W0JSJlH+5aJZCLu5Qq0NKlr+YGzaEbIsNcb9cO5G1GTngXfP9fttsJv4T+55w9b7RgSRNttoDqOLegnf+N2XvgeRGxPvA=,iv:wQNE8Xtc7aLGxzIZTcJz+xbLu1TUeqyCI2f2P+k5f8s=,tag:VWGiDR9TR+rNUQr/tKqhTw==,type:str]
+    lastmodified: "2026-05-16T10:37:46Z"
+    mac: ENC[AES256_GCM,data:T34ESqEzMQIsuL+3S5+bjMVIqnLAFt65PIQW6OSO6INCx3GGlwi91Bio6QRxrfbN84ebkWRfIMIULa1ujScJI9uhPHvt/hCjp1g/5lMD+Igu+CSw1DowV14y4JHct2lvD+tzVmLMuPC7Ro7i1N+1Nz0yllaUn2AdBay7L3TYv7A=,iv:smAg1rLW8VJ8XmYdvc4G7+OD+0LJc4f8IrONSrHxMvU=,tag:CnCJa7SipSn63lp/mjXm/A==,type:str]
     version: 3.13.0
