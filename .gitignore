@@ -4,3 +4,5 @@ patches/install_argocd.yaml
 charts
 # Helm dependencies lock file
 Chart.lock
+# Claude Code superpowers specs (local design docs, not for repo)
+**/docs/superpowers/

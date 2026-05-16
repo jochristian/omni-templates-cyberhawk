@@ -9,3 +9,4 @@ resources:
   - it-tools.yaml
   - karakeep.yaml
   - portfolio.yaml
+  - openbao.yaml
