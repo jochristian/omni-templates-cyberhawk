@@ -1,0 +1,87 @@
+global:
+  enabled: true
+  tlsDisable: false
+
+server:
+  image:
+    repository: ghcr.io/openbao/openbao
+    tag: ""
+
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      config: |
+        ui = true
+
+        listener "tcp" {
+          address         = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_cert_file   = "/openbao/userconfig/openbao-tls/tls.crt"
+          tls_key_file    = "/openbao/userconfig/openbao-tls/tls.key"
+        }
+
+        storage "raft" {
+          path = "/openbao/data"
+          retry_join {
+            leader_api_addr     = "https://openbao-0.openbao-internal.openbao.svc.cluster.local:8200"
+            leader_ca_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
+          }
+          retry_join {
+            leader_api_addr     = "https://openbao-1.openbao-internal.openbao.svc.cluster.local:8200"
+            leader_ca_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
+          }
+          retry_join {
+            leader_api_addr     = "https://openbao-2.openbao-internal.openbao.svc.cluster.local:8200"
+            leader_ca_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
+          }
+        }
+
+        service_registration "kubernetes" {}
+
+  extraVolumes:
+    - type: secret
+      name: openbao-tls
+
+  extraEnvironmentVars:
+    VAULT_CACERT: /openbao/userconfig/openbao-tls/tls.crt
+    VAULT_ADDR: https://127.0.0.1:8200
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  securityContext:
+    capabilities:
+      add:
+        - IPC_LOCK
+
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: democratic-csi-iscsi
+
+  auditStorage:
+    enabled: true
+    size: 5Gi
+    storageClass: democratic-csi-iscsi
+
+  serviceAccount:
+    create: true
+    name: openbao
+
+injector:
+  enabled: true
+  replicas: 1
+  webhook:
+    annotations:
+      cert-manager.io/inject-ca-from: openbao/injector-tls-cert
+
+ui:
+  enabled: true
+  serviceType: ClusterIP
