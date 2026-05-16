@@ -33,17 +33,21 @@ kubectl get pod -n openbao openbao-2 -o jsonpath='{.status.phase}' 2>/dev/null |
   && kubectl get pod -n openbao openbao-2 -o jsonpath='{.status.containerStatuses[0].ready}' 2>/dev/null | grep -q true \
   && ok || fail
 
+# bao status exits non-zero on standby nodes — capture output before grep to avoid pipefail
 check 4 "openbao-0 Initialized: true"
-$BAO_EXEC bao status -format=json 2>/dev/null | grep -q '"initialized":true' && ok || fail
+BAO_STATUS_0=$($BAO_EXEC bao status -format=json 2>/dev/null || true)
+echo "$BAO_STATUS_0" | grep -qE '"initialized":\s*true' && ok || fail
 
 check 5 "openbao-0 Sealed: false"
-$BAO_EXEC bao status -format=json 2>/dev/null | grep -q '"sealed":false' && ok || fail
+echo "$BAO_STATUS_0" | grep -qE '"sealed":\s*false' && ok || fail
 
 check 6 "openbao-1 Sealed: false"
-kubectl exec -n openbao openbao-1 -- bao status -format=json 2>/dev/null | grep -q '"sealed":false' && ok || fail
+BAO_STATUS_1=$(kubectl exec -n openbao openbao-1 -- env BAO_ADDR=http://127.0.0.1:8200 bao status -format=json 2>/dev/null || true)
+echo "$BAO_STATUS_1" | grep -qE '"sealed":\s*false' && ok || fail
 
 check 7 "openbao-2 Sealed: false"
-kubectl exec -n openbao openbao-2 -- bao status -format=json 2>/dev/null | grep -q '"sealed":false' && ok || fail
+BAO_STATUS_2=$(kubectl exec -n openbao openbao-2 -- env BAO_ADDR=http://127.0.0.1:8200 bao status -format=json 2>/dev/null || true)
+echo "$BAO_STATUS_2" | grep -qE '"sealed":\s*false' && ok || fail
 
 # Auth methods
 check 8 "kubernetes/ auth method enabled"
@@ -77,6 +81,7 @@ TMPKEY=$(mktemp /tmp/verify-ssh-XXXXXX)
 trap 'rm -f "$TMPKEY" "${TMPKEY}.pub" "${TMPKEY}-cert.pub"' EXIT
 
 check 16 "generate temp ed25519 keypair"
+rm -f "$TMPKEY"
 ssh-keygen -t ed25519 -f "$TMPKEY" -N "" -q 2>/dev/null && ok || fail
 
 check 17 "sign temp key (TTL: 1m)"

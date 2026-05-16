@@ -6,7 +6,7 @@ for var in BAO_ADDR BAO_TOKEN; do
 done
 echo "✅ env vars set"
 
-BAO_EXEC="kubectl exec -n openbao openbao-0 -- env BAO_ADDR=http://127.0.0.1:8200 BAO_TOKEN=$BAO_TOKEN"
+BAO_EXEC="kubectl exec -i -n openbao openbao-0 -- env BAO_ADDR=http://127.0.0.1:8200 BAO_TOKEN=$BAO_TOKEN"
 
 # --- Client signing ---
 
