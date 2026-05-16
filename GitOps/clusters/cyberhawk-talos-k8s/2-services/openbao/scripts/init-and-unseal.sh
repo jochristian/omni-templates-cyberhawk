@@ -48,8 +48,14 @@ unseal_pod() {
   fi
 }
 
-# Check openbao-0 is running (the only pod up at init time)
+# With Parallel pod management, all 3 pods start simultaneously.
+# Wait for all 3 before init so Raft can form quorum (2/3) and elect a leader.
 wait_for_pod_running openbao-0
+wait_for_pod_running openbao-1
+wait_for_pod_running openbao-2
+
+echo "Giving Raft 10 seconds to elect a leader..."
+sleep 10
 
 echo "Checking initialization state..."
 STATUS=$(kubectl exec -n openbao openbao-0 -- bao status -format=json 2>/dev/null || echo '{"initialized":false}')
@@ -91,15 +97,9 @@ if [[ "$CONFIRM" != "YES" ]]; then
   exit 1
 fi
 
-# Unseal pod 0 — once unsealed it becomes Ready and pod 1 starts
+# All pods are already Running (Parallel management). Unseal sequentially.
 unseal_pod openbao-0
-
-# Wait for pod 1 to start (StatefulSet creates it once pod 0 is Ready)
-wait_for_pod_running openbao-1
 unseal_pod openbao-1
-
-# Wait for pod 2
-wait_for_pod_running openbao-2
 unseal_pod openbao-2
 
 echo ""
