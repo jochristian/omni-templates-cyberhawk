@@ -1,0 +1,33 @@
+# ============================================================
+# NEVER commit this file without SOPS encryption.
+# Workflow:
+#   1. bash scripts/generate-tls.sh > /tmp/openbao-tls.yaml
+#   2. cp /tmp/openbao-tls.yaml 2-services/openbao/openbao-tls.sops.yaml
+#   3. sops --encrypt --in-place 2-services/openbao/openbao-tls.sops.yaml
+#   4. git add openbao-tls.sops.yaml && git commit
+#   rm /tmp/openbao-tls.yaml
+# ============================================================
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+    name: openbao-tls
+    namespace: openbao
+stringData:
+    tls.crt: ENC[AES256_GCM,data:59FKH+gOEPVcCYg=,iv:pV/0oCgzvqDhSyEhVWJEAX2orpikwGhYmSeP7y5dfG4=,tag:+jsaqSlxaqTm3U+7f4rXww==,type:str]
+    tls.key: ENC[AES256_GCM,data:6AlihhYYRUoWqxQ=,iv:bykxDJpzynlwyghaYIsJWmuuea8uwOGhP0yH7ZkBLeM=,tag:LNrVazNQp5jxvKWGaktJAg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBWT3NlZmNydVFhRXRxaW92
+            dnBqUzhCdDhKUk1jVVo4OGtlcjRKY1VIcFVVCjAzMUtmaDZ1QzB4emNvT0xaRDY5
+            MW8vYUZTN2dQY1NtRlBUZEcyUFFiajQKLS0tIDgyZzZPdkJ2QW9YRHpNZzdoVUhB
+            b0traFB5S25HdXdmbUtpM2pqRkNGMjgKlsrdX1EDObJg25QM+yhchZwIOQx946kv
+            6uTuFz2+kCRZwM2/xB5zXm+vamNIjtV7OCIXtINB3S7Wop0XXyA2Gw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-05-16T08:17:58Z"
+    mac: ENC[AES256_GCM,data:Z6nCN13DfbdcwJLLiMVJJtonewt6nVoWDUcp2Eiq4owIjrixLyI1C3UNYuFeyV3aEO1yCP3sgljaGALxyG3KipLqd4sbcRIoMeCL6LLS26acHgldaZuxSx1KCpjYMAtb6CBi6p+eIZUdsMsIhD1T3zGk7ZWkKJxvbyXqnojNta4=,iv:w1X76i6vKxcJQEYELhBJjvApoGUqvT5t9lhUn5CXnLU=,tag:XnOLeaKx8AjyD9BwtkdcnQ==,type:str]
+    version: 3.13.0

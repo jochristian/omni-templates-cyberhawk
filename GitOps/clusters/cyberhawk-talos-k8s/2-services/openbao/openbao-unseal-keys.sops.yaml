@@ -1,0 +1,38 @@
+# ============================================================
+# NEVER commit this file without SOPS encryption.
+# Workflow:
+#   1. Replace all PLACEHOLDER values with real output from init-and-unseal.sh
+#   2. sops --encrypt --in-place openbao-unseal-keys.sops.yaml
+#   3. git add openbao-unseal-keys.sops.yaml && git commit
+#   Never reverse steps 2 and 3.
+# ============================================================
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+    name: openbao-unseal-keys
+    namespace: openbao
+    labels:
+        app.kubernetes.io/managed-by: sops
+    annotations:
+        openbao.cyberhawk.no/note: Revoke root-token after bootstrap. Keys for emergency manual unseal only.
+stringData:
+    unseal-key-1: ENC[AES256_GCM,data:o1ANlCaP7ZotWV8=,iv:TYYd9/MsELFWDD9r4IxosASRInrkjzDrd/GfrjLx12o=,tag:KWtQ5DEYtpC8SPh0zmzKGw==,type:str]
+    unseal-key-2: ENC[AES256_GCM,data:dDHZp3DVJA9O48A=,iv:+azC4aaUXBIVF2Y2YLyQOLl7EzaZ4QkvFJomDKmQ7Gw=,tag:2oSuwppfptNbyxDFSdC1IQ==,type:str]
+    unseal-key-3: ENC[AES256_GCM,data:dBYMtCISbkJQeRE=,iv:kczroSt7u/Xxd/IDM+nEOWDgtBhY+psYdV9bEP1YzeU=,tag:0XiMGoqZuCEAZqv21X/3tQ==,type:str]
+    root-token: ENC[AES256_GCM,data:iygVvZkX7MeqRi0=,iv:1ELVKzLlc0iCBJqJi1mttqhJLFo7SwiQzI0k4NaNDr4=,tag:q5EJAfBvvRcalKJpM5TdCA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB4SjNlaGhUVEpoUzV6V3Vp
+            VmVCTVptd2ZRZ3F0c2lVK29zczBLczlRN0NJCjYzVzVYcUFHR01TcE4xZmJlR3R3
+            Y1BzYnZEUTJaNU9sU3lSWWNpQVVmWHMKLS0tIG9GcEZWbWNhSmJuK2k2T0NTOTB1
+            MU50NHFqZGhGaWdpenhrZ2toZmxybkkK4fSw0a6L+FPqdOI1XrnJC2KoCVFrIM33
+            5hcZLXNwdd5SxSUlws1kELxkl69lVK/4eT+akZ/FPQ5nMm77oZ9dZA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-05-16T08:17:58Z"
+    mac: ENC[AES256_GCM,data:HXG9lnTDkDdKzjd7X1gNi1NL/+PVBTRm+TIoCjjnCHfzLZv/kIc5/GU4lRNEkwb4D0+ajaGAFcdRg+W0JSJlH+5aJZCLu5Qq0NKlr+YGzaEbIsNcb9cO5G1GTngXfP9fttsJv4T+55w9b7RgSRNttoDqOLegnf+N2XvgeRGxPvA=,iv:wQNE8Xtc7aLGxzIZTcJz+xbLu1TUeqyCI2f2P+k5f8s=,tag:VWGiDR9TR+rNUQr/tKqhTw==,type:str]
+    version: 3.13.0
