@@ -4,7 +4,8 @@ global:
 
 server:
   image:
-    repository: ghcr.io/openbao/openbao
+    registry: "quay.io"
+    repository: "openbao/openbao"
     tag: ""
 
   ha:
