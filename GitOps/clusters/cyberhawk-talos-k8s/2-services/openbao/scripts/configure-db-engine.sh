@@ -4,12 +4,12 @@ set -euo pipefail
 # ⚠️  Edit this script and replace all CHANGE_ME values before running.
 # ⚠️  rotate-root is irreversible — OpenBao becomes sole owner of vault admin password.
 
-BAO_EXEC="kubectl exec -n openbao openbao-0 --"
-
 for var in BAO_ADDR BAO_TOKEN; do
   [[ -n "${!var:-}" ]] || { echo "ERROR: $var is not set"; exit 1; }
 done
 echo "✅ env vars set"
+
+BAO_EXEC="kubectl exec -n openbao openbao-0 -- env BAO_ADDR=http://127.0.0.1:8200 BAO_TOKEN=$BAO_TOKEN"
 
 if grep -q "CHANGE_ME" "$0"; then
   echo "ERROR: Edit this script and replace all CHANGE_ME values before running."

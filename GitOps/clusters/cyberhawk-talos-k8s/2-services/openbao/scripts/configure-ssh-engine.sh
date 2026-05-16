@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BAO_EXEC="kubectl exec -n openbao openbao-0 --"
-
 for var in BAO_ADDR BAO_TOKEN; do
   [[ -n "${!var:-}" ]] || { echo "ERROR: $var is not set"; exit 1; }
 done
 echo "✅ env vars set"
+
+BAO_EXEC="kubectl exec -n openbao openbao-0 -- env BAO_ADDR=http://127.0.0.1:8200 BAO_TOKEN=$BAO_TOKEN"
 
 # --- Client signing ---
 
