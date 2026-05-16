@@ -27,8 +27,6 @@ server:
           path = "/openbao/data"
         }
 
-        service_registration "kubernetes" {}
-
   resources:
     requests:
       cpu: 250m
