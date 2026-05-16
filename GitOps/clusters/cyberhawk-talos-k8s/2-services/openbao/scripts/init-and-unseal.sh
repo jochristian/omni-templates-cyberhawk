@@ -3,23 +3,53 @@ set -euo pipefail
 
 # WARNING: Run this script ONLY on a fresh, uninitialized OpenBao cluster.
 # Verify state first: kubectl exec -n openbao openbao-0 -- bao status
+#
+# StatefulSet behaviour: pods start sequentially — pod N only starts after pod N-1
+# is Ready (unsealed). This script handles that by waiting for each pod before unsealing.
 
 command -v kubectl >/dev/null 2>&1 || { echo "ERROR: kubectl not found"; exit 1; }
 command -v jq     >/dev/null 2>&1 || { echo "ERROR: jq not found (brew install jq / apt install jq)"; exit 1; }
 
 kubectl cluster-info >/dev/null 2>&1 || { echo "ERROR: cluster not reachable"; exit 1; }
 
-PODS=(openbao-0 openbao-1 openbao-2)
+wait_for_pod_running() {
+  local pod="$1"
+  echo "Waiting for $pod to be Running..."
+  local attempts=0
+  until kubectl get pod -n openbao "$pod" -o jsonpath='{.status.phase}' 2>/dev/null | grep -q Running; do
+    ((attempts++))
+    if [[ $attempts -ge 60 ]]; then
+      echo "ERROR: $pod did not reach Running state after 5 minutes"
+      exit 1
+    fi
+    sleep 5
+  done
+  echo "  $pod is Running."
+}
 
-echo "Checking pod states..."
-for pod in "${PODS[@]}"; do
-  phase=$(kubectl get pod -n openbao "$pod" -o jsonpath='{.status.phase}' 2>/dev/null || echo "Missing")
-  if [[ "$phase" != "Running" ]]; then
-    echo "ERROR: Pod $pod is not Running (phase: $phase). Ensure all pods are Running before init."
+unseal_pod() {
+  local pod="$1"
+  echo ""
+  echo "Unsealing $pod..."
+  read -rsp "  Key 1: " UNSEAL_KEY1; echo
+  kubectl exec -n openbao "$pod" -- bao operator unseal "$UNSEAL_KEY1" >/dev/null
+  read -rsp "  Key 2: " UNSEAL_KEY2; echo
+  kubectl exec -n openbao "$pod" -- bao operator unseal "$UNSEAL_KEY2" >/dev/null
+  read -rsp "  Key 3: " UNSEAL_KEY3; echo
+  kubectl exec -n openbao "$pod" -- bao operator unseal "$UNSEAL_KEY3" >/dev/null
+
+  local sealed
+  sealed=$(kubectl exec -n openbao "$pod" -- bao status -format=json 2>/dev/null | jq -r '.sealed')
+  if [[ "$sealed" == "false" ]]; then
+    echo "  ✅ $pod is unsealed"
+  else
+    echo "  ❌ $pod is still sealed — check keys"
     exit 1
   fi
-done
-echo "All pods Running."
+}
+
+# Check openbao-0 is running (the only pod up at init time)
+wait_for_pod_running openbao-0
 
 echo "Checking initialization state..."
 STATUS=$(kubectl exec -n openbao openbao-0 -- bao status -format=json 2>/dev/null || echo '{"initialized":false}')
@@ -61,30 +91,29 @@ if [[ "$CONFIRM" != "YES" ]]; then
   exit 1
 fi
 
-for pod in "${PODS[@]}"; do
-  echo ""
-  echo "Unsealing $pod..."
-  read -rsp "  Key 1: " UNSEAL_KEY1; echo
-  kubectl exec -n openbao "$pod" -- bao operator unseal "$UNSEAL_KEY1" >/dev/null
-  read -rsp "  Key 2: " UNSEAL_KEY2; echo
-  kubectl exec -n openbao "$pod" -- bao operator unseal "$UNSEAL_KEY2" >/dev/null
-  read -rsp "  Key 3: " UNSEAL_KEY3; echo
-  kubectl exec -n openbao "$pod" -- bao operator unseal "$UNSEAL_KEY3" >/dev/null
+# Unseal pod 0 — once unsealed it becomes Ready and pod 1 starts
+unseal_pod openbao-0
 
-  SEALED=$(kubectl exec -n openbao "$pod" -- bao status -format=json 2>/dev/null \
-    | jq -r '.sealed')
-  if [[ "$SEALED" == "false" ]]; then
-    echo "  ✅ $pod is unsealed"
-  else
-    echo "  ❌ $pod is still sealed — check keys"
-  fi
-done
+# Wait for pod 1 to start (StatefulSet creates it once pod 0 is Ready)
+wait_for_pod_running openbao-1
+unseal_pod openbao-1
+
+# Wait for pod 2
+wait_for_pod_running openbao-2
+unseal_pod openbao-2
 
 echo ""
+echo "=========================================="
 echo "Initialization complete. Next steps:"
 echo "  1. Update openbao-unseal-keys.sops.yaml with keys 1-3 and the root token"
-echo "  2. sops --encrypt --in-place 2-services/openbao/openbao-unseal-keys.sops.yaml"
-echo "  3. git commit and push"
-echo "  4. export BAO_TOKEN=$ROOT_TOKEN"
-echo "  5. Run configure-k8s-auth.sh then configure-kv-engine.sh, configure-ssh-engine.sh, configure-db-engine.sh"
-echo "  6. Revoke the root token when bootstrapping is complete: bao token revoke <token>"
+echo "  2. sops 2-services/openbao/openbao-unseal-keys.sops.yaml  (opens in editor)"
+echo "  3. git add openbao-unseal-keys.sops.yaml && git commit && git push"
+echo "  4. export BAO_ADDR=https://openbao.openbao.svc.cluster.local:8200"
+echo "  5. export BAO_TOKEN=$ROOT_TOKEN"
+echo "  6. kubectl get secret -n openbao openbao-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > /tmp/openbao-tls.crt"
+echo "  7. export BAO_CACERT=/tmp/openbao-tls.crt"
+echo "  8. Run configure scripts: configure-k8s-auth.sh → configure-kv-engine.sh → configure-ssh-engine.sh"
+echo "  9. Edit configure-db-engine.sh (replace CHANGE_ME), then run it"
+echo " 10. bash scripts/verify.sh"
+echo " 11. Revoke root token: bao token revoke \$BAO_TOKEN"
+echo "=========================================="
