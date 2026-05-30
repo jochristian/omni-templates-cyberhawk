@@ -53,6 +53,7 @@ spec:
       metadata:
         name: valkey-data
       spec:
+        storageClassName: democratic-csi-iscsi
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
