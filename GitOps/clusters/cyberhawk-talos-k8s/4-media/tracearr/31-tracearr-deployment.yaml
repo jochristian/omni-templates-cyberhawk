@@ -28,11 +28,13 @@ spec:
             - configMapRef:
                 name: tracearr-config
           env:
-            - name: DATABASE_URL
+            - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: tracearr-db-app
-                  key: uri
+                  name: tracearr-db-secret
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgres://tracearr:$(POSTGRES_PASSWORD)@timescaledb:5432/tracearr"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

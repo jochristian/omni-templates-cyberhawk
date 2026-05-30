@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timescaledb-initdb
+data:
+  00-timescaledb.sql: |
+    CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;

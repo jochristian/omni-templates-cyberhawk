@@ -28,6 +28,20 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
+  name: tracearr-timescaledb
+spec:
+  endpointSelector:
+    matchLabels:
+      app: timescaledb
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: tracearr
+  egress: []
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
   name: tracearr-valkey
 spec:
   endpointSelector:
