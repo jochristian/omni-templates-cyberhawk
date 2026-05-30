@@ -81,10 +81,14 @@ spec:
               mountPath: /var/lib/postgresql/data
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d
+            - name: pg-run
+              mountPath: /var/run/postgresql
       volumes:
         - name: initdb
           configMap:
             name: timescaledb-initdb
+        - name: pg-run
+          emptyDir: {}
   volumeClaimTemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim

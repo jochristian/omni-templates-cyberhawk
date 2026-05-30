@@ -29,7 +29,7 @@ spec:
         - name: valkey
           image: valkey/valkey:9.1.0-alpine3.23
           # noeviction required for BullMQ job queue used by Tracearr
-          command: ["valkey-server", "--maxmemory-policy", "noeviction"]
+          command: ["valkey-server", "--maxmemory-policy", "noeviction", "--appendonly", "yes"]
           securityContext:
             runAsUser: 999
             runAsGroup: 999

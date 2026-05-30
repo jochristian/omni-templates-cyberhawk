@@ -11,6 +11,13 @@ spec:
         - host
         - remote-node
         - ingress
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: newt
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
   egress:
     - toPorts:
         - ports:

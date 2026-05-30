@@ -24,6 +24,24 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
+  name: allow-tracearr-to-tautulli
+  namespace: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app: tautulli
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: tracearr
+    toPorts:
+    - ports:
+      - port: "8181"
+        protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
   name: allow-newt-to-yamtrack
   namespace: media
 spec:
