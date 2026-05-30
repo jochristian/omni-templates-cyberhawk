@@ -18,7 +18,11 @@ spec:
               protocol: TCP
             - port: "6379"
               protocol: TCP
+            - port: "80"
+              protocol: TCP
             - port: "443"
+              protocol: TCP
+            - port: "8181"
               protocol: TCP
             - port: "32400"
               protocol: TCP
