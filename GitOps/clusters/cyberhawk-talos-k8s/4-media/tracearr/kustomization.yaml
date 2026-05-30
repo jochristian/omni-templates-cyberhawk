@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tracearr
+
+generators:
+  - 01-secret.yaml
+
+resources:
+  - 02-configmap.yaml
+  - 10-cnpg-cluster.yaml
+  - 20-valkey-statefulset.yaml
+  - 21-valkey-service.yaml
+  - 30-tracearr-pvc.yaml
+  - 31-tracearr-deployment.yaml
+  - 32-tracearr-service.yaml
+  - 40-httproute.yaml
+  - 50-networkpolicies.yaml
+
+configurations:
+  - kustomize-config.yaml
+
+images:
+  - name: ghcr.io/connorgallopo/tracearr
+    newTag: "1.4.28" # renovate: docker=ghcr.io/connorgallopo/tracearr
+  - name: valkey/valkey
+    newTag: "9.1.0-alpine3.23" # renovate: docker=valkey/valkey
+  - name: docker.io/timescale/timescaledb
+    newTag: "2.27.1-pg17" # renovate: docker=timescale/timescaledb
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: tracearr

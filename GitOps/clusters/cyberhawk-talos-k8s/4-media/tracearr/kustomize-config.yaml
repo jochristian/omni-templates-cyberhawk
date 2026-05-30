@@ -1,0 +1,5 @@
+images:
+  - path: spec/imageName
+    kind: Cluster
+    group: postgresql.cnpg.io
+    version: v1

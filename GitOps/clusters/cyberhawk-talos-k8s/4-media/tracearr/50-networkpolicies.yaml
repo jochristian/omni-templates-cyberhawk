@@ -1,0 +1,40 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: tracearr
+spec:
+  endpointSelector:
+    matchLabels:
+      app: tracearr
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+        - ingress
+  egress:
+    - toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "6379"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: tracearr-valkey
+spec:
+  endpointSelector:
+    matchLabels:
+      app: valkey
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: tracearr
+  egress: []

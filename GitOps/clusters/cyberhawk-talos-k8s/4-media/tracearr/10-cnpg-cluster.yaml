@@ -1,0 +1,35 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: tracearr-db
+spec:
+  instances: 1
+  # timescale/timescaledb (non-HA) follows standard PostgreSQL image conventions — compatible with CNPG
+  imageName: docker.io/timescale/timescaledb
+  storage:
+    size: 5Gi
+    storageClass: democratic-csi-iscsi
+  bootstrap:
+    initdb:
+      database: tracearr
+      owner: tracearr
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+  postgresql:
+    parameters:
+      shared_preload_libraries: "timescaledb"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                  - blix
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 100m
+    limits:
+      memory: 2Gi

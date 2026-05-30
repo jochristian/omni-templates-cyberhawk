@@ -10,3 +10,4 @@ resources:
   - karakeep.yaml
   - portfolio.yaml
   - openbao.yaml
+  - tracearr.yaml
