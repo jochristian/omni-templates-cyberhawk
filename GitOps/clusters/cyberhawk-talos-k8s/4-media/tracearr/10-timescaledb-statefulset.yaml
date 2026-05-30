@@ -37,6 +37,16 @@ spec:
             - postgres
             - -c
             - max_locks_per_transaction=512
+            - -c
+            - shared_buffers=512MB
+            - -c
+            - work_mem=8MB
+            - -c
+            - effective_cache_size=2500MB
+            - -c
+            - random_page_cost=1.1
+            - -c
+            - wal_buffers=16MB
           ports:
             - containerPort: 5432
           env:
@@ -58,9 +68,9 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 512Mi
+              memory: 768Mi
             limits:
-              memory: 2Gi
+              memory: 3Gi
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", "tracearr", "-d", "tracearr"]
