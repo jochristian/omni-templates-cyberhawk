@@ -14,6 +14,15 @@ spec:
         app: timescaledb
     spec:
       automountServiceAccountToken: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
       securityContext:
         fsGroup: 999
         runAsUser: 999
@@ -24,6 +33,10 @@ spec:
       containers:
         - name: timescaledb
           image: timescale/timescaledb:2.27.1-pg17
+          args:
+            - postgres
+            - -c
+            - max_locks_per_transaction=128
           ports:
             - containerPort: 5432
           env:

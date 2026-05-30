@@ -20,6 +20,8 @@ spec:
               protocol: TCP
             - port: "443"
               protocol: TCP
+            - port: "32400"
+              protocol: TCP
     - toPorts:
         - ports:
             - port: "53"

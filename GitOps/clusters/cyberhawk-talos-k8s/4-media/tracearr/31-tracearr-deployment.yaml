@@ -15,6 +15,15 @@ spec:
         app: tracearr
     spec:
       automountServiceAccountToken: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
       securityContext:
         seccompProfile:
           type: RuntimeDefault
