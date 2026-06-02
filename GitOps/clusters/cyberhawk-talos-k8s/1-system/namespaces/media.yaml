@@ -7,6 +7,40 @@ metadata:
     team: media
     networking-zone: frontend
 ---
+apiVersion: cilium.io/v2
+kind: CiliumEgressGatewayPolicy
+metadata:
+  name: egress-media
+spec:
+  selectors:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: media
+  destinationCIDRs:
+    - 0.0.0.0/0
+  egressGateway:
+    nodeSelector:
+      matchLabels:
+        topology.kubernetes.io/zone: lorenskog
+    egressIP: 10.50.2.250
+---
+apiVersion: cilium.io/v2
+kind: CiliumEgressGatewayPolicy
+metadata:
+  name: egress-media-blix
+spec:
+  selectors:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: media
+  destinationCIDRs:
+    - 0.0.0.0/0
+  egressGateway:
+    nodeSelector:
+      matchLabels:
+        topology.kubernetes.io/zone: blix
+    egressIP: 10.50.2.250
+---
 apiVersion: "cilium.io/v2"
 kind: CiliumNetworkPolicy
 metadata:

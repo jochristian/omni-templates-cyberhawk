@@ -67,6 +67,26 @@ spec:
         matchExpressions:
           - { key: somekey, operator: NotIn, values: ["never-used-value"] }
 ---
+# Dummy service to get BGP to announce the media egress IP (10.50.2.250).
+# Cilium has no native egress IP BGP advertisement in v1 API — pinning a
+# LoadBalancer IP causes the BGP speaker to advertise it as a /32 from all nodes.
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-media-bgp-announce
+  namespace: kube-system
+  labels:
+    advertise: bgp
+  annotations:
+    io.cilium/lb-ipam-ips: "10.50.2.250"
+spec:
+  type: LoadBalancer
+  allocateLoadBalancerNodePorts: false
+  externalTrafficPolicy: Cluster
+  ports:
+    - port: 1
+      protocol: TCP
+---
 apiVersion: cilium.io/v2
 kind: CiliumLoadBalancerIPPool
 metadata:
