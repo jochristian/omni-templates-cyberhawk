@@ -1,0 +1,28 @@
+# Static seal auto-unseal key for OpenBao (seal "static" stanza).
+# CRITICAL: if this key AND the SOPS age key are lost, the OpenBao
+# cluster is unrecoverable, even from raft snapshots.
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+    name: openbao-static-unseal
+    namespace: openbao
+    labels:
+        app.kubernetes.io/managed-by: sops
+stringData:
+    BAO_STATIC_UNSEAL_KEY: ENC[AES256_GCM,data:BDxG6YOxdEOwNv9fLwlFgSyChhCwaFKzbPy+SR7Zf8mQ3z5fSwl3mD+2A6I=,iv:UU7uKkKzrL1mcuS7wsly0TKEIua0lBy+tbu/OxvE4e0=,tag:m0Uwo0R6JHR353EdmvScQQ==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBIZ2pUWFlQbWdTSHQ3YVlK
+            NkE5YjNYMXV4UGN0NXNSUjNZK2RvZjZEbEhJCkM0ckhBN0duRXJ6Y25lQlp0WG5p
+            eTFSTHhQaW1hTHdudzRxSXUxQmJ5cGcKLS0tIFAweGxGa3oyOFFLLzdRUVlRdFpp
+            RnFvS1lITXhMWlRFMGxhMklsRkNJZFkKvTazsSG4FOuFvxVBS8ojyt1SL6LtIuVE
+            tKbIywdLlUgOuzPdiBsX1/xWQ1BPZQlfbgT2UU2lL8m7aS2h5R9EGQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-06-12T19:02:22Z"
+    mac: ENC[AES256_GCM,data:z7rDC00clvIYvqAPtGSPzVBx6I8ZWbq4zEL7MNSZd7f3goiP6W69ttvoGDKjzHzlZTjMmeGoqkE7SmqwyxEjCHa55xyuADfEWK6JUq+XKBNX4lOEsA8umO8Qo0v+Z0Qe6vjQ+aGro3niZxwsbH7FUCZW9usgNuRSfZ7ajqGfO5M=,iv:DVyHzFkisdGSumNDW8ks/+u68ZRwwkOw4ApCXoXOQAc=,tag:mUn5gXC9WIWQKbc1XFhmMg==,type:str]
+    version: 3.13.1

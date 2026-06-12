@@ -27,6 +27,13 @@ server:
           path = "/openbao/data"
         }
 
+        # Auto-unseal — key delivered via SOPS-managed secret
+        # (openbao-static-unseal). Shamir keys remain as recovery keys.
+        seal "static" {
+          current_key_id = "static-key-1"
+          current_key    = "env://BAO_STATIC_UNSEAL_KEY"
+        }
+
   resources:
     requests:
       cpu: 250m
@@ -49,6 +56,11 @@ server:
     enabled: true
     size: 5Gi
     storageClass: democratic-csi-iscsi
+
+  extraSecretEnvironmentVars:
+    - envName: BAO_STATIC_UNSEAL_KEY
+      secretName: openbao-static-unseal
+      secretKey: BAO_STATIC_UNSEAL_KEY
 
   serviceAccount:
     create: true

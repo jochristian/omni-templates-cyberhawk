@@ -8,3 +8,4 @@ metadata:
           path: ksops
 files:
   - openbao-unseal-keys.sops.yaml
+  - openbao-static-unseal.sops.yaml
