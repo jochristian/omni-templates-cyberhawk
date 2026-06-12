@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rrdcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rrdcached
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: rrdcached
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: rrdcached
+          image: crazymax/rrdcached
+          ports:
+            - containerPort: 42217
+          env:
+            - name: TZ
+              value: Europe/Oslo
+            # Must match librenms PUID/PGID so both sides can write the RRDs
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: WRITE_TIMEOUT
+              value: "300"
+            - name: WRITE_JITTER
+              value: "60"
+            - name: WRITE_THREADS
+              value: "4"
+          readinessProbe:
+            tcpSocket:
+              port: 42217
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 42217
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              subPath: rrd
+              mountPath: /data/db
+            # Local journal: graceful shutdown flushes the cache; a hard node
+            # crash loses at most WRITE_TIMEOUT seconds of datapoints. Keeping
+            # the journal off NFS is the point of running rrdcached here.
+            - name: journal
+              mountPath: /data/journal
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: librenms-data
+        - name: journal
+          emptyDir: {}
