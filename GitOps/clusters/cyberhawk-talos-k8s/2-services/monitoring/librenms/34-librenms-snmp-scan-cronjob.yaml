@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: librenms-snmp-scan
+spec:
+  # Upstream default cadence for snmp-scan.py; subnets come from the
+  # 'nets' config in the LibreNMS DB (lnms config:get nets)
+  schedule: "33 */6 * * *"
+  timeZone: Europe/Oslo
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: snmp-scan
+              image: librenms/librenms
+              # Mirrors /etc/cont-init.d/03-config.sh + 04-svc-main.sh from the
+              # image: assemble .env from env vars, append APP_KEY/NODE_ID
+              # persisted in /data/.env, then scan as the librenms user
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  cat > /opt/librenms/.env <<ENV
+                  APP_URL=/
+                  DB_HOST=${DB_HOST}
+                  DB_PORT=${DB_PORT:-3306}
+                  DB_DATABASE=${DB_NAME}
+                  DB_USERNAME=${DB_USER}
+                  DB_PASSWORD="${DB_PASSWORD}"
+                  ENV
+                  cat /data/.env >> /opt/librenms/.env
+                  chown librenms:librenms /opt/librenms/.env
+                  exec su -s /bin/sh librenms -c "/opt/librenms/snmp-scan.py -t 4"
+              envFrom:
+                - configMapRef:
+                    name: librenms-config
+              env:
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: librenms-secret
+                      key: DB_PASSWORD
+              securityContext:
+                capabilities:
+                  add: [NET_ADMIN, NET_RAW]
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: librenms-data
