@@ -58,8 +58,16 @@ cilium:
   devices: "eth0"
   routingMode: tunnel
   autoDirectNodeRoutes: false
-  ipv4NativeRoutingCIDR: "10.0.0.0/8"
+  # Pod CIDR only — anything broader (e.g. 10.0.0.0/8) skips masquerade for
+  # cross-site destinations like the blix node IPs, and pod-sourced packets
+  # don't survive the site boundary
+  ipv4NativeRoutingCIDR: "10.244.0.0/16"
   tunnelProtocol: vxlan
+
+  # SNAT pod traffic destined for other nodes' IPs (BPF masquerade skips
+  # remote nodes by default) — required for pod -> apiserver across sites
+  extraConfig:
+    enable-remote-node-masquerade: "true"
 
   forwardKubeDNSToHost: false
 
