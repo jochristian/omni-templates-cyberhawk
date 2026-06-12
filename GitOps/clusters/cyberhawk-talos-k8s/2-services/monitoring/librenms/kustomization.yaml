@@ -21,7 +21,7 @@ images:
   - name: librenms/librenms
     newTag: "26.5.1"
   - name: valkey/valkey
-    newTag: "8.0-alpine"
+    newTag: "9.1-alpine"
 
 labels:
   - includeSelectors: true

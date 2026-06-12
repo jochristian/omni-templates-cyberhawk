@@ -43,6 +43,13 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 15
             failureThreshold: 10
+          # TCP only — an HTTP check would restart the pod on DB outages too
+          livenessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 5
           resources:
             requests:
               cpu: 100m
