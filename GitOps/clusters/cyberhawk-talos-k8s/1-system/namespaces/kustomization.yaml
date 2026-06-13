@@ -11,3 +11,4 @@ resources:
   - portfolio.yaml
   - openbao.yaml
   - tracearr.yaml
+  - tetragon.yaml
