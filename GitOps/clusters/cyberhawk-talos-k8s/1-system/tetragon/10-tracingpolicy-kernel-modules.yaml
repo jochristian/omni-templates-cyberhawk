@@ -1,0 +1,84 @@
+# Best-practice OBSERVABILITY policy — kernel module operations (host integrity).
+# Source: cilium/tetragon examples/tracingpolicy/host-changes/monitor-kernel-modules.yaml
+#
+# Detects: explicit module loads (init_module/finit_module), automatic/implicit
+# loads, unsigned-module loads, and module unloads. On immutable Talos these are
+# effectively never expected, so this is near-zero volume and high signal
+# (rootkit / unexpected-module detection). Observe-only.
+#
+# policy-mode: monitor => audit only, never enforces (no enforcement action exists
+# in this policy regardless). The maxData/resolve/returnCopy/return/syscall fields
+# are the CRD's server-side defaults, pinned here so ArgoCD stays Synced (the CRD
+# injects them otherwise -> permanent OutOfSync). See [[project-argocd-crd-default-outofsync]].
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: "monitor-kernel-modules"
+spec:
+  options:
+    - name: "policy-mode"
+      value: "monitor"
+  kprobes:
+    - call: "security_kernel_module_request"
+      # Automatic / implicit module-load detection.
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "string"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+    - call: "security_kernel_read_file"
+      # Explicit module load via finit_module() (gives full module path).
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "file"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 1
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 1
+              operator: "Equal"
+              values:
+                - "2" # READING_MODULE
+    - call: "do_init_module"
+      # Handles both init_module() and finit_module().
+      syscall: false
+      return: false
+      args:
+        - index: 0
+          type: "module"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+    - call: "free_module"
+      # Module unload.
+      syscall: false
+      return: false
+      args:
+        - index: 0
+          type: "module"
+          maxData: false
+          resolve: ""
+          returnCopy: false

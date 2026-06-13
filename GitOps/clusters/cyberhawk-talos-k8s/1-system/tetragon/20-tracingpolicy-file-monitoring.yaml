@@ -1,0 +1,114 @@
+# Best-practice OBSERVABILITY policy — sensitive file integrity (writes only).
+# Source: cilium/tetragon examples/tracingpolicy/filename_monitoring_filtered.yaml
+#
+# Watches MODIFICATION (write / mmap-write / truncate) of a small, curated set of
+# sensitive files. In-kernel path + MAY_WRITE filtering keeps this low volume even
+# though security_file_permission is a hot hook (only writes to these exact paths
+# reach userspace). Read access is intentionally NOT monitored, to minimise
+# overhead. Observe-only.
+#
+# policy-mode: monitor => audit only. maxData/resolve/returnCopy/return/syscall are
+# CRD server-side defaults pinned to keep ArgoCD Synced (see
+# [[project-argocd-crd-default-outofsync]]). Extend `values:` with more paths
+# (e.g. /etc/ssh/sshd_config, /root/.ssh/authorized_keys) as needed.
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: "file-monitoring-sensitive-writes"
+spec:
+  options:
+    - name: "policy-mode"
+      value: "monitor"
+  kprobes:
+    - call: "security_file_permission"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "file" # struct file * — used for the path
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 1
+          type: "int" # 0x04 MAY_READ, 0x02 MAY_WRITE
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "/etc/passwd"
+                - "/etc/shadow"
+                - "/etc/sudoers"
+            - index: 1
+              operator: "Equal"
+              values:
+                - "2" # MAY_WRITE only
+    - call: "security_mmap_file"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "file"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 1
+          type: "uint32" # prot flags: PROT_READ 0x01, PROT_WRITE 0x02, PROT_EXEC 0x04
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 2
+          type: "nop" # mmap flags
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "/etc/passwd"
+                - "/etc/shadow"
+                - "/etc/sudoers"
+            - index: 1
+              operator: "Mask"
+              values:
+                - "2" # PROT_WRITE
+    - call: "security_path_truncate"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "path" # struct path * — used for the path
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "/etc/passwd"
+                - "/etc/shadow"
+                - "/etc/sudoers"

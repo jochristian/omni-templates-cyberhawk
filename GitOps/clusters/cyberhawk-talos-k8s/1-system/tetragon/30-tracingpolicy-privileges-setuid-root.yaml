@@ -1,0 +1,275 @@
+# Best-practice OBSERVABILITY policy — privilege escalation to root (uid/gid 0).
+# Source: cilium/tetragon examples/policylibrary/privileges/privileges-setuid-root.yaml
+#
+# Flags processes changing their uid/gid TO root via the set*uid/set*gid syscall
+# families. Filtered in-kernel to value 0 (root) and rate-limited to 1 event/min
+# per process, so volume stays low. Observe-only (action: Post). Note: syscalls
+# made inside gVisor-sandboxed pods are handled by gVisor's own syscall layer and
+# may not reach these host kprobes — expected, not a failure.
+#
+# policy-mode: monitor => audit only. maxData/resolve/returnCopy/return/syscall are
+# CRD server-side defaults, pinned to keep ArgoCD Synced
+# (see [[project-argocd-crd-default-outofsync]]).
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: "privileges-setuid-root"
+spec:
+  options:
+    - name: "policy-mode"
+      value: "monitor"
+  kprobes:
+    - call: "__sys_setuid"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+    - call: "__sys_setgid"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+    - call: "__sys_setreuid"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 1
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchArgs:
+            - index: 1
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+    - call: "__sys_setregid"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 1
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchArgs:
+            - index: 1
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+    - call: "__sys_setresuid"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 1
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 2
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 1 # effective uid — reduces noise
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchArgs:
+            - index: 2
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+    - call: "__sys_setresgid"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 1
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+        - index: 2
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 1 # effective gid — reduces noise
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchArgs:
+            - index: 2
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+    - call: "__sys_setfsuid"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+    - call: "__sys_setfsgid"
+      syscall: false
+      return: true
+      args:
+        - index: 0
+          type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
+      returnArg:
+        index: 0
+        type: "int"
+        maxData: false
+        resolve: ""
+        returnCopy: false
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"

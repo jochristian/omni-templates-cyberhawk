@@ -4,15 +4,21 @@ kind: Kustomization
 # Cilium Tetragon — runtime-security OBSERVABILITY only ("learning" posture).
 #
 # Posture: observe-only. Tetragon streams process exec/exit, file, network and
-# syscall events but performs NO enforcement. Tetragon only enforces when a
-# TracingPolicy ships an enforcement action (Sigkill/Override/Signal); we ship
-# zero TracingPolicies. To audit without enforcing later, add a TracingPolicy
-# with `spec.options: [{name: policy-mode, value: monitor}]`.
+# syscall events but performs NO enforcement. The TracingPolicies below all run in
+# policy-mode "monitor" and use only the `Post` (report) action — NONE carry an
+# enforcement action (Sigkill/Override/Signal), so nothing is ever blocked/killed.
+# CRD-defaulted fields (maxData/resolve/returnCopy/return/syscall) are pinned in
+# each policy so ArgoCD stays Synced.
 #
 # Namespace `tetragon` is defined (and labeled privileged) in
 # 1-system/namespaces/tetragon.yaml — required because Tetragon runs privileged.
 
 namespace: tetragon
+
+resources:
+  - 10-tracingpolicy-kernel-modules.yaml
+  - 20-tracingpolicy-file-monitoring.yaml
+  - 30-tracingpolicy-privileges-setuid-root.yaml
 
 helmCharts:
   - name: tetragon
