@@ -43,9 +43,11 @@ sops --decrypt mysecret.yaml
 
 ```bash
 # 1. Update .sops.yaml with new age public key
-# 2. Re-encrypt each file (requires OLD key to still be available):
-sops updatekeys 2-services/openbao/openbao-tls.sops.yaml
+# 2. Re-encrypt each file (requires OLD key to still be available).
+#    Do this for EVERY *.sops.yaml in the repo, e.g. for OpenBao:
 sops updatekeys 2-services/openbao/openbao-unseal-keys.sops.yaml
+sops updatekeys 2-services/openbao/openbao-static-unseal.sops.yaml
+#    (find them all with: git ls-files '*.sops.yaml')
 # 3. Update the argocd-sops-age-key Secret with the new private key
 # 4. Commit and push
 ```

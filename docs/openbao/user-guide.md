@@ -253,8 +253,7 @@ Your token doesn't have the required policy. Check with `bao token lookup` and a
 - Check init container logs: `kubectl logs <pod> -c vault-agent-init`
 
 **OpenBao sealed after pod restart**
-Pods lose their unsealed state on restart. Unseal with:
-```bash
-sops --decrypt GitOps/clusters/cyberhawk-talos-k8s/2-services/openbao/openbao-unseal-keys.sops.yaml
-# then run the unseal commands from operator-runbook.md section 3
-```
+Normally this shouldn't happen — the cluster **auto-unseals** on restart from the static
+seal key (`openbao-static-unseal` Secret). If a pod is stuck sealed, the static key is
+likely missing or wrong; check the pod logs and the Secret, then fall back to the Shamir
+recovery keys per `operator-runbook.md` section 3 (Unseal recovery).
