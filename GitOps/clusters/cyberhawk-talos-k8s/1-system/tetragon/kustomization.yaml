@@ -6,16 +6,13 @@ kind: Kustomization
 # Posture: observe-only. Tetragon streams process exec/exit, file, network and
 # syscall events but performs NO enforcement. Tetragon only enforces when a
 # TracingPolicy ships an enforcement action (Sigkill/Override/Signal); we ship
-# none. The single example TracingPolicy below runs in policy-mode "monitor",
-# which logs what *would* be enforced without ever blocking or killing.
+# zero TracingPolicies. To audit without enforcing later, add a TracingPolicy
+# with `spec.options: [{name: policy-mode, value: monitor}]`.
 #
 # Namespace `tetragon` is defined (and labeled privileged) in
 # 1-system/namespaces/tetragon.yaml — required because Tetragon runs privileged.
 
 namespace: tetragon
-
-resources:
-  - tracingpolicy-monitor-example.yaml
 
 helmCharts:
   - name: tetragon
