@@ -23,6 +23,22 @@ configMapGenerator:
     files:
       - cilium-agent.json
 
+  - name: grafana-dashboard-cilium-operator
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+    files:
+      - cilium-operator.json
+
+  - name: grafana-dashboard-hubble
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+    files:
+      - hubble.json
+
   - name: grafana-dashboard-cert-manager
     options:
       labels:

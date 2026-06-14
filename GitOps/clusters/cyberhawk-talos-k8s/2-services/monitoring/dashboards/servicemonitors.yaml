@@ -100,3 +100,30 @@ spec:
         - sourceLabels: [__meta_kubernetes_pod_label_k8s_app]
           targetLabel: k8s_app
           action: replace
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cilium-operator
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  selector:
+    matchLabels:
+      io.cilium/app: operator
+  podMetricsEndpoints:
+    - port: prometheus # cilium-operator metrics on :9963
+      interval: 30s
+      relabelings:
+        # The official Cilium Operator dashboard filters on io_cilium_app="operator";
+        # surface the pod label (io.cilium/app=operator) as that metric label.
+        - sourceLabels: [__meta_kubernetes_pod_label_io_cilium_app]
+          targetLabel: io_cilium_app
+          action: replace
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+          action: replace
