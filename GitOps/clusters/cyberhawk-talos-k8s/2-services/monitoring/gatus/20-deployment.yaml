@@ -54,6 +54,8 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
+              # NET_RAW: required for ICMP endpoint checks (raw socket for ping).
+              add: ["NET_RAW"]
           volumeMounts:
             - name: config
               mountPath: /config

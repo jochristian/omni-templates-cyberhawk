@@ -153,3 +153,13 @@ endpoints:
     url: "https://1.1.1.1"
     interval: 120s
     conditions: ["[STATUS] == 200"]
+  # ICMP host check. Needs CAP_NET_RAW on the pod (added in 20-deployment.yaml) so
+  # Gatus can open a raw socket for the ping. Reachable only if the nodes can route
+  # to 192.168.255.0/24.
+  - name: 192.168.255.1 (icmp)
+    group: External
+    url: "icmp://192.168.255.1"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+      - "[RESPONSE_TIME] < 1000"
