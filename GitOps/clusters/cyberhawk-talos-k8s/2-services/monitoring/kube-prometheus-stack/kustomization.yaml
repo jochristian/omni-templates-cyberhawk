@@ -64,6 +64,14 @@ helmCharts:
             url: http://monitoring-kube-prometheus-prometheus.monitoring:9090
             jsonData:
               timeInterval: 30
+          # Loki (2-services/monitoring/loki) — durable store for Tetragon
+          # runtime-security events shipped by Alloy. Query e.g.
+          # {job="tetragon"} |= "process_kprobe" for policy matches.
+          - name: Loki
+            type: loki
+            uid: loki
+            access: proxy
+            url: http://loki.monitoring.svc.cluster.local:3100
         service:
           annotations:
             omni-kube-service-exposer.sidero.dev/port: "50082"

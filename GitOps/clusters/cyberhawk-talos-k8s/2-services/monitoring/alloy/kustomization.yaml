@@ -1,0 +1,86 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Grafana Alloy — log collector for Tetragon runtime-security events.
+#
+# Scope (deliberately narrow): a SINGLE Alloy replica reads, via the Kubernetes
+# API, only the `export-stdout` container of the Tetragon agents in namespace
+# `tetragon`, and pushes those lines to Loki. A single Deployment replica (not a
+# DaemonSet) is correct here because loki.source.kubernetes reads pod logs over
+# the API — a per-node DaemonSet would read all 4 agents from every node and
+# duplicate every line. Tetragon volume is small, so one replica suffices.
+#
+# Events shipped = whatever Tetragon already writes to stdout: process_exec /
+# process_exit (lineage) + process_kprobe (policy matches), already filtered by
+# the chart's default export deny-list. No Tetragon change is required — the
+# export-stdout sidecar is enabled by the chart default (export.mode=stdout).
+#
+# Lands in namespace `monitoring` (level-2 dir) next to Loki and Grafana.
+
+namespace: monitoring
+
+helmCharts:
+  - name: alloy
+    repo: https://grafana.github.io/helm-charts
+    version: 1.10.0 # renovate: helm=alloy repo=https://grafana.github.io/helm-charts
+    releaseName: alloy
+    namespace: monitoring
+    includeCRDs: true
+    valuesInline:
+      controller:
+        # Single instance: API-based scraping must not be duplicated per node.
+        type: deployment
+        replicas: 1
+      alloy:
+        # No host log mounts needed — logs are pulled via the API, not /var/log.
+        mounts:
+          varlog: false
+        configMap:
+          content: |-
+            // Discover pods in the tetragon namespace.
+            discovery.kubernetes "tetragon" {
+              role = "pod"
+              namespaces {
+                names = ["tetragon"]
+              }
+            }
+
+            // Keep only the export-stdout sidecar; attach low-cardinality labels.
+            discovery.relabel "tetragon" {
+              targets = discovery.kubernetes.tetragon.targets
+
+              rule {
+                source_labels = ["__meta_kubernetes_pod_container_name"]
+                regex         = "export-stdout"
+                action        = "keep"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_namespace"]
+                target_label  = "namespace"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_pod_name"]
+                target_label  = "pod"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_pod_node_name"]
+                target_label  = "node"
+              }
+              rule {
+                target_label = "job"
+                replacement  = "tetragon"
+              }
+            }
+
+            // Tail those containers via the Kubernetes API.
+            loki.source.kubernetes "tetragon" {
+              targets    = discovery.relabel.tetragon.output
+              forward_to = [loki.write.default.receiver]
+            }
+
+            // Push to the single-binary Loki in this namespace.
+            loki.write "default" {
+              endpoint {
+                url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+              }
+            }

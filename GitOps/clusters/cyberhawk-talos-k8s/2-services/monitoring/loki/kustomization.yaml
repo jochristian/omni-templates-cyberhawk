@@ -1,0 +1,79 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Grafana Loki — durable log store, single-binary mode (filesystem on iSCSI PVC).
+#
+# Purpose: give Tetragon's runtime-security event stream a durable home that
+# survives pod/node restarts (the agents export to an emptyDir that is wiped on
+# restart). Grafana Alloy (2-services/monitoring/alloy) tails the Tetragon
+# export-stdout sidecar and pushes here; Grafana queries it via the Loki
+# datasource added in kube-prometheus-stack.
+#
+# Sizing is deliberately small: only Tetragon events are ingested today. This is
+# SingleBinary (not the chart-default SimpleScalable) with all microservice
+# targets, caches, gateway and canary disabled. Lands in namespace `monitoring`
+# (level-2 dir) alongside Prometheus/Grafana.
+
+namespace: monitoring
+
+helmCharts:
+  - name: loki
+    repo: https://grafana.github.io/helm-charts
+    version: 6.55.0 # renovate: helm=loki repo=https://grafana.github.io/helm-charts
+    releaseName: loki
+    namespace: monitoring
+    includeCRDs: true
+    valuesInline:
+      deploymentMode: SingleBinary
+      loki:
+        # Single-tenant: no auth, no multi-tenancy headers needed in-cluster.
+        auth_enabled: false
+        commonConfig:
+          replication_factor: 1
+        storage:
+          type: filesystem
+        schemaConfig:
+          configs:
+            - from: "2024-04-01"
+              store: tsdb
+              object_store: filesystem
+              schema: v13
+              index:
+                prefix: index_
+                period: 24h
+        limits_config:
+          retention_period: 744h # 31d
+          volume_enabled: true
+        compactor:
+          retention_enabled: true
+          delete_request_store: filesystem
+        pattern_ingester:
+          enabled: false
+        analytics:
+          reporting_enabled: false
+      singleBinary:
+        replicas: 1
+        persistence:
+          enabled: true
+          storageClass: democratic-csi-iscsi
+          size: 20Gi
+      # Zero out the SimpleScalable / microservices targets.
+      backend:
+        replicas: 0
+      read:
+        replicas: 0
+      write:
+        replicas: 0
+      # Optional components not needed for a small single-binary install.
+      chunksCache:
+        enabled: false
+      resultsCache:
+        enabled: false
+      lokiCanary:
+        enabled: false
+      test:
+        enabled: false
+      gateway:
+        enabled: false
+      minio:
+        enabled: false

@@ -50,7 +50,10 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-LOG="/var/run/cilium/tetragon/tetragon.log"   # plus rotated *.log.N backups
+# Active log is tetragon.log; Tetragon rotates to tetragon-<timestamp>.log (NOT
+# .log.N), so this glob must match both. Export dir is an emptyDir, so only the
+# few most-recent rotated files survive and everything is lost on pod restart.
+LOG="/var/run/cilium/tetragon/tetragon*.log"   # active + rotated backups
 PYF="$(mktemp --suffix=.py)"
 TMP="$(mktemp)"
 PIDS=()
@@ -186,7 +189,7 @@ else
     # anchor on the JSON event key so we match real process_kprobe EVENTS, not
     # process_exec lines that merely mention 'process_kprobe' in their cmdline.
     kubectl exec -n "$NS" "$p" -c tetragon -- \
-      sh -c "grep -h '^{\"process_kprobe\"' ${LOG}* 2>/dev/null | tail -n 4000" >> "$TMP" 2>/dev/null || true
+      sh -c "grep -h '^{\"process_kprobe\"' ${LOG} 2>/dev/null | tail -n 4000" >> "$TMP" 2>/dev/null || true
   done
   python3 "$PYF" batch "$NUM" "$HOOK" "$WLNS" "$HOST" < "$TMP"
 fi
