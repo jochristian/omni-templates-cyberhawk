@@ -105,7 +105,9 @@ chart) that Argo CD can build. Sync policy is automated with `prune: true` and
 - **etcd** is scraped via `prometheus.prometheusSpec.additionalScrapeConfigs` (static
   config, job `kube-etcd`, http `:2381`) — **not** the chart's Service+Endpoints, because
   ArgoCD's `resource.exclusions` drops `Endpoints`/`EndpointSlice`. Control-plane IPs:
-  ctrl-00 `10.50.1.50`, ctrl-01 `10.50.1.51`, ctrl-02 `192.168.155.10` (blix site).
+  ctrl-00 `10.50.1.50` (blix), ctrl-01 `10.50.1.51` (blix), ctrl-02 `192.168.155.10`
+  (lørenskog). Sites by subnet: blix `10.50.1.0/24`, lørenskog `192.168.155.0/24`
+  (worker-01 `192.168.155.100` is lørenskog).
 - **kps major upgrades:** apply the chart CRDs out-of-band first (`kubectl apply
   --server-side`), else ArgoCD wedges at sync status `Unknown` with a `ComparisonError`
   on new CR fields.

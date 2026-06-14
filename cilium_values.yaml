@@ -1,4 +1,21 @@
+# Reference copy ONLY — NOT the source of truth, NOT edited by hand.
+#
+# The authoritative Cilium Helm values live in:
+#   GitOps/clusters/cyberhawk-talos-k8s/1-system/kube-system/cilium/values.yaml
+# The bootstrap inline manifest (patches/install_cilium.yaml) is `helm template`'d
+# from that GitOps chart dir (see README), so a cluster rebuild uses the GitOps
+# values directly — this file is never consumed by the build.
+#
+# It exists purely so the bootstrap values can be eyeballed without digging into
+# GitOps. Keep it a verbatim mirror of the GitOps values.yaml above; if they ever
+# diverge, the GitOps copy wins. (Last synced 2026-06-14.)
+#
+# Encryption note: encryption is OFF here on purpose — blix<->lørenskog is already
+# encrypted by an external user-controlled WireGuard tunnel, so KubeSpan and Cilium
+# encryption are both intentionally disabled (no double-encryption). Do not "fix"
+# this by turning encryption on.
 cilium:
+  mtu: 1450
   kubeProxyReplacement: true
   # Talos specific
   k8sServiceHost: localhost
@@ -29,39 +46,44 @@ cilium:
   cni:
     exclusive: false
 
-  encryption:
-    enabled: true
-    type: "wireguard"
-
   # https://docs.cilium.io/en/stable/network/concepts/ipam/
   ipam:
     mode: kubernetes
 
-#  l7Proxy: true
+  encryption:
+    enabled: false
+    type: ""
 
   nodePort:
-      enabled: true
+    enabled: true
 
   forceDeviceDetection: true
 
     #debug:
   #  enabled: true
 
-  # Increase rate limit when doing L2 announcements
-  k8sClientRateLimit:
-    qps: 20
-    burst: 100
-
   l2announcements:
-    enabled: true
+    enabled: false
 
   bpf:
-      masquerade: true
+    masquerade: true
 
   externalIPs:
     enabled: true
 
-  #devices: "br+ eth+"
+  devices: "eth0"
+  routingMode: tunnel
+  autoDirectNodeRoutes: false
+  # Pod CIDR only — anything broader (e.g. 10.0.0.0/8) skips masquerade for
+  # cross-site destinations like the blix node IPs, and pod-sourced packets
+  # don't survive the site boundary
+  ipv4NativeRoutingCIDR: "10.244.0.0/16"
+  tunnelProtocol: vxlan
+
+  # SNAT pod traffic destined for other nodes' IPs (BPF masquerade skips
+  # remote nodes by default) — required for pod -> apiserver across sites
+  extraConfig:
+    enable-remote-node-masquerade: "true"
 
   forwardKubeDNSToHost: false
 
@@ -95,12 +117,30 @@ cilium:
         io.cilium/lb-ipam-ips: 10.50.2.1
 
   prometheus:
-      enabled: true
-      serviceMonitor:
-          enabled: false
+    enabled: true
+    serviceMonitor:
+        enabled: false
 
   # Enable Hubble
   hubble:
+      # Hubble Prometheus metrics (separate from flow observability). Exposes the
+      # hubble_* series on :9965 that the official Hubble Grafana dashboard needs.
+      # The chart creates a ServiceMonitor; label it so kube-prometheus-stack's
+      # selector (release=monitoring) scrapes it.
+      # NOTE: enabling this rolls the cilium-agent DaemonSet (new metrics port).
+      metrics:
+        enabled:
+          - dns
+          - drop
+          - tcp
+          - flow
+          - port-distribution
+          - icmp
+          - http
+        serviceMonitor:
+          enabled: true
+          labels:
+            release: monitoring
       relay:
         enabled: true
       ui:
