@@ -107,6 +107,24 @@ cilium:
 
   # Enable Hubble
   hubble:
+      # Hubble Prometheus metrics (separate from flow observability). Exposes the
+      # hubble_* series on :9965 that the official Hubble Grafana dashboard needs.
+      # The chart creates a ServiceMonitor; label it so kube-prometheus-stack's
+      # selector (release=monitoring) scrapes it.
+      # NOTE: enabling this rolls the cilium-agent DaemonSet (new metrics port).
+      metrics:
+        enabled:
+          - dns
+          - drop
+          - tcp
+          - flow
+          - port-distribution
+          - icmp
+          - http
+        serviceMonitor:
+          enabled: true
+          labels:
+            release: monitoring
       relay:
         enabled: true
       ui:
