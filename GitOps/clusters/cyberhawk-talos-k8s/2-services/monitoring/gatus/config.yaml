@@ -77,31 +77,13 @@ endpoints:
     conditions: ["[CONNECTED] == true"]
 
   # ---- Apps ---------------------------------------------------------------
-  - name: karakeep
-    group: Apps
-    url: "http://karakeep.karakeep.svc.cluster.local:3000/"
-    interval: 120s
-    conditions: ["[STATUS] < 500"]
-  - name: karakeep-meilisearch
-    group: Apps
-    url: "http://meilisearch.karakeep.svc.cluster.local:7700/health"
-    interval: 120s
-    conditions: ["[STATUS] == 200"]
-  - name: portfolio-web
-    group: Apps
-    url: "http://portfolio-web.portfolio.svc.cluster.local:8080/"
-    interval: 120s
-    conditions: ["[STATUS] < 500"]
-  - name: portfolio-api
-    group: Apps
-    url: "tcp://portfolio-api.portfolio.svc.cluster.local:8080"
-    interval: 120s
-    conditions: ["[CONNECTED] == true"]
-  - name: tracearr
-    group: Apps
-    url: "http://tracearr.tracearr.svc.cluster.local:3000/"
-    interval: 120s
-    conditions: ["[STATUS] < 500"]
+  # NOTE: user apps (karakeep, portfolio, tracearr) carry CiliumNetworkPolicies
+  # ("allow-external-deny-internal" / per-component portfolio-api etc.) that allow
+  # ingress only via the gateway, NOT cross-namespace from monitoring. So we do NOT
+  # probe their internal Services (that would be blocked = false 'down' and fights
+  # the segmentation). They're monitored end-to-end via their public hostnames in
+  # the External group instead. karakeep has no public HTTPRoute yet — give it one
+  # (like portfolio/tracearr) or pin its LB IP and it can be added here.
 
   # ---- Site: blix (10.50.1.0/24) -----------------------------------------
   - name: ctrl-00 kubelet
