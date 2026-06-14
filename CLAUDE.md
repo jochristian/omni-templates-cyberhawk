@@ -86,8 +86,16 @@ chart) that Argo CD can build. Sync policy is automated with `prune: true` and
 - **Dashboards:** `dashboards/` — each JSON is wired in via a `configMapGenerator` entry
   labelled `grafana_dashboard: "1"` (Grafana sidecar auto-loads it). `servicemonitors.yaml`
   holds the hand-written ServiceMonitor/PodMonitors (argocd, cilium-agent, cilium-operator).
-  Official Cilium **agent/operator** + **Hubble** dashboards and a custom **Tetragon**
-  dashboard (Loki event detail + Prometheus aggregates) live here.
+  Official Cilium **agent/operator** + **Hubble** dashboards and custom **Tetragon** and
+  **Gatus** dashboards (the latter bound to `gatus_*` metrics) live here.
+- **Uptime/status:** **Gatus** (`gatus/`, config-as-code, no admin UI — edit `config.yaml`,
+  the `configMapGenerator` hash rolls the pod). sqlite history on iSCSI, exposed via Omni
+  workload proxy `:50083`, `release: monitoring` ServiceMonitor feeds `gatus_*` into
+  Prometheus. Checks are grouped `cyberhawk-talos-k8s (cluster)` / `External hosts` /
+  `Internet / DNS`. **Probe user apps via their public hostname, not internal Services** —
+  karakeep/portfolio/tracearr carry `allow-external-deny-internal` CiliumNetworkPolicies,
+  so a monitoring→app Service probe is denied (false "down"). ICMP checks need `NET_RAW`
+  on the pod (otherwise it's drop-ALL caps / non-root / RO-rootfs).
 - **Runtime security:** **Tetragon** (`1-system/tetragon/`) runs **observe-only**
   (monitor-mode TracingPolicies, `Post` action only — never enforcement). `tetra`/Loki
   viewer: `docs/tetragon/policy-matches.sh` (`--loki` reads durable history).
