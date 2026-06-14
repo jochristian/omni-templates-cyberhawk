@@ -30,3 +30,11 @@ configMapGenerator:
       disableNameSuffixHash: true
     files:
       - cert-manager.json
+
+  - name: grafana-dashboard-tetragon
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+    files:
+      - tetragon.json
