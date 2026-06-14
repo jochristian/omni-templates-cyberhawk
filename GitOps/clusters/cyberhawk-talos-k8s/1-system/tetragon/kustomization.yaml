@@ -41,6 +41,20 @@ helmCharts:
         enableProcessNs: false
         # Required for namespaced/monitor TracingPolicy selectors (chart default).
         enablePolicyFilter: true
+        # Scrape agent metrics (:2112) into kube-prometheus-stack. extraLabels adds
+        # the `release: monitoring` label this Prometheus' serviceMonitorSelector
+        # requires (it selects all namespaces). Gives aggregate event/policy-match
+        # counts (e.g. tetragon_events_total) for the Grafana dashboard.
+        prometheus:
+          serviceMonitor:
+            enabled: true
+            extraLabels:
+              release: monitoring
       tetragonOperator:
         # Operator manages the TracingPolicy CRDs.
         enabled: true
+        prometheus:
+          serviceMonitor:
+            enabled: true
+            extraLabels:
+              release: monitoring
