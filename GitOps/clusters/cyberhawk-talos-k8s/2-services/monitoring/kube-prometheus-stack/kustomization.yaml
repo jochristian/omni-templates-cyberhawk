@@ -53,6 +53,20 @@ helmCharts:
                 resources:
                   requests:
                     storage: 40Gi
+          # etcd runs as a Talos service (not a pod), exposing plaintext metrics on
+          # the control-plane node IPs at :2381. The kubeEtcd exporter scrapes it via
+          # a selectorless Service + a manual Endpoints object — but ArgoCD excludes
+          # Endpoints/EndpointSlice from management, so that object is never created
+          # and the etcd target stays down. Scrape it directly with a static config
+          # instead (job "kube-etcd" matches the chart's etcd dashboard + alert rules).
+          additionalScrapeConfigs:
+            - job_name: kube-etcd
+              scheme: http
+              static_configs:
+                - targets:
+                    - 10.50.1.50:2381
+                    - 10.50.1.51:2381
+                    - 10.50.1.52:2381
       grafana:
         grafana.ini:
           auth:
