@@ -22,7 +22,7 @@ helmCharts:
         endpoints:
           - 10.50.1.50
           - 10.50.1.51
-          - 10.50.1.52
+          - 192.168.155.10
         service:
           enabled: true
           port: 2381
@@ -66,7 +66,7 @@ helmCharts:
                 - targets:
                     - 10.50.1.50:2381
                     - 10.50.1.51:2381
-                    - 10.50.1.52:2381
+                    - 192.168.155.10:2381
       grafana:
         grafana.ini:
           auth:
