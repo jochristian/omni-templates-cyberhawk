@@ -3,18 +3,30 @@
 # policy-matches.sh — human-friendly view of Tetragon TracingPolicy *matches*.
 #
 # Our policies run in monitor (observe-only) mode; every match is emitted as a
-# `process_kprobe` event. This tool shows them across ALL Tetragon agents, either
-# as recent history (from each node's JSON export log) or as a live stream.
+# `process_kprobe` event. This tool shows them, either as recent history or as a
+# live stream.
+#
+# Two history sources:
+#   pods (default)  greps each agent's JSON export log (in-pod, EPHEMERAL — the
+#                   export dir is an emptyDir, wiped on pod/node restart).
+#   loki (--loki)   queries Loki (job="tetragon"), the DURABLE store fed by Alloy.
+#                   Survives restarts and reaches back days; use --since to widen.
+# Live follow (-f) always streams from the agents (Loki has no detail you'd tail).
 #
 # Usage:
-#   docs/tetragon/policy-matches.sh                 # last 50 matches (history)
+#   docs/tetragon/policy-matches.sh                 # last 50 matches (in-pod logs)
 #   docs/tetragon/policy-matches.sh 100             # last 100 matches
+#   docs/tetragon/policy-matches.sh --loki          # last 50 from Loki (7d window)
+#   docs/tetragon/policy-matches.sh --loki --since 30d 500
+#   docs/tetragon/policy-matches.sh --loki --hook setuid-root
 #   docs/tetragon/policy-matches.sh -f              # live follow (Ctrl-C to stop)
-#   docs/tetragon/policy-matches.sh -f --hook setuid-root
 #   docs/tetragon/policy-matches.sh --ns media 200  # only events from namespace 'media'
 #
 # Options:
-#   -f, --follow        live stream instead of history
+#   -f, --follow        live stream instead of history (always via agents)
+#   --loki              read history from Loki instead of the in-pod export logs
+#   --source pods|loki  same, explicit form (default: pods)
+#   --since DUR         Loki look-back window, e.g. 30m 24h 7d (default 7d)
 #   -n, --num N         number of history records (default 50; ignored with -f)
 #   --hook LABEL        filter by hook: file-write file-mmap-write file-truncate
 #                       kmod-request kmod-read kmod-load kmod-unload setuid-root
@@ -25,20 +37,28 @@
 # Note: host/runtime events (e.g. runc calling setuid(0) on every container start)
 # are benign noise and hidden by default; --host includes them (mainly affects -f).
 #
-# Env: TETRAGON_NS (namespace where Tetragon runs, default 'tetragon'), NO_COLOR.
-# Read-only. Requires kubectl + python3. Not a GitOps manifest — ArgoCD ignores it.
+# Env: TETRAGON_NS (agents' namespace, default 'tetragon'), MONITORING_NS (Loki's
+# namespace, default 'monitoring'), NO_COLOR.
+# Read-only. Requires kubectl + python3. --loki port-forwards svc/loki briefly.
+# Not a GitOps manifest — ArgoCD ignores it.
 set -euo pipefail
 
 NS="${TETRAGON_NS:-tetragon}"
+MON_NS="${MONITORING_NS:-monitoring}"
 NUM=50
 FOLLOW=0
 HOOK=""
 WLNS=""
 HOST=0          # 0 = in-pod only (default); 1 = also show host/runtime events
+SOURCE=pods     # pods (in-pod export logs) | loki (durable store)
+SINCE=7d        # Loki look-back window
 
 while [ $# -gt 0 ]; do
   case "$1" in
     -f|--follow) FOLLOW=1 ;;
+    --loki)      SOURCE=loki ;;
+    --source)    SOURCE="$2"; shift ;;
+    --since)     SINCE="$2"; shift ;;
     -n|--num)    NUM="$2"; shift ;;
     --hook)      HOOK="$2"; shift ;;
     --ns)        WLNS="$2"; shift ;;
@@ -50,15 +70,27 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+case "$SOURCE" in pods|loki) ;; *) echo "bad --source: $SOURCE (pods|loki)" >&2; exit 2 ;; esac
+
+# Convert --since (30m / 24h / 7d, or bare seconds) to seconds for the Loki window.
+case "$SINCE" in
+  *m) SINCE_SECS=$(( ${SINCE%m} * 60 )) ;;
+  *h) SINCE_SECS=$(( ${SINCE%h} * 3600 )) ;;
+  *d) SINCE_SECS=$(( ${SINCE%d} * 86400 )) ;;
+  *[!0-9]*) echo "bad --since: $SINCE (use e.g. 30m, 24h, 7d)" >&2; exit 2 ;;
+  *) SINCE_SECS="$SINCE" ;;
+esac
+
 # Active log is tetragon.log; Tetragon rotates to tetragon-<timestamp>.log (NOT
 # .log.N), so this glob must match both. Export dir is an emptyDir, so only the
 # few most-recent rotated files survive and everything is lost on pod restart.
 LOG="/var/run/cilium/tetragon/tetragon*.log"   # active + rotated backups
 PYF="$(mktemp --suffix=.py)"
+LOKIPY="$(mktemp --suffix=.py)"
 TMP="$(mktemp)"
 PIDS=()
 cleanup() {
-  rm -f "$PYF" "$TMP"
+  rm -f "$PYF" "$LOKIPY" "$TMP"
   [ ${#PIDS[@]} -gt 0 ] && kill "${PIDS[@]}" 2>/dev/null || true   # only OUR children
 }
 trap cleanup EXIT INT TERM
@@ -172,11 +204,51 @@ else:
 PY
 # -----------------------------------------------------------------------------
 
-pods="$(kubectl get pods -n "$NS" -l app.kubernetes.io/name=tetragon \
-        -o jsonpath='{.items[*].metadata.name}')"
-if [ -z "${pods// }" ]; then echo "No Tetragon agents in namespace '$NS'." >&2; exit 1; fi
+# ---- Loki fetcher (used by --source loki): pulls process_kprobe lines via the
+# query_range API and prints them oldest-first for the shared formatter. -------
+cat > "$LOKIPY" <<'PY'
+import json, os, sys, time, urllib.parse, urllib.request, urllib.error
+params = urllib.parse.urlencode({
+    "query": os.environ["LQ"], "limit": os.environ.get("LLIMIT", "5000"),
+    "direction": "backward", "start": os.environ["LSTART"], "end": os.environ["LEND"]})
+url = os.environ["LOKI_URL"] + "/loki/api/v1/query_range?" + params
+data = None
+for _ in range(50):                       # tolerate port-forward warmup
+    try:
+        with urllib.request.urlopen(url, timeout=15) as r:
+            data = json.load(r); break
+    except (urllib.error.URLError, ConnectionError):
+        time.sleep(0.3)
+if data is None:
+    sys.stderr.write("loki: no response from %s (port-forward up?)\n" % os.environ["LOKI_URL"]); sys.exit(1)
+if data.get("status") != "success":
+    sys.stderr.write("loki error: %s\n" % json.dumps(data)[:300]); sys.exit(1)
+rows = [(ts, line) for st in data["data"]["result"] for ts, line in st["values"]]
+rows.sort(key=lambda x: x[0])
+for _, line in rows:
+    sys.stdout.write(line + "\n")
+PY
+
+run_loki() {
+  # Brief background port-forward to the Loki service; cleaned up on exit.
+  kubectl port-forward -n "$MON_NS" svc/loki 3100:3100 >/dev/null 2>&1 &
+  PIDS+=($!)
+  LOKI_URL="http://localhost:3100" LLIMIT=5000 \
+    LQ='{job="tetragon"} |~ `^{"process_kprobe"`' \
+    LSTART="$(( $(date +%s) - SINCE_SECS ))000000000" \
+    LEND="$(date +%s)000000000" \
+    python3 "$LOKIPY" > "$TMP"
+}
+
+require_agents() {
+  pods="$(kubectl get pods -n "$NS" -l app.kubernetes.io/name=tetragon \
+          -o jsonpath='{.items[*].metadata.name}')"
+  if [ -z "${pods// }" ]; then echo "No Tetragon agents in namespace '$NS'." >&2; exit 1; fi
+}
 
 if [ "$FOLLOW" = 1 ]; then
+  [ "$SOURCE" = loki ] && echo "# note: -f follows live via the agents (Loki is history-only)." >&2
+  require_agents
   # one live stream per agent, all formatted to this terminal
   for p in $pods; do
     kubectl exec -n "$NS" "$p" -c tetragon -- tetra getevents -o json 2>/dev/null \
@@ -184,7 +256,11 @@ if [ "$FOLLOW" = 1 ]; then
     PIDS+=($!)
   done
   wait
+elif [ "$SOURCE" = loki ]; then
+  run_loki
+  python3 "$PYF" batch "$NUM" "$HOOK" "$WLNS" "$HOST" < "$TMP"
 else
+  require_agents
   for p in $pods; do
     # anchor on the JSON event key so we match real process_kprobe EVENTS, not
     # process_exec lines that merely mention 'process_kprobe' in their cmdline.
