@@ -28,6 +28,15 @@ helmCharts:
     namespace: tetragon
     includeCRDs: true
     valuesInline:
+      # Talos v1.12.0+ requires tracefs to be mounted into the agent from the host
+      # (https://tetragon.io/docs/installation/kubernetes/). Tetragon would otherwise
+      # self-mount tracefs via SYS_ADMIN inside its container — which works today
+      # (v1.13.4) but is the fragile path: a future Talos hardening change could break
+      # kprobe attachment silently. Mount it from the host instead. hostPath == mountPath.
+      extraHostPathMounts:
+        - name: sys-kernel-tracing
+          mountPath: /sys/kernel/tracing
+          readOnly: false
       # JSON event export to a writable path. Talos has a read-only rootfs with a
       # writable /var, and this is the chart default — kept explicit for clarity.
       exportDirectory: "/var/run/cilium/tetragon"
