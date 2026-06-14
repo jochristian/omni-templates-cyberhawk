@@ -1,7 +1,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: monitoring
+# NB: no top-level `namespace:` transformer. The Helm release already stamps every
+# resource with its correct namespace (monitoring for the stack; kube-system for the
+# kube-controller-manager/scheduler/etcd/coredns/kube-proxy exporter Services, which
+# MUST live in kube-system to select those component pods). A blanket
+# `namespace: monitoring` rewrites those exporter Services into monitoring, leaving
+# them with no endpoints — which made the CoreDNS/controller-manager/scheduler/etcd
+# dashboards show "No data".
 
 helmCharts:
   - name: kube-prometheus-stack
