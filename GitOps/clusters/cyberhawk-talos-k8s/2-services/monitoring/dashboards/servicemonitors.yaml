@@ -94,3 +94,9 @@ spec:
         - sourceLabels: [__meta_kubernetes_pod_node_name]
           targetLabel: node
           action: replace
+        # Official Cilium Grafana dashboards filter every query by k8s_app="cilium".
+        # The cilium pods carry the pod label k8s-app=cilium; surface it as the
+        # k8s_app metric label so those dashboards bind (otherwise: "No data").
+        - sourceLabels: [__meta_kubernetes_pod_label_k8s_app]
+          targetLabel: k8s_app
+          action: replace
