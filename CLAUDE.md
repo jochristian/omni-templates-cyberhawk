@@ -56,7 +56,7 @@ directory; you do not register it anywhere.**
 
 Directories are organized into numbered layers, scanned at two depths:
 
-- `1-system/` — cluster infrastructure (argocd, cilium, cnpg, mariadb-operator, CSI, gateway)
+- `1-system/` — cluster infrastructure (argocd, cilium, cnpg, mariadb-operator, CSI, gateway, tetragon)
 - `2-services/` — platform services (cert-manager, monitoring, openbao, newt, vcluster, volsync)
 - `3-apps/` — applications (it-tools, karakeep, portfolio)
 - `4-media/` — media apps (tautulli, tracearr, yamtrack)
@@ -72,6 +72,43 @@ Discovery & naming rules baked into the generator:
 Every discovered leaf directory **must contain a `kustomization.yaml`** (or a Helm
 chart) that Argo CD can build. Sync policy is automated with `prune: true` and
 `selfHeal: false`, server-side apply, `CreateNamespace=true`.
+
+## Observability stack (`2-services/monitoring/` + `1-system/tetragon/`)
+
+- **Metrics:** `kube-prometheus-stack` (Prometheus + Grafana + Alertmanager). Grafana
+  uses anonymous auth and provisions datasources via the chart's `additionalDataSources`
+  (Prometheus is the chart default — do **not** redeclare it, that broke all dashboards
+  once) plus a `Loki` datasource. Latest stable is tracked (kps/grafana/loki/alloy).
+- **Logs:** single-binary **Loki** (`loki/`, filesystem on iSCSI) + **Grafana Alloy**
+  (`alloy/`, single Deployment) which tails the Tetragon `export-stdout` sidecar over the
+  K8s API and pushes to Loki. Durable across pod/node restarts (the agents' export dir is
+  an emptyDir).
+- **Dashboards:** `dashboards/` — each JSON is wired in via a `configMapGenerator` entry
+  labelled `grafana_dashboard: "1"` (Grafana sidecar auto-loads it). `servicemonitors.yaml`
+  holds the hand-written ServiceMonitor/PodMonitors (argocd, cilium-agent, cilium-operator).
+  Official Cilium **agent/operator** + **Hubble** dashboards and a custom **Tetragon**
+  dashboard (Loki event detail + Prometheus aggregates) live here.
+- **Runtime security:** **Tetragon** (`1-system/tetragon/`) runs **observe-only**
+  (monitor-mode TracingPolicies, `Post` action only — never enforcement). `tetra`/Loki
+  viewer: `docs/tetragon/policy-matches.sh` (`--loki` reads durable history).
+
+**Monitoring gotchas (these cause silent "No data" / OutOfSync):**
+
+- **No blanket `namespace:` transformer in the kps kustomization.** Helm already
+  namespaces every resource; a top-level `namespace: monitoring` rewrites the
+  `kube-system` exporter Services (coredns/kube-controller-manager/scheduler/etcd/proxy)
+  into `monitoring`, leaving them with no endpoints.
+- **Scrape selection:** a ServiceMonitor/PodMonitor is only scraped if it carries the
+  label `release: monitoring`. Any `relabelings` must pin `action: replace` (CRD default)
+  or the app sits OutOfSync. Official Cilium dashboards filter on `k8s_app="cilium"` /
+  `io_cilium_app="operator"`, so the monitors relabel those pod labels onto the metrics.
+- **etcd** is scraped via `prometheus.prometheusSpec.additionalScrapeConfigs` (static
+  config, job `kube-etcd`, http `:2381`) — **not** the chart's Service+Endpoints, because
+  ArgoCD's `resource.exclusions` drops `Endpoints`/`EndpointSlice`. Control-plane IPs:
+  ctrl-00 `10.50.1.50`, ctrl-01 `10.50.1.51`, ctrl-02 `192.168.155.10` (blix site).
+- **kps major upgrades:** apply the chart CRDs out-of-band first (`kubectl apply
+  --server-side`), else ArgoCD wedges at sync status `Unknown` with a `ComparisonError`
+  on new CR fields.
 
 ## Conventions for workload directories
 
@@ -116,5 +153,11 @@ cat keys.txt | kubectl -n argocd create secret generic argocd-sops-age-key --fro
 - Argo CD reconciles from `HEAD` of `main` on
   `github.com/jochristian/omni-templates-cyberhawk`, so changes take effect only after
   they are pushed.
+- **`kubectl` access uses Omni OIDC** (`oidc-login` exec plugin, `--skip-open-browser`).
+  On a headless host the token expires and `kubectl` then **hangs** (no browser to
+  re-auth). Refresh non-interactively with
+  `omnictl kubeconfig -c cyberhawk-talos-k8s-01 --service-account --user <name> --ttl 720h -f`
+  (or `--grant-type authcode-keyboard`). This needs an omniconfig at `~/.config/omni/config.yaml`.
 - `docs/openbao/` contains runbooks for OpenBao (operator runbook, SOPS workflow,
-  agent-injector examples, user guide). `**/docs/superpowers/` is local-only (gitignored).
+  agent-injector examples, user guide). `docs/tetragon/` has `policy-matches.sh` (runtime
+  policy-match viewer). `**/docs/superpowers/` is local-only (gitignored).
