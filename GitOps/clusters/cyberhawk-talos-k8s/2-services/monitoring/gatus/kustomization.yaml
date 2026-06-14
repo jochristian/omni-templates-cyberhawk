@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+
+resources:
+  - 10-pvc.yaml
+  - 20-deployment.yaml
+  - 30-service.yaml
+  - 40-servicemonitor.yaml
+
+# Gatus config as a ConfigMap. Hash suffix is kept (default) so editing config.yaml
+# rolls the Deployment automatically; kustomize rewrites the volume reference.
+configMapGenerator:
+  - name: gatus-config
+    files:
+      - config.yaml
+
+images:
+  - name: ghcr.io/twin/gatus
+    newTag: v5.36.0
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: gatus

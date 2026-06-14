@@ -1,0 +1,173 @@
+# Gatus configuration (https://github.com/TwiN/gatus). Loaded from /config.
+# Self-hosted Gatus is free (Apache-2.0). This monitors the cluster from *inside*
+# the cluster (so it sees the same path apps do) plus per-site node reachability and
+# the external path (DNS -> Pangolin tunnel -> Cilium gateway -> TLS).
+
+# Durable history in sqlite on the mounted PVC (see 10-pvc.yaml).
+storage:
+  type: sqlite
+  path: /data/data.db
+
+# Expose Prometheus metrics on the web port; scraped by the ServiceMonitor
+# (40-servicemonitor.yaml). Lets kube-prometheus-stack alert on gatus_* series.
+metrics: true
+
+ui:
+  title: "Cyberhawk Status"
+  header: "cyberhawk-talos-k8s-01"
+  description: "Service & multi-site health for the Talos cluster"
+
+endpoints:
+  # ---- Cluster / platform -------------------------------------------------
+  - name: kubernetes-api
+    group: Platform
+    url: "tcp://kubernetes.default.svc.cluster.local:443"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+  - name: argocd
+    group: Platform
+    url: "http://argocd-server.argocd.svc.cluster.local:80/healthz"
+    interval: 60s
+    conditions: ["[STATUS] == 200"]
+  - name: hubble-relay
+    group: Platform
+    url: "tcp://hubble-relay.kube-system.svc.cluster.local:80"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+
+  # ---- Observability ------------------------------------------------------
+  - name: grafana
+    group: Observability
+    url: "http://monitoring-grafana.monitoring.svc.cluster.local:80/api/health"
+    interval: 60s
+    conditions: ["[STATUS] == 200"]
+  - name: prometheus
+    group: Observability
+    url: "http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090/-/healthy"
+    interval: 60s
+    conditions: ["[STATUS] == 200"]
+  - name: alertmanager
+    group: Observability
+    url: "http://monitoring-kube-prometheus-alertmanager.monitoring.svc.cluster.local:9093/-/healthy"
+    interval: 60s
+    conditions: ["[STATUS] == 200"]
+  - name: loki
+    group: Observability
+    url: "http://loki.monitoring.svc.cluster.local:3100/ready"
+    interval: 60s
+    conditions: ["[STATUS] == 200"]
+  - name: alloy
+    group: Observability
+    url: "http://alloy.monitoring.svc.cluster.local:12345/-/ready"
+    interval: 60s
+    conditions: ["[STATUS] == 200"]
+  - name: librenms
+    group: Observability
+    url: "http://librenms.monitoring.svc.cluster.local:80/"
+    interval: 120s
+    conditions: ["[STATUS] == any(200, 301, 302)"]
+
+  # ---- Security -----------------------------------------------------------
+  # TCP only: OpenBao may serve TLS internally and we don't want a false 'down'
+  # from a scheme/cert mismatch. Swap to https /v1/sys/health later for seal state.
+  - name: openbao
+    group: Security
+    url: "tcp://openbao.openbao.svc.cluster.local:8200"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+
+  # ---- Apps ---------------------------------------------------------------
+  - name: karakeep
+    group: Apps
+    url: "http://karakeep.karakeep.svc.cluster.local:3000/"
+    interval: 120s
+    conditions: ["[STATUS] < 500"]
+  - name: karakeep-meilisearch
+    group: Apps
+    url: "http://meilisearch.karakeep.svc.cluster.local:7700/health"
+    interval: 120s
+    conditions: ["[STATUS] == 200"]
+  - name: portfolio-web
+    group: Apps
+    url: "http://portfolio-web.portfolio.svc.cluster.local:8080/"
+    interval: 120s
+    conditions: ["[STATUS] < 500"]
+  - name: portfolio-api
+    group: Apps
+    url: "tcp://portfolio-api.portfolio.svc.cluster.local:8080"
+    interval: 120s
+    conditions: ["[CONNECTED] == true"]
+  - name: tracearr
+    group: Apps
+    url: "http://tracearr.tracearr.svc.cluster.local:3000/"
+    interval: 120s
+    conditions: ["[STATUS] < 500"]
+
+  # ---- Site: blix (10.50.1.0/24) -----------------------------------------
+  - name: ctrl-00 kubelet
+    group: "Site: blix"
+    url: "tcp://10.50.1.50:10250"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+  - name: ctrl-00 etcd
+    group: "Site: blix"
+    url: "tcp://10.50.1.50:2381"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+  - name: ctrl-01 kubelet
+    group: "Site: blix"
+    url: "tcp://10.50.1.51:10250"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+  - name: ctrl-01 etcd
+    group: "Site: blix"
+    url: "tcp://10.50.1.51:2381"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+
+  # ---- Site: lørenskog (192.168.155.0/24) --------------------------------
+  - name: ctrl-02 kubelet
+    group: "Site: lorenskog"
+    url: "tcp://192.168.155.10:10250"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+  - name: ctrl-02 etcd
+    group: "Site: lorenskog"
+    url: "tcp://192.168.155.10:2381"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+  - name: worker-01 kubelet
+    group: "Site: lorenskog"
+    url: "tcp://192.168.155.100:10250"
+    interval: 60s
+    conditions: ["[CONNECTED] == true"]
+
+  # ---- External (full path: DNS -> Pangolin -> gateway -> TLS) ------------
+  # Also watches cert expiry; alerts if the leaf has < 10 days left.
+  - name: portfolio (public)
+    group: External
+    url: "https://portfolio.cyberhawk.no"
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+  - name: tracearr (public)
+    group: External
+    url: "https://tracearr.cyberhawk.no"
+    interval: 120s
+    conditions:
+      - "[STATUS] < 500"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+  - name: dns cyberhawk.no
+    group: External
+    url: "1.1.1.1"
+    dns:
+      query-name: "cyberhawk.no"
+      query-type: "A"
+    interval: 300s
+    conditions: ["[DNS_RCODE] == NOERROR"]
+  - name: internet egress
+    group: External
+    url: "https://1.1.1.1"
+    interval: 120s
+    conditions: ["[STATUS] == 200"]

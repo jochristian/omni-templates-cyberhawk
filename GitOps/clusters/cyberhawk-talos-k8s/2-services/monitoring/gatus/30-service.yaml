@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gatus
+  annotations:
+    # Expose the Gatus UI through Omni's workload proxy (like Grafana 50082 /
+    # ArgoCD 50081 / Hubble 50080). 50083 is the next free slot.
+    omni-kube-service-exposer.sidero.dev/port: "50083"
+    omni-kube-service-exposer.sidero.dev/label: Gatus
+spec:
+  selector:
+    app.kubernetes.io/name: gatus
+  ports:
+    - name: web
+      port: 8080
+      targetPort: web
