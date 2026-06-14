@@ -2,6 +2,14 @@
 # Self-hosted Gatus is free (Apache-2.0). This monitors the cluster from *inside*
 # the cluster (so it sees the same path apps do) plus per-site node reachability and
 # the external path (DNS -> Pangolin tunnel -> Cilium gateway -> TLS).
+#
+# Groups (rendered as collapsible sections on the status page, and as the `group`
+# label in Prometheus/Grafana):
+#   - "cyberhawk-talos-k8s (cluster)" : everything inside the cluster (infra, nodes,
+#     and the user apps checked via their public path). Site (blix/lørenskog) is kept
+#     in the node check names.
+#   - "External hosts"                : hosts that are NOT part of the cluster.
+#   - "Internet / DNS"                : upstream DNS + raw internet egress.
 
 # Durable history in sqlite on the mounted PVC (see 10-pvc.yaml).
 storage:
@@ -18,130 +26,135 @@ ui:
   description: "Service & multi-site health for the Talos cluster"
 
 endpoints:
-  # ---- Cluster / platform -------------------------------------------------
+  # ===== cyberhawk-talos-k8s (cluster) ====================================
+
+  # ---- Platform ----
   - name: kubernetes-api
-    group: Platform
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://kubernetes.default.svc.cluster.local:443"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
   - name: argocd
-    group: Platform
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "http://argocd-server.argocd.svc.cluster.local:80/healthz"
     interval: 60s
     conditions: ["[STATUS] == 200"]
   - name: hubble-relay
-    group: Platform
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://hubble-relay.kube-system.svc.cluster.local:80"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
 
-  # ---- Observability ------------------------------------------------------
+  # ---- Observability ----
   - name: grafana
-    group: Observability
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "http://monitoring-grafana.monitoring.svc.cluster.local:80/api/health"
     interval: 60s
     conditions: ["[STATUS] == 200"]
   - name: prometheus
-    group: Observability
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090/-/healthy"
     interval: 60s
     conditions: ["[STATUS] == 200"]
   - name: alertmanager
-    group: Observability
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "http://monitoring-kube-prometheus-alertmanager.monitoring.svc.cluster.local:9093/-/healthy"
     interval: 60s
     conditions: ["[STATUS] == 200"]
   - name: loki
-    group: Observability
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "http://loki.monitoring.svc.cluster.local:3100/ready"
     interval: 60s
     conditions: ["[STATUS] == 200"]
   - name: alloy
-    group: Observability
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "http://alloy.monitoring.svc.cluster.local:12345/-/ready"
     interval: 60s
     conditions: ["[STATUS] == 200"]
   - name: librenms
-    group: Observability
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "http://librenms.monitoring.svc.cluster.local:80/"
     interval: 120s
     conditions: ["[STATUS] == any(200, 301, 302)"]
 
-  # ---- Security -----------------------------------------------------------
+  # ---- Security ----
   # TCP only: OpenBao may serve TLS internally and we don't want a false 'down'
   # from a scheme/cert mismatch. Swap to https /v1/sys/health later for seal state.
   - name: openbao
-    group: Security
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://openbao.openbao.svc.cluster.local:8200"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
 
-  # ---- Apps ---------------------------------------------------------------
-  # NOTE: user apps (karakeep, portfolio, tracearr) carry CiliumNetworkPolicies
-  # ("allow-external-deny-internal" / per-component portfolio-api etc.) that allow
-  # ingress only via the gateway, NOT cross-namespace from monitoring. So we do NOT
-  # probe their internal Services (that would be blocked = false 'down' and fights
-  # the segmentation). They're monitored end-to-end via their public hostnames in
-  # the External group instead. karakeep has no public HTTPRoute yet — give it one
-  # (like portfolio/tracearr) or pin its LB IP and it can be added here.
-
-  # ---- Site: blix (10.50.1.0/24) -----------------------------------------
-  - name: ctrl-00 kubelet
-    group: "Site: blix"
+  # ---- Nodes (site kept in the name) ----
+  - name: ctrl-00 kubelet (blix)
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://10.50.1.50:10250"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
-  - name: ctrl-00 etcd
-    group: "Site: blix"
+  - name: ctrl-00 etcd (blix)
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://10.50.1.50:2381"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
-  - name: ctrl-01 kubelet
-    group: "Site: blix"
+  - name: ctrl-01 kubelet (blix)
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://10.50.1.51:10250"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
-  - name: ctrl-01 etcd
-    group: "Site: blix"
+  - name: ctrl-01 etcd (blix)
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://10.50.1.51:2381"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
-
-  # ---- Site: lørenskog (192.168.155.0/24) --------------------------------
-  - name: ctrl-02 kubelet
-    group: "Site: lorenskog"
+  - name: ctrl-02 kubelet (lorenskog)
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://192.168.155.10:10250"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
-  - name: ctrl-02 etcd
-    group: "Site: lorenskog"
+  - name: ctrl-02 etcd (lorenskog)
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://192.168.155.10:2381"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
-  - name: worker-01 kubelet
-    group: "Site: lorenskog"
+  - name: worker-01 kubelet (lorenskog)
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "tcp://192.168.155.100:10250"
     interval: 60s
     conditions: ["[CONNECTED] == true"]
 
-  # ---- External (full path: DNS -> Pangolin -> gateway -> TLS) ------------
-  # Also watches cert expiry; alerts if the leaf has < 10 days left.
+  # ---- User apps (checked end-to-end via their public hostname; internal Service
+  # probes are blocked by their allow-external-deny-internal CiliumNetworkPolicies) ----
   - name: portfolio (public)
-    group: External
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "https://portfolio.cyberhawk.no"
     interval: 120s
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
   - name: tracearr (public)
-    group: External
+    group: "cyberhawk-talos-k8s (cluster)"
     url: "https://tracearr.cyberhawk.no"
     interval: 120s
     conditions:
       - "[STATUS] < 500"
       - "[CERTIFICATE_EXPIRATION] > 240h"
+
+  # ===== External hosts (not part of the cluster) =========================
+  # ICMP host check. Needs CAP_NET_RAW on the pod (added in 20-deployment.yaml) so
+  # Gatus can open a raw socket for the ping. Reachable only if the nodes can route
+  # to 192.168.255.0/24.
+  - name: 192.168.255.1 (icmp)
+    group: "External hosts"
+    url: "icmp://192.168.255.1"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+      - "[RESPONSE_TIME] < 1000"
+
+  # ===== Internet / DNS ===================================================
   - name: dns cyberhawk.no
-    group: External
+    group: "Internet / DNS"
     url: "1.1.1.1"
     dns:
       query-name: "cyberhawk.no"
@@ -149,17 +162,7 @@ endpoints:
     interval: 300s
     conditions: ["[DNS_RCODE] == NOERROR"]
   - name: internet egress
-    group: External
+    group: "Internet / DNS"
     url: "https://1.1.1.1"
     interval: 120s
     conditions: ["[STATUS] == 200"]
-  # ICMP host check. Needs CAP_NET_RAW on the pod (added in 20-deployment.yaml) so
-  # Gatus can open a raw socket for the ping. Reachable only if the nodes can route
-  # to 192.168.255.0/24.
-  - name: 192.168.255.1 (icmp)
-    group: External
-    url: "icmp://192.168.255.1"
-    interval: 60s
-    conditions:
-      - "[CONNECTED] == true"
-      - "[RESPONSE_TIME] < 1000"
