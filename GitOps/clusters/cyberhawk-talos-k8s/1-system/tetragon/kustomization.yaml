@@ -50,6 +50,17 @@ helmCharts:
         enableProcessNs: false
         # Required for namespaced/monitor TracingPolicy selectors (chart default).
         enablePolicyFilter: true
+        # Talk to the host containerd CRI for container metadata + robust pod
+        # association. Without this, Tetragon associates containers by parsing
+        # cgroup names, which races at startup (logs: "failed to find cgroup id.
+        # Skipping container"). Talos' containerd socket is /run/containerd/
+        # containerd.sock (confirmed; containerd 2.2.4). cgidmap (uses cgroup IDs
+        # for pod association) depends on cri being enabled.
+        cri:
+          enabled: true
+          socketHostPath: /run/containerd/containerd.sock
+        cgidmap:
+          enabled: true
         # Scrape agent metrics (:2112) into kube-prometheus-stack. extraLabels adds
         # the `release: monitoring` label this Prometheus' serviceMonitorSelector
         # requires (it selects all namespaces). Gives aggregate event/policy-match
