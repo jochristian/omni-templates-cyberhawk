@@ -1,0 +1,130 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "title": "Gatus — Status & Uptime",
+  "uid": "gatus-status",
+  "tags": ["gatus", "uptime", "status"],
+  "timezone": "browser",
+  "time": { "from": "now-24h", "to": "now" },
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "group",
+        "label": "Group",
+        "type": "query",
+        "datasource": "${datasource}",
+        "query": "label_values(gatus_results_endpoint_success, group)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "name",
+        "label": "Endpoint",
+        "type": "query",
+        "datasource": "${datasource}",
+        "query": "label_values(gatus_results_endpoint_success{group=~\"$group\"}, name)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Endpoints UP",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" }, "unit": "none" } },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "sum(gatus_results_endpoint_success{group=~\"$group\", name=~\"$name\"})", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "stat",
+      "title": "Endpoints DOWN",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "count(gatus_results_endpoint_success{group=~\"$group\", name=~\"$name\"}) - sum(gatus_results_endpoint_success{group=~\"$group\", name=~\"$name\"})", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "stat",
+      "title": "Monitored",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "blue" }, "unit": "none" } },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "count(gatus_results_endpoint_success{group=~\"$group\", name=~\"$name\"})", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "stat",
+      "title": "Overall uptime (range)",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 0 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 0.95 }, { "color": "green", "value": 0.99 } ] } } },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "sum(increase(gatus_results_total{success=\"true\", group=~\"$group\", name=~\"$name\"}[$__range])) / clamp_min(sum(increase(gatus_results_total{group=~\"$group\", name=~\"$name\"}[$__range])), 1)", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "state-timeline",
+      "title": "Status over time",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 4 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 80, "lineWidth": 0 }, "mappings": [ { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } } ], "max": 1, "min": 0, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] } } },
+      "options": { "mergeValues": true, "showValue": "never", "rowHeight": 0.9, "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "expr": "gatus_results_endpoint_success{group=~\"$group\", name=~\"$name\"}", "legendFormat": "{{group}} / {{name}}", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "table",
+      "title": "Uptime % by endpoint (range)",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 13 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "custom": { "align": "auto" } }, "overrides": [ { "matcher": { "id": "byName", "options": "Uptime" }, "properties": [ { "id": "unit", "value": "percentunit" }, { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }, { "id": "min", "value": 0 }, { "id": "max", "value": 1 }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 0.95 }, { "color": "green", "value": 0.99 } ] } } ] } ] },
+      "options": { "showHeader": true, "sortBy": [ { "displayName": "Uptime", "desc": false } ] },
+      "targets": [ { "refId": "A", "format": "table", "instant": true, "expr": "sum by (group, name) (increase(gatus_results_total{success=\"true\", group=~\"$group\", name=~\"$name\"}[$__range])) / clamp_min(sum by (group, name) (increase(gatus_results_total{group=~\"$group\", name=~\"$name\"}[$__range])), 1)", "datasource": "${datasource}" } ],
+      "transformations": [ { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "Value": "Uptime" } } } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Response time",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 13 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } } },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "expr": "gatus_results_duration_seconds{group=~\"$group\", name=~\"$name\"}", "legendFormat": "{{name}}", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "bargauge",
+      "title": "TLS certificate expiry (days)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "d", "min": 0, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 10 }, { "color": "green", "value": 21 } ] } } },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] }, "showUnfilled": true },
+      "targets": [ { "refId": "A", "expr": "gatus_results_certificate_expiration_seconds{group=~\"$group\", name=~\"$name\"} / 86400", "legendFormat": "{{name}}", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP response codes (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "stacking": { "mode": "normal" }, "fillOpacity": 30, "showPoints": "never" } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "expr": "sum by (code) (rate(gatus_results_code_total{group=~\"$group\", name=~\"$name\"}[5m]))", "legendFormat": "{{code}}", "datasource": "${datasource}" } ]
+    }
+  ]
+}
