@@ -13,13 +13,28 @@ spec:
             secretName: argocd-sops-age-key
       initContainers:
         - name: install-ksops
-          image: viaductoss/ksops:v4.3.3
-          command: ["/bin/sh", "-c"]
-          args:
-            - echo "Installing KSOPS...";
-              mv ksops /custom-tools/;
-              mv kustomize /custom-tools/;
-              echo "Done.";
+          image: viaductoss/ksops:v4.5.1
+          # Image is distroless from v4.4.0 onward (no shell), so the install is
+          # done via the built-in `ksops install` subcommand rather than `sh -c`/mv.
+          # `--with-kustomize` keeps overriding ArgoCD's bundled kustomize with the
+          # KSOPS-supplied one (paired with the kustomize override mount below).
+          command:
+            ["/usr/local/bin/ksops", "install", "--with-kustomize", "/custom-tools"]
+          # Match the hardened securityContext of the sibling containers (copyutil /
+          # repo-server). runAsUser must be the numeric distroless `nonroot` uid (65532):
+          # with only `runAsNonRoot: true` the kubelet refuses to start the container
+          # because it can't verify a non-numeric image user. Verified the install runs
+          # under a read-only rootfs as uid 65532.
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           volumeMounts:
             - mountPath: /custom-tools
               name: custom-tools
