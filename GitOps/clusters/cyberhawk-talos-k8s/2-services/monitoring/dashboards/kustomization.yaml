@@ -62,3 +62,11 @@ configMapGenerator:
       disableNameSuffixHash: true
     files:
       - gatus.json
+
+  - name: grafana-dashboard-keda
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+    files:
+      - keda.json

@@ -1,0 +1,144 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "title": "KEDA — Autoscaling",
+  "uid": "keda-autoscaling",
+  "tags": ["keda", "autoscaling", "scaledobject"],
+  "timezone": "browser",
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "scaledObject",
+        "label": "ScaledObject",
+        "type": "query",
+        "datasource": "${datasource}",
+        "query": "label_values(keda_scaler_active, scaledObject)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Operator up",
+      "description": "keda_build_info present = the KEDA operator is exporting metrics.",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] } } },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "sum(keda_build_info) or vector(0)", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "stat",
+      "title": "ScaledObjects",
+      "description": "Distinct ScaledObjects KEDA is currently managing. 0 until you create one.",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "blue" }, "unit": "none" } },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "count(count by (scaledObject) (keda_scaler_active)) or vector(0)", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "stat",
+      "title": "Active scalers",
+      "description": "Scalers reporting active=1 (their trigger is above threshold / scaling out).",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" }, "unit": "none" } },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "sum(keda_scaler_active{scaledObject=~\"$scaledObject\"}) or vector(0)", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "stat",
+      "title": "Scaler errors (5m)",
+      "description": "Total scaler errors in the range — non-zero means a trigger source is unreachable/misconfigured.",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "sum(increase(keda_scaler_errors_total{scaledObject=~\"$scaledObject\"}[5m])) or vector(0)", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "state-timeline",
+      "title": "Scaler active over time",
+      "description": "Populates once a ScaledObject exists. Green = scaler active (driving scale-out).",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 80, "lineWidth": 0 }, "mappings": [ { "type": "value", "options": { "0": { "text": "idle", "color": "gray" }, "1": { "text": "active", "color": "green" } } } ], "max": 1, "min": 0 } },
+      "options": { "mergeValues": true, "showValue": "never", "rowHeight": 0.9, "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" } },
+      "targets": [ { "refId": "A", "expr": "keda_scaler_active{scaledObject=~\"$scaledObject\"}", "legendFormat": "{{scaledObject}} / {{scaler}} ({{metric}})", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Scaler errors (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 20, "showPoints": "never" }, "color": { "mode": "palette-classic" } } },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum", "lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "expr": "sum by (scaledObject, scaler) (rate(keda_scaler_errors_total{scaledObject=~\"$scaledObject\"}[5m]))", "legendFormat": "{{scaledObject}} / {{scaler}}", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "ScaledObject errors (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 20, "showPoints": "never" }, "color": { "mode": "palette-classic" } } },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum", "lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "expr": "sum by (scaledObject) (rate(keda_scaled_object_errors_total{scaledObject=~\"$scaledObject\"}[5m]))", "legendFormat": "{{scaledObject}}", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Scaler metric value",
+      "description": "Current value each scaler reports for its target metric.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" }, "color": { "mode": "palette-classic" } } },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "expr": "keda_scaler_metrics_value{scaledObject=~\"$scaledObject\"}", "legendFormat": "{{scaledObject}} / {{metric}}", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Scaler metric latency",
+      "description": "Time KEDA takes to fetch each scaler's metric (keda_scaler_metrics_latency_seconds).",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" }, "color": { "mode": "palette-classic" } } },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "expr": "keda_scaler_metrics_latency_seconds{scaledObject=~\"$scaledObject\"}", "legendFormat": "{{scaledObject}} / {{scaler}}", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Operator reconcile rate",
+      "description": "controller-runtime reconciles for the KEDA operator (overall controller health).",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" }, "color": { "mode": "palette-classic" } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "expr": "sum by (controller) (rate(controller_runtime_reconcile_total{job=\"keda-operator\"}[5m]))", "legendFormat": "{{controller}}", "datasource": "${datasource}" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Operator reconcile errors",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "datasource": "${datasource}",
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 20, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "expr": "sum by (controller) (rate(controller_runtime_reconcile_errors_total{job=\"keda-operator\"}[5m]))", "legendFormat": "{{controller}}", "datasource": "${datasource}" } ]
+    }
+  ]
+}
