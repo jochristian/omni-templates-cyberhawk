@@ -1,0 +1,23 @@
+# Park karakeep's headless Chrome overnight to reclaim its memory (idle ~256Mi-1Gi).
+# Chrome is only needed while karakeep crawls/fetches bookmark content. Crawl jobs are
+# queued and retried by karakeep, so if a bookmark is added during the parked window it
+# simply crawls once chrome wakes at 08:00 — no data loss, just a delay. Single instance
+# only (karakeep talks to one chrome), so maxReplicaCount stays 1.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: chrome
+  namespace: karakeep
+spec:
+  scaleTargetRef:
+    name: chrome            # the chrome Deployment (same namespace)
+  minReplicaCount: 0        # parked overnight
+  maxReplicaCount: 1        # never more than one chrome
+  cooldownPeriod: 120
+  triggers:
+    - type: cron
+      metadata:
+        timezone: Europe/Oslo
+        start: "0 8 * * *"   # 08:00 -> chrome up
+        end: "0 0 * * *"     # 00:00 -> window closes, park to 0 (active 08:00-00:00)
+        desiredReplicas: "1"

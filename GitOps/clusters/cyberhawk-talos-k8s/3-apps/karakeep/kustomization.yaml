@@ -11,6 +11,7 @@ resources:
 - 12-meilisearch-service.yaml
 - 20-chrome-deployment.yaml
 - 21-chrome-service.yaml
+- 22-chrome-scaledobject.yaml
 - 30-karakeep-pvc.yaml
 - 31-karakeep-deployment.yaml
 - 32-karakeep-service.yaml

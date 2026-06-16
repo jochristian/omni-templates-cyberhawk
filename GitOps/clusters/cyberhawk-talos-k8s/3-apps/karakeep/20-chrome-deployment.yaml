@@ -4,7 +4,9 @@ metadata:
   name: chrome
   namespace: karakeep
 spec:
-  replicas: 1
+  # replicas intentionally omitted: KEDA (22-chrome-scaledobject.yaml) owns the count
+  # via an HPA and parks chrome to zero overnight. Pinning it here would make ArgoCD
+  # flap OutOfSync on every scale event.
   selector:
     matchLabels:
       app: chrome
