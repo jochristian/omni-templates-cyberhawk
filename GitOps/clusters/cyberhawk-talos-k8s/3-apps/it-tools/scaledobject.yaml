@@ -17,7 +17,6 @@ spec:
   minReplicaCount: 0        # scale-to-zero off-hours
   maxReplicaCount: 3        # ceiling; the cron trigger below only ever asks for 1
   cooldownPeriod: 120       # wait 120s of inactivity before scaling back to 0
-  fallback: {}
   triggers:
     - type: cron
       metadata:
