@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: keda
+  labels:
+    # KEDA runs non-root / unprivileged, so no privileged PodSecurity label is needed.
+    # Intentionally NO allow-external-deny-internal CiliumNetworkPolicy here: the
+    # keda-metrics-apiserver is an aggregated API server that kube-apiserver calls
+    # cross-namespace; a deny-internal policy would break HPA metric lookups.
+    environment: keda

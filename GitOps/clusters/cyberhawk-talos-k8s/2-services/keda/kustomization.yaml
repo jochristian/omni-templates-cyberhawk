@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: keda
+
+# KEDA (https://keda.sh) — event-driven autoscaler. Installed the same way as
+# cert-manager: the official Helm chart inflated by kustomize, with CRDs included.
+# ArgoCD discovers this dir as app `2-services-keda` -> namespace `keda`.
+#
+# Notes:
+#  - Chart version == app version for KEDA (2.20.1 -> KEDA 2.20.1).
+#  - includeCRDs/crds.install ship ScaledObject/ScaledJob/TriggerAuthentication etc.
+#    The appset applies server-side, so the large CRDs don't hit the client-side
+#    annotation-size limit.
+#  - Prometheus metrics + ServiceMonitors are enabled and tagged `release: monitoring`
+#    so kube-prometheus-stack scrapes them (it selects ServiceMonitors with that
+#    label across all namespaces).
+#  - watchNamespace is left "" (cluster-wide). KEDA runs non-root/unprivileged, so no
+#    host mounts or privileged PodSecurity are required (unlike Tetragon).
+helmCharts:
+  - name: keda
+    repo: https://kedacore.github.io/charts
+    version: 2.20.1
+    releaseName: keda
+    namespace: keda
+    includeCRDs: true
+    valuesInline:
+      crds:
+        install: true
+
+      # ---- Prometheus / kube-prometheus-stack integration ----
+      prometheus:
+        operator:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: monitoring
+        metricServer:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: monitoring

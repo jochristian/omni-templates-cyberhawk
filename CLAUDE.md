@@ -57,7 +57,7 @@ directory; you do not register it anywhere.**
 Directories are organized into numbered layers, scanned at two depths:
 
 - `1-system/` — cluster infrastructure (argocd, cilium, cnpg, mariadb-operator, CSI, gateway, tetragon)
-- `2-services/` — platform services (cert-manager, monitoring, openbao, newt, vcluster, volsync)
+- `2-services/` — platform services (cert-manager, monitoring, openbao, newt, vcluster, volsync, keda)
 - `3-apps/` — applications (it-tools, karakeep, portfolio)
 - `4-media/` — media apps (tautulli, tracearr, yamtrack)
 

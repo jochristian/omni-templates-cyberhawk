@@ -12,3 +12,4 @@ resources:
   - openbao.yaml
   - tracearr.yaml
   - tetragon.yaml
+  - keda.yaml
