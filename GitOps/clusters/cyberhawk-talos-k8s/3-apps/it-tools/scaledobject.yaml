@@ -1,0 +1,27 @@
+# KEDA test/demo on it-tools (stateless static site — safe to scale to zero).
+# Cron scaler: 1 replica during the daytime window, 0 outside it (scale-to-zero).
+# Reverting is trivial: delete this ScaledObject and KEDA removes the managed HPA;
+# the Deployment then keeps whatever replica count it last had (re-pin replicas in
+# deployment.yaml if you want a fixed baseline again).
+#
+# Times are Europe/Oslo. Standard 5-field cron. To watch a transition immediately,
+# temporarily set `start`/`end` a few minutes out, sync, and watch the pods.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: it-tools
+  namespace: it-tools
+spec:
+  scaleTargetRef:
+    name: it-tools          # the Deployment to scale (same namespace)
+  minReplicaCount: 0        # scale-to-zero off-hours
+  maxReplicaCount: 3        # ceiling; the cron trigger below only ever asks for 1
+  cooldownPeriod: 120       # wait 120s of inactivity before scaling back to 0
+  fallback: {}
+  triggers:
+    - type: cron
+      metadata:
+        timezone: Europe/Oslo
+        start: "0 7 * * *"   # 07:00 -> scale up to desiredReplicas
+        end: "0 23 * * *"    # 23:00 -> window closes, scale to 0
+        desiredReplicas: "1"

@@ -3,5 +3,6 @@ kind: Kustomization
 
 resources:
 - deployment.yaml
+- scaledobject.yaml
 #- service.yaml
 #- http-route.yaml

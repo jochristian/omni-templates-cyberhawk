@@ -4,7 +4,9 @@ metadata:
   name: it-tools
   namespace: it-tools
 spec:
-  replicas: 1
+  # replicas intentionally omitted: KEDA (see scaledobject.yaml) owns the replica
+  # count via an HPA. Pinning it here would make ArgoCD flap OutOfSync every time
+  # KEDA scales (incl. to zero off-hours).
   selector:
     matchLabels:
       app: it-tools
