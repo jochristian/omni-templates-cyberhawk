@@ -1,7 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: keda
+# NB: no top-level `namespace:` transformer. The Helm chart already namespaces every
+# resource (release namespace = keda, set below), and one resource — the
+# `keda-operator-auth-reader` RoleBinding — MUST stay in kube-system so the
+# metrics-apiserver can read the extension-apiserver-authentication configmap. A
+# blanket `namespace: keda` rewrites it into keda and the metrics server CrashLoops.
+# (Same class of bug as the kps "no blanket namespace transformer" gotcha.)
 
 # KEDA (https://keda.sh) — event-driven autoscaler. Installed the same way as
 # cert-manager: the official Helm chart inflated by kustomize, with CRDs included.
