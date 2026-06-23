@@ -5,7 +5,7 @@ namespace: cnpg
 helmCharts:
   - name: cloudnative-pg
     repo: https://cloudnative-pg.github.io/charts
-    version: 0.28.0 # renovate: helm=cloudnative-pg repo=https://cloudnative-pg.github.io/charts
+    version: 0.28.3 # renovate: helm=cloudnative-pg repo=https://cloudnative-pg.github.io/charts
     releaseName: cloudnative-pg
     namespace: cnpg
     valuesInline:
