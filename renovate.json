@@ -1,39 +1,32 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    ":dependencyDashboard",
-    ":semanticCommits",
+    "config:best-practices",
     ":timezone(Europe/Oslo)"
   ],
+  "semanticCommits": "enabled",
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "Renovate Dependency Dashboard",
   "labels": ["dependencies"],
-  "prHourlyLimit": 4,
   "prConcurrentLimit": 10,
-  "commitMessagePrefix": "chore(deps):",
+  "prHourlyLimit": 4,
   "customManagers": [
     {
       "customType": "regex",
-      "description": "kustomize images: newTag and inline Deployment images annotated '# renovate: docker=NAME'",
+      "description": "Inline container images annotated '# renovate: docker=NAME'. The native kustomize manager already covers images:/helmCharts: in every kustomization.yaml; this only catches images pinned directly in a manifest (currently just it-tools' Deployment).",
       "managerFilePatterns": ["/^GitOps/.+\\.ya?ml$/"],
       "matchStrings": [
-        "newTag:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s*#\\s*renovate:\\s*docker=(?<depName>\\S+)",
         "image:\\s*\\S+:(?<currentValue>[^\"'\\s@]+)\\s*#\\s*renovate:\\s*docker=(?<depName>\\S+)"
       ],
       "datasourceTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "description": "kustomize helmCharts: version annotated '# renovate: helm=NAME repo=URL'",
-      "managerFilePatterns": ["/^GitOps/.+\\.ya?ml$/"],
-      "matchStrings": [
-        "version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s*#\\s*renovate:\\s*helm=(?<depName>\\S+)\\s+repo=(?<registryUrl>\\S+)"
-      ],
-      "datasourceTemplate": "helm"
     }
   ],
   "packageRules": [
+    {
+      "description": "Keep tag-based pinning. kustomize images use newTag, and Renovate SKIPS any image carrying both newTag and a digest, which would freeze future updates. Flip to per-image digest pinning later if desired.",
+      "matchDatasources": ["docker"],
+      "pinDigests": false
+    },
     {
       "description": "Label Helm chart bumps",
       "matchDatasources": ["helm"],
@@ -45,7 +38,7 @@
       "addLabels": ["container"]
     },
     {
-      "description": "Keep Renovate's own image current, on its own branch",
+      "description": "Label Renovate's own self-update PRs",
       "matchPackageNames": ["renovate/renovate"],
       "addLabels": ["renovate"]
     }
