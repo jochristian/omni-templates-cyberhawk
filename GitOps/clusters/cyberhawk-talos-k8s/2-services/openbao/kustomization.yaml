@@ -13,7 +13,7 @@ resources:
 helmCharts:
   - name: openbao
     repo: https://openbao.github.io/openbao-helm
-    version: 0.28.2
+    version: 0.28.4
     releaseName: openbao
     namespace: openbao
     valuesFile: openbao-values.yaml
