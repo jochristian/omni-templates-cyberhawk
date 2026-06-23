@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: renovate-config
+data:
+  # Bot-level (self-hosted) config only. Dependency policy, custom managers and
+  # package rules live in the repo-root renovate.json so they're reviewable in-repo.
+  config.json: |
+    {
+      "platform": "github",
+      "endpoint": "https://api.github.com/",
+      "repositories": ["jochristian/omni-templates-cyberhawk"],
+      "autodiscover": false,
+      "onboarding": false,
+      "requireConfig": "required",
+      "gitAuthor": "Renovate Bot <renovate@cyberhawk.no>"
+    }

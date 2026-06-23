@@ -1,0 +1,53 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":timezone(Europe/Oslo)"
+  ],
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate Dependency Dashboard",
+  "labels": ["dependencies"],
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 10,
+  "commitMessagePrefix": "chore(deps):",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "kustomize images: newTag and inline Deployment images annotated '# renovate: docker=NAME'",
+      "managerFilePatterns": ["/^GitOps/.+\\.ya?ml$/"],
+      "matchStrings": [
+        "newTag:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s*#\\s*renovate:\\s*docker=(?<depName>\\S+)",
+        "image:\\s*\\S+:(?<currentValue>[^\"'\\s@]+)\\s*#\\s*renovate:\\s*docker=(?<depName>\\S+)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "kustomize helmCharts: version annotated '# renovate: helm=NAME repo=URL'",
+      "managerFilePatterns": ["/^GitOps/.+\\.ya?ml$/"],
+      "matchStrings": [
+        "version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s*#\\s*renovate:\\s*helm=(?<depName>\\S+)\\s+repo=(?<registryUrl>\\S+)"
+      ],
+      "datasourceTemplate": "helm"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Label Helm chart bumps",
+      "matchDatasources": ["helm"],
+      "addLabels": ["helm"]
+    },
+    {
+      "description": "Label container image bumps",
+      "matchDatasources": ["docker"],
+      "addLabels": ["container"]
+    },
+    {
+      "description": "Keep Renovate's own image current, on its own branch",
+      "matchPackageNames": ["renovate/renovate"],
+      "addLabels": ["renovate"]
+    }
+  ]
+}
