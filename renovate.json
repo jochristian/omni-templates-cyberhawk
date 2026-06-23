@@ -42,9 +42,10 @@
       "addLabels": ["container"]
     },
     {
-      "description": "Label Renovate's own self-update PRs",
+      "description": "Auto-merge Renovate's own image bumps straight to main with NO PR (it ships ~daily; branch automerge commits to a temp branch and fast-forwards into main when nothing is failing).",
       "matchPackageNames": ["renovate/renovate"],
-      "addLabels": ["renovate"]
+      "automerge": true,
+      "automergeType": "branch"
     }
   ]
 }
