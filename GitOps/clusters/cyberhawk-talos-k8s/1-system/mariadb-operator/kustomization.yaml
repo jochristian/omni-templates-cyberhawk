@@ -12,7 +12,7 @@ helmCharts:
 
   - name: mariadb-operator
     repo: https://helm.mariadb.com/mariadb-operator
-    version: 26.3.0
+    version: 26.6.0
     releaseName: mariadb-operator
     namespace: mariadb-operator
     valuesInline:
