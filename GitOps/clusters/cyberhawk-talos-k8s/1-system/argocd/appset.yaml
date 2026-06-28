@@ -61,6 +61,10 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
+          # Diff server-side too (matches ServerSideApply): stops operator
+          # mutating-webhook defaults (e.g. mariadb-operator's tls/image/
+          # updateStrategy fields) from showing as false drift / OutOfSync.
+          - ServerSideDiff=true
           - ApplyOutOfSyncOnly=true
           - RespectIgnoreDifferences=true
           - SkipDryRunOnMissingResource=true
