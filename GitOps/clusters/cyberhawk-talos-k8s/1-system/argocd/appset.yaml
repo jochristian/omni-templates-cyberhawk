@@ -22,6 +22,12 @@ spec:
           - path: "GitOps/clusters/cyberhawk-talos-k8s/4-media/*/*"
   template:
     metadata:
+      annotations:
+        # ServerSideDiff is a COMPARE-option (not a syncOption): diff via a
+        # server-side dry-run (as ServerSideApply already does) so operator
+        # mutating-webhook defaults (e.g. mariadb-operator's tls/image/
+        # updateStrategy fields) stop showing as false drift / OutOfSync.
+        argocd.argoproj.io/compare-options: ServerSideDiff=true
       # Generate unique names: layer-namespace or layer-namespace-app
       name: |
         {{- $segments := splitList "/" .path.path -}}
@@ -61,10 +67,6 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
-          # Diff server-side too (matches ServerSideApply): stops operator
-          # mutating-webhook defaults (e.g. mariadb-operator's tls/image/
-          # updateStrategy fields) from showing as false drift / OutOfSync.
-          - ServerSideDiff=true
           - ApplyOutOfSyncOnly=true
           - RespectIgnoreDifferences=true
           - SkipDryRunOnMissingResource=true
