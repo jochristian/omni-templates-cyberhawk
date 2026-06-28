@@ -5,7 +5,9 @@ metadata:
   namespace: portfolio
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    # BeforeHookCreation: delete the prior hook Job before each run so a failed
+    # one doesn't linger forever (HookSucceeded alone never cleans up failures).
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
 spec:
   backoffLimit: 3
   template:
