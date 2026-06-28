@@ -4,6 +4,10 @@ metadata:
   name: librenms-dispatcher
 spec:
   replicas: 1
+  # Recreate (not RollingUpdate) so a fixed DISPATCHER_NODE_ID is never held by
+  # two pods at once during a rollout (they share one poller_cluster row).
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: librenms
@@ -29,10 +33,10 @@ spec:
                 secretKeyRef:
                   name: librenms-secret
                   key: DB_PASSWORD
+            # Stable, NOT the pod name: a per-pod name leaves an orphan
+            # poller_cluster row on every rollout (breaks validate.php).
             - name: DISPATCHER_NODE_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
+              value: librenms-dispatcher
             - name: SIDECAR_DISPATCHER
               value: "1"
           securityContext:
