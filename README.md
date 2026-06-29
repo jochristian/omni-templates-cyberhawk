@@ -93,8 +93,8 @@ Directories are grouped into numbered layers (applied roughly in order):
 
 | Layer | Contains |
 |-------|----------|
-| `1-system/` | Cluster infrastructure: argocd, cilium (+ cilium-bgp), cnpg, mariadb-operator, CSI drivers (nfs, democratic-csi), gateway, namespaces. |
-| `2-services/` | Platform services: cert-manager, monitoring (kube-prometheus-stack, librenms), openbao, newt, volsync-system. |
+| `1-system/` | Cluster infrastructure: argocd, cilium (+ cilium-bgp), cnpg, mariadb-operator, CSI drivers (nfs, democratic-csi), gateway, tetragon, namespaces. |
+| `2-services/` | Platform services: cert-manager, keda, openbao, newt, volsync-system, and monitoring (kube-prometheus-stack, loki, alloy, gatus, librenms, renovate). |
 | `3-apps/` | Applications: it-tools, karakeep, portfolio. |
 | `4-media/` | Media apps: tautulli, tracearr, yamtrack. |
 
