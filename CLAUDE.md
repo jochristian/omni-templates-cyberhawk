@@ -51,13 +51,13 @@ the `gvisor-*` and `monitoring*` / `etcd-timeouts` / `zswap` patches tune Talos.
 `1-system/argocd/appset.yaml` is the heart of the GitOps model. A single Argo CD
 **ApplicationSet** uses a git-directory generator to auto-discover folders and create
 one Argo CD `Application` per directory — there are almost no hand-written `Application`
-manifests (exceptions: `vcluster`, `volsync-system`). **To add a workload you create a
+manifests (exception: `volsync-system`). **To add a workload you create a
 directory; you do not register it anywhere.**
 
 Directories are organized into numbered layers, scanned at two depths:
 
 - `1-system/` — cluster infrastructure (argocd, cilium, cnpg, mariadb-operator, CSI, gateway, tetragon)
-- `2-services/` — platform services (cert-manager, monitoring, openbao, newt, vcluster, volsync, keda)
+- `2-services/` — platform services (cert-manager, monitoring, openbao, newt, volsync, keda)
 - `3-apps/` — applications (it-tools, karakeep, portfolio)
 - `4-media/` — media apps (tautulli, tracearr, yamtrack)
 
