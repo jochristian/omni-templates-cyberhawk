@@ -8,7 +8,7 @@ resources:
   - monitoring.yaml
   - it-tools.yaml
   - karakeep.yaml
-  - portfolio.yaml
+#  - portfolio.yaml
   - openbao.yaml
   - tracearr.yaml
   - tetragon.yaml
