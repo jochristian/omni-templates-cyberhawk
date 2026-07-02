@@ -21,7 +21,7 @@ resources:
 
 images:
   - name: ghcr.io/connorgallopo/tracearr
-    newTag: "1.4.28" # renovate: docker=ghcr.io/connorgallopo/tracearr
+    newTag: "1.4.29" # renovate: docker=ghcr.io/connorgallopo/tracearr
   - name: valkey/valkey
     newTag: "9.1.0-alpine3.23" # renovate: docker=valkey/valkey
   - name: timescale/timescaledb
