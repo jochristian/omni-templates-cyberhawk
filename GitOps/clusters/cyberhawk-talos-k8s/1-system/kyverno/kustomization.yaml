@@ -1,7 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Kyverno policy engine + starter policies (audit-only, karakeep pilot).
+# Kyverno policy engine + starter policies (Audit on the GitOps-managed
+# namespaces, Enforce in karakeep via failureActionOverrides).
 #
 # NOTE: deliberately NO top-level `namespace:` transformer here — kustomize
 # treats unknown kinds as namespaced and would stamp `namespace: kyverno`
@@ -35,6 +36,13 @@ helmCharts:
       crds:
         migration:
           enabled: false
+      # Break-glass: PolicyException CRs are honoured, but only from the
+      # kyverno namespace — a workload namespace cannot exempt itself.
+      # Runbook: docs/kyverno/break-glass.md
+      features:
+        policyExceptions:
+          enabled: true
+          namespace: kyverno
       # Homelab sizing: single replica per controller (chart default resource
       # requests/limits are already modest: 100m/64Mi req, 128Mi limit).
       # ServiceMonitors need `release: monitoring` to be selected by the
