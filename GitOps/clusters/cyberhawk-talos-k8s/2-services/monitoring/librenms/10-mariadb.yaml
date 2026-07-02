@@ -4,6 +4,12 @@ metadata:
   name: mariadb
   namespace: monitoring
 spec:
+  # Propagated by mariadb-operator to all child resources (incl. the
+  # StatefulSet) — satisfies the kyverno require-labels policy.
+  inheritMetadata:
+    labels:
+      app.kubernetes.io/name: mariadb
+
   # Root password — add MARIADB_ROOT_PASSWORD key to librenms-secret SOPS file
   rootPasswordSecretKeyRef:
     name: librenms-secret
