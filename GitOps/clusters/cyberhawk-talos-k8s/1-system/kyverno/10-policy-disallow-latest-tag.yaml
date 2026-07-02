@@ -1,0 +1,54 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      The ':latest' tag is mutable and can lead to unexpected errors if the
+      image changes. This policy validates that every container image
+      specifies a tag and that the tag is not 'latest'.
+      AUDIT-ONLY, karakeep pilot — widen the namespaces match before
+      promoting anywhere else (see docs/superpowers/specs/2026-07-02-kyverno-design.md).
+spec:
+  # Audit-only pilot: fail OPEN. With a single admission-controller replica,
+  # the default failurePolicy (Fail) would block ALL pod/workload
+  # create/update cluster-wide whenever the Kyverno pod is down.
+  # Revisit when any rule is promoted to Enforce.
+  webhookConfiguration:
+    failurePolicy: Ignore
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - karakeep
+      validate:
+        failureAction: Audit
+        message: "An image tag is required."
+        pattern:
+          spec:
+            containers:
+              - image: "*:*"
+    - name: validate-image-tag
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - karakeep
+      validate:
+        failureAction: Audit
+        message: "Using a mutable image tag e.g. 'latest' is not allowed."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"

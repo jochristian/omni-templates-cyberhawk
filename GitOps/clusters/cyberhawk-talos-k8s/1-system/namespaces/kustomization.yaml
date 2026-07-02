@@ -13,3 +13,4 @@ resources:
   - tracearr.yaml
   - tetragon.yaml
   - keda.yaml
+  - kyverno.yaml

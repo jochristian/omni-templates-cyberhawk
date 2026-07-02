@@ -1,0 +1,65 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Kyverno policy engine + starter policies (audit-only, karakeep pilot).
+#
+# NOTE: deliberately NO top-level `namespace:` transformer here — kustomize
+# treats unknown kinds as namespaced and would stamp `namespace: kyverno`
+# onto the cluster-scoped ClusterPolicy resources below. The chart namespace
+# is set on the helmCharts entry instead; ArgoCD's CreateNamespace=true
+# creates the `kyverno` namespace.
+#
+# Helm hooks are disabled: under kustomize --enable-helm rendering, hook
+# Jobs (pre-delete webhook cleanup, post-upgrade CRD migration) would be
+# applied as plain always-present Jobs, and the chart's helm-test Pods
+# (skipTests) would be applied as plain Pods running an unpinned image.
+# Webhooks are cleaned up by the controller itself; CRD migrations on
+# major bumps are handled out-of-band (same playbook as
+# kube-prometheus-stack majors).
+
+resources:
+  - 10-policy-disallow-latest-tag.yaml
+  - 11-policy-require-labels.yaml
+
+helmCharts:
+  - name: kyverno
+    repo: https://kyverno.github.io/kyverno/
+    version: 3.8.1 # renovate: helm=kyverno repo=https://kyverno.github.io/kyverno/
+    releaseName: kyverno
+    namespace: kyverno
+    includeCRDs: true
+    skipTests: true
+    valuesInline:
+      webhooksCleanup:
+        enabled: false
+      crds:
+        migration:
+          enabled: false
+      # Homelab sizing: single replica per controller (chart default resource
+      # requests/limits are already modest: 100m/64Mi req, 128Mi limit).
+      # ServiceMonitors need `release: monitoring` to be selected by the
+      # kube-prometheus-stack Prometheus.
+      admissionController:
+        replicas: 1
+        serviceMonitor:
+          enabled: true
+          additionalLabels:
+            release: monitoring
+      backgroundController:
+        replicas: 1
+        serviceMonitor:
+          enabled: true
+          additionalLabels:
+            release: monitoring
+      reportsController:
+        replicas: 1
+        serviceMonitor:
+          enabled: true
+          additionalLabels:
+            release: monitoring
+      cleanupController:
+        replicas: 1
+        serviceMonitor:
+          enabled: true
+          additionalLabels:
+            release: monitoring
