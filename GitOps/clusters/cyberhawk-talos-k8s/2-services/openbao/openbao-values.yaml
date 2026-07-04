@@ -42,6 +42,15 @@ server:
       cpu: 1000m
       memory: 1Gi
 
+  # HA is 3 replicas with required one-pod-per-node anti-affinity, but the
+  # cluster has only 2 schedulable workers — without this toleration the
+  # third raft member sits Pending forever (2/3 quorum, no fault tolerance).
+  # Letting it land on a control-plane node restores genuine 3-node HA.
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
   # PSS restricted compliance. The chart's pod-level defaults (runAsNonRoot,
   # uid 100, seccompProfile RuntimeDefault) already apply; the container
   # context replaces the chart default, so allowPrivilegeEscalation must be
