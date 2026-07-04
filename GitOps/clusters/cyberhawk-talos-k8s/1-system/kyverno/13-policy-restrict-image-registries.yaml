@@ -9,10 +9,12 @@ metadata:
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
       Images may only be pulled from the registries this cluster actually
-      uses: docker.io, ghcr.io, quay.io, lscr.io, gcr.io. Catches typosquats
-      and manifests pulling from unexpected sources. image_normalize()
-      canonicalises bare image names (e.g. "corentinth/it-tools" ->
-      "docker.io/corentinth/it-tools") so implicit Docker Hub images pass.
+      uses: docker.io, ghcr.io, quay.io, lscr.io, gcr.io, registry.k8s.io
+      (kube-state-metrics via kps chart) and docker-registry*.mariadb.com
+      (mariadb-operator's mirrors). Catches typosquats and manifests pulling
+      from unexpected sources. image_normalize() canonicalises bare image
+      names (e.g. "corentinth/it-tools" -> "docker.io/corentinth/it-tools")
+      so implicit Docker Hub images pass.
       Scope: Audit across the GitOps-managed namespaces (declared in
       1-system/namespaces/, minus infrastructure: tetragon/kyverno/keda),
       ENFORCE in karakeep. Promote namespaces by adding them to
@@ -54,8 +56,9 @@ spec:
             namespaces:
               - karakeep
         message: >-
-          Image is not from an approved registry
-          (docker.io, ghcr.io, quay.io, lscr.io, gcr.io).
+          Image is not from an approved registry (docker.io, ghcr.io,
+          quay.io, lscr.io, gcr.io, registry.k8s.io,
+          docker-registry*.mariadb.com).
         foreach:
           - list: "request.object.spec.[ephemeralContainers, initContainers, containers][]"
             deny:
@@ -69,3 +72,5 @@ spec:
                       - "quay.io/*"
                       - "lscr.io/*"
                       - "gcr.io/*"
+                      - "registry.k8s.io/*"
+                      - "docker-registry*.mariadb.com/*"
