@@ -71,3 +71,50 @@ helmCharts:
           enabled: true
           additionalLabels:
             release: monitoring
+
+  # Policy Reporter: UI + metrics on top of the (Cluster)PolicyReports the
+  # engine above produces. UI is exposed through the Omni workload proxy
+  # (50084 — next slot after Gatus 50083). The bundled Grafana dashboards
+  # land in this namespace as ConfigMaps; the kps Grafana sidecar watches
+  # ALL namespaces so they are auto-loaded.
+  - name: policy-reporter
+    repo: https://kyverno.github.io/policy-reporter
+    version: 3.7.4 # renovate: helm=policy-reporter repo=https://kyverno.github.io/policy-reporter
+    releaseName: policy-reporter
+    namespace: kyverno
+    skipTests: true
+    valuesInline:
+      metrics:
+        enabled: true
+      monitoring:
+        enabled: true
+        serviceMonitor:
+          labels:
+            release: monitoring
+      resources:
+        requests:
+          cpu: 10m
+          memory: 75Mi
+        limits:
+          memory: 200Mi
+      ui:
+        enabled: true
+        service:
+          annotations:
+            omni-kube-service-exposer.sidero.dev/port: "50084"
+            omni-kube-service-exposer.sidero.dev/label: Policy Reporter
+        resources:
+          requests:
+            cpu: 10m
+            memory: 75Mi
+          limits:
+            memory: 200Mi
+      plugin:
+        kyverno:
+          enabled: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 75Mi
+            limits:
+              memory: 200Mi
