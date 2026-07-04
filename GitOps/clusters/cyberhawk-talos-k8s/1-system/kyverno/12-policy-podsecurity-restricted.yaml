@@ -1,0 +1,54 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: podsecurity-restricted
+  annotations:
+    policies.kyverno.io/title: Pod Security Standards (Restricted)
+    policies.kyverno.io/category: Pod Security Standards
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Audits the full Pod Security Standards "restricted" profile. Talos PSA
+      already enforces "baseline" and warns on "restricted" cluster-wide, but
+      PSA warnings are only visible at apply time — this policy turns them
+      into persistent PolicyReports (Policy Reporter / Grafana) with the
+      exact failing control per workload.
+      Scope: Audit-only across the GitOps-managed namespaces (declared in
+      1-system/namespaces/, minus infrastructure: tetragon/kyverno/keda).
+      Deliberately NO Enforce override yet — promote a namespace only after
+      its audit results are clean. Break-glass: docs/kyverno/break-glass.md.
+spec:
+  # Fail OPEN (best-effort enforcement): with a single admission-controller
+  # replica, the default failurePolicy (Fail) would block ALL pod/workload
+  # create/update cluster-wide whenever the Kyverno pod is down. Accepted
+  # trade-off: a down Kyverno briefly lets violations into Enforce namespaces.
+  # If hard guarantees are ever needed: failurePolicy Fail + >=2 replicas.
+  webhookConfiguration:
+    failurePolicy: Ignore
+  background: true
+  rules:
+    - name: restricted
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              # Namespaces declared in 1-system/namespaces/ minus
+              # infrastructure (tetragon, kyverno, keda) — keep in sync.
+              namespaces:
+                - cert-manager
+                - development
+                - it-tools
+                - karakeep
+                - media
+                - monitoring
+                - newt
+                - openbao
+                - portfolio
+                - production
+                - tracearr
+      validate:
+        failureAction: Audit
+        podSecurity:
+          level: restricted
+          version: latest

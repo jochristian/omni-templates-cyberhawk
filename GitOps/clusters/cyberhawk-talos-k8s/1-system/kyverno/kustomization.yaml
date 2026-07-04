@@ -21,6 +21,8 @@ kind: Kustomization
 resources:
   - 10-policy-disallow-latest-tag.yaml
   - 11-policy-require-labels.yaml
+  - 12-policy-podsecurity-restricted.yaml
+  - 13-policy-restrict-image-registries.yaml
 
 helmCharts:
   - name: kyverno
