@@ -26,6 +26,11 @@ helmCharts:
     valuesInline:
       deploymentMode: SingleBinary
       loki:
+        # PSS restricted: the chart's podSecurityContext (non-root uid 10001,
+        # fsGroup) lacks a seccompProfile — helm deep-merges this in.
+        podSecurityContext:
+          seccompProfile:
+            type: RuntimeDefault
         # Single-tenant: no auth, no multi-tenancy headers needed in-cluster.
         auth_enabled: false
         commonConfig:

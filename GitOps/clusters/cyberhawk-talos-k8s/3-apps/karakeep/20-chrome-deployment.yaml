@@ -16,6 +16,11 @@ spec:
         app: chrome
     spec:
       securityContext:
+        # Image runs as user "chrome" (uid 1000); numeric uid declared so the
+        # kubelet can verify runAsNonRoot (image USER is a name, not a uid).
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:

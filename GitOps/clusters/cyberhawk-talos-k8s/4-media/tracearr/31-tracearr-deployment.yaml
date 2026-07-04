@@ -25,6 +25,10 @@ spec:
                     values:
                       - blix
       securityContext:
+        # Image runs as user "tracearr" (uid 1001); numeric uid declared so the
+        # kubelet can verify runAsNonRoot.
+        runAsNonRoot: true
+        runAsUser: 1001
         seccompProfile:
           type: RuntimeDefault
       containers:

@@ -42,10 +42,20 @@ server:
       cpu: 1000m
       memory: 1Gi
 
-  securityContext:
-    capabilities:
-      add:
-        - IPC_LOCK
+  # PSS restricted compliance. The chart's pod-level defaults (runAsNonRoot,
+  # uid 100, seccompProfile RuntimeDefault) already apply; the container
+  # context replaces the chart default, so allowPrivilegeEscalation must be
+  # restated. NOTE: an earlier `server.securityContext.capabilities.add:
+  # IPC_LOCK` block sat here for a while — that key does not exist in the
+  # openbao chart and was silently ignored (verified live), so OpenBao has
+  # always run without IPC_LOCK/mlock.
+  statefulSet:
+    securityContext:
+      container:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
 
   dataStorage:
     enabled: true

@@ -31,7 +31,27 @@ helmCharts:
         # Single instance: API-based scraping must not be duplicated per node.
         type: deployment
         replicas: 1
+      # PSS restricted compliance. The image ships user "alloy" (uid 473);
+      # nothing here needs root — logs are pulled via the K8s API and state
+      # lives in /tmp/alloy, recreated on restart. The uid applies to the
+      # config-reloader sidecar too (it only reads the ConfigMap volume).
+      global:
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 473
+          runAsGroup: 473
+          seccompProfile:
+            type: RuntimeDefault
+      configReloader:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
       alloy:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
         # No host log mounts needed — logs are pulled via the API, not /var/log.
         mounts:
           varlog: false
