@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: geopulse-config
+data:
+  # Public URLs
+  GEOPULSE_UI_URL: "https://geopulse.cyberhawk.no"
+  GEOPULSE_PUBLIC_BASE_URL: "https://geopulse.cyberhawk.no"
+  GEOPULSE_SHARE_BASE_URL: "https://geopulse.cyberhawk.no"
+  GEOPULSE_INVITATION_BASE_URL: "https://geopulse.cyberhawk.no"
+  # Auth / cookies (host-only cookies: no GEOPULSE_COOKIE_DOMAIN set)
+  GEOPULSE_AUTH_SECURE_COOKIES: "true"
+  GEOPULSE_JWT_ISSUER: "https://geopulse.cyberhawk.no"
+  # Flip to "false" after creating the first (admin) account.
+  GEOPULSE_AUTH_REGISTRATION_ENABLED: "true"
+  # Database (username/password come from the CNPG geopulse-db-app secret)
+  GEOPULSE_POSTGRES_URL: "jdbc:postgresql://geopulse-db-rw:5432/geopulse"
+  # MQTT disabled (HTTP-based GPS sources only)
+  GEOPULSE_MQTT_ENABLED: "false"

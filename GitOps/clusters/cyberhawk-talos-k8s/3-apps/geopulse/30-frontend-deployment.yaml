@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geopulse-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geopulse-frontend
+  template:
+    metadata:
+      labels:
+        app: geopulse-frontend
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        # nginx user in the upstream image; non-root => entrypoint picks port 8080.
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: frontend
+          image: tess1o/geopulse-ui:1.33.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            # Default value, set explicitly for clarity: nginx proxies /api/ here.
+            - name: GEOPULSE_BACKEND_URL
+              value: "http://geopulse-backend:8080"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3

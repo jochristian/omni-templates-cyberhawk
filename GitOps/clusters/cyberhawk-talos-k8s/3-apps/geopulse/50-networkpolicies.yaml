@@ -1,0 +1,93 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: geopulse-frontend
+spec:
+  endpointSelector:
+    matchLabels:
+      app: geopulse-frontend
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+        - ingress
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: newt
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    # Backend API proxy (8080) + OSM tile proxy (443)
+    - toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: geopulse-backend
+spec:
+  endpointSelector:
+    matchLabels:
+      app: geopulse-backend
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: geopulse-frontend
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    # PostgreSQL (5432) + geocoding APIs, e.g. Nominatim (443)
+    - toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: geopulse-db
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: geopulse-db
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: geopulse-backend
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # CNPG operator: status/readiness queries against the instance manager
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+  # NO egress section: the CNPG instance manager must reach the API server.

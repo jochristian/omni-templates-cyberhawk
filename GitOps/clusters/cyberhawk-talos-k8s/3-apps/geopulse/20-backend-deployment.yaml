@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geopulse-backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: geopulse-backend
+  template:
+    metadata:
+      labels:
+        app: geopulse-backend
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        # Image supports arbitrary non-root UIDs; numeric uid declared so the
+        # kubelet can verify runAsNonRoot.
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: backend
+          image: tess1o/geopulse-backend:1.33.0-jvm
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: geopulse-config
+          env:
+            - name: GEOPULSE_POSTGRES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: geopulse-db-app
+                  key: username
+            - name: GEOPULSE_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: geopulse-db-app
+                  key: password
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: keys
+              mountPath: /app/keys
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: keys
+          secret:
+            secretName: geopulse-keys

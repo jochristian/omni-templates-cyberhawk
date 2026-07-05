@@ -36,6 +36,7 @@ spec:
               namespaces:
                 - cert-manager
                 - development
+                - geopulse
                 - it-tools
                 - karakeep
                 - media
@@ -67,6 +68,7 @@ spec:
               namespaces:
                 - cert-manager
                 - development
+                - geopulse
                 - it-tools
                 - karakeep
                 - media

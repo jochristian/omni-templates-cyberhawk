@@ -139,6 +139,13 @@ endpoints:
     conditions:
       - "[STATUS] < 500"
       - "[CERTIFICATE_EXPIRATION] > 240h"
+  - name: geopulse (public)
+    group: "cyberhawk-talos-k8s (cluster)"
+    url: "https://geopulse.cyberhawk.no"
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
 
   # ===== External hosts (not part of the cluster) =========================
   # ICMP host check. Needs CAP_NET_RAW on the pod (added in 20-deployment.yaml) so

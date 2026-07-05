@@ -17,10 +17,10 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Inline container images annotated '# renovate: docker=NAME'. The native kustomize manager already covers images:/helmCharts: in every kustomization.yaml; this only catches images pinned directly in a manifest (currently just it-tools' Deployment).",
+      "description": "Inline container images annotated '# renovate: docker=NAME'. The native kustomize manager already covers images:/helmCharts: in every kustomization.yaml; this only catches images pinned directly in a manifest (currently just it-tools' Deployment) and CNPG Cluster imageName pins.",
       "managerFilePatterns": ["/^GitOps/.+\\.ya?ml$/"],
       "matchStrings": [
-        "image:\\s*\\S+:(?<currentValue>[^\"'\\s@]+)\\s*#\\s*renovate:\\s*docker=(?<depName>\\S+)"
+        "image(?:Name)?:\\s*\\S+:(?<currentValue>[^\"'\\s@]+)\\s*#\\s*renovate:\\s*docker=(?<depName>\\S+)"
       ],
       "datasourceTemplate": "docker"
     }
