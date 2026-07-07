@@ -23,6 +23,15 @@
         "image(?:Name)?:\\s*\\S+:(?<currentValue>[^\"'\\s@]+)\\s*#\\s*renovate:\\s*docker=(?<depName>\\S+)"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Talos extraManifests URLs annotated '# renovate: github-release=OWNER/REPO'. Tracks the version path segment (vX.Y.Z) in pinned raw.githubusercontent.com / releases/download URLs in patches/.",
+      "managerFilePatterns": ["/^patches/.+\\.ya?ml$/"],
+      "matchStrings": [
+        "-\\s+https://\\S+/(?<currentValue>v\\d+\\.\\d+\\.\\d+)/\\S+\\s+#\\s*renovate:\\s*github-release=(?<depName>\\S+)"
+      ],
+      "datasourceTemplate": "github-releases"
     }
   ],
   "packageRules": [
