@@ -51,3 +51,20 @@ spec:
       nodeLabels:
         topology.kubernetes.io/region: onprem
         topology.kubernetes.io/zone: lorenskog
+---
+# worker-02 hostname for the blix worker (registered as stableHostname-generated
+# "talos-sob-q5u"). Hostname change re-registers the kubelet as a new Node object;
+# the old Node must be deleted manually after the switch.
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-8aca3283-3fd7-4058-ba8a-fe380c3b5698-hostname
+  labels:
+    omni.sidero.dev/machine: 8aca3283-3fd7-4058-ba8a-fe380c3b5698
+  annotations:
+    name: hostname-worker-02
+spec:
+  data: |
+    machine:
+      network:
+        hostname: worker-02
