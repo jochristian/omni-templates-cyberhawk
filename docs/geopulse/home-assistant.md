@@ -160,12 +160,74 @@ which pushes a report immediately.
 - On failure, check HA logs for `rest_command` errors (401 = token mismatch
   with the GeoPulse source; 400 = payload rendered invalid JSON).
 
+## 6. Companion-app tracking settings (Android)
+
+The default "balanced" reporting (one point every ~4–15 min, on movement)
+is enough for GeoPulse's stay/trip detection — a 1.8 km walk was classified
+correctly at that density. What matters most is stopping Android from
+suppressing the reports:
+
+- **App info → Permissions → Location → "Allow all the time"** + **"Use
+  precise location"**. With "Only while using", background reports fall back
+  to coarse network fixes (~100 m accuracy).
+- **App info → Battery → Unrestricted.** Pixels defer background work
+  otherwise; this alone causes 15+ minute gaps.
+
+Sensor options live in the HA app → **Settings → Companion app → Manage
+sensors → Location sensors → Background location** (the Companion app entry
+only exists on the phone; enable the sensor first or the options stay
+hidden):
+
+- **Minimum accuracy:** leave at 200 m — GeoPulse copes with the occasional
+  coarse point, and filtering harder just creates gaps.
+- **High accuracy mode:** OFF by default (deliberate — foreground service +
+  real battery drain). For dense tracks on demand, toggle it from an HA
+  automation with the `command_high_accuracy_mode` notification command
+  instead of leaving it on:
+
+```yaml
+alias: GeoPulse high accuracy when away
+mode: single
+triggers:
+  - trigger: state
+    entity_id: device_tracker.YOUR_PHONE
+    from: home
+    id: left
+  - trigger: state
+    entity_id: device_tracker.YOUR_PHONE
+    to: home
+    id: arrived
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: left
+        sequence:
+          - action: notify.mobile_app_YOUR_PHONE   # base name, no suffix!
+            data:
+              message: command_high_accuracy_mode
+              data:
+                command: turn_on
+      - conditions:
+          - condition: trigger
+            id: arrived
+        sequence:
+          - action: notify.mobile_app_YOUR_PHONE
+            data:
+              message: command_high_accuracy_mode
+              data:
+                command: turn_off
+```
+
+Set **High accuracy mode update interval** to 30–60 s in the sensor settings
+so the command has effect. Same YAML-mode editing caveat as section 4 — the
+visual editor strips the nested `data:` blocks.
+
 ## Notes
 
-- Update cadence = whatever the companion app reports. For denser tracks,
-  raise the app's location update frequency (Android companion → Settings →
-  Companion app → Manage sensors → Location) — GeoPulse's stay/trip
-  detection works better with more points.
+- Update cadence = whatever the companion app reports; see section 6 for
+  tuning. GeoPulse's stay/trip detection works better with more points, but
+  the balanced default is sufficient.
 - The upstream reference for the payload shape is
   `docs-website/docs/user-guide/gps-sources/home_assistant.md` in the
   GeoPulse repo; fields verified against `HomeAssistantGpsData` (device_id,
