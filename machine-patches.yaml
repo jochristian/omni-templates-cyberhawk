@@ -1,0 +1,56 @@
+# Per-machine ConfigPatches for machines allocated via machine classes.
+# The cluster template can't carry per-machine patches when ControlPlane uses a
+# machineClass ("machine is not used in controlplane or workers"), so these are
+# applied directly: omnictl apply -f machine-patches.yaml
+#
+# Control-plane topology labels: the CP machine set spans both sites, so zone
+# labels can't live in the shared ControlPlane patch list. Without these, the
+# zone labels exist only on the Node objects (hand-applied) and vanish if a
+# node is ever recreated/re-registered.
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-64103ded-7c53-4324-b956-f88eb1cbb3d2-topology-labels
+  labels:
+    omni.sidero.dev/cluster: cyberhawk-talos-k8s-01
+    omni.sidero.dev/cluster-machine: 64103ded-7c53-4324-b956-f88eb1cbb3d2
+  annotations:
+    name: topology-labels-ctrl-00
+spec:
+  data: |
+    machine:
+      nodeLabels:
+        topology.kubernetes.io/region: onprem
+        topology.kubernetes.io/zone: blix
+---
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-10282cde-8218-42b3-95e8-8bbfb0f7a28a-topology-labels
+  labels:
+    omni.sidero.dev/cluster: cyberhawk-talos-k8s-01
+    omni.sidero.dev/cluster-machine: 10282cde-8218-42b3-95e8-8bbfb0f7a28a
+  annotations:
+    name: topology-labels-ctrl-01
+spec:
+  data: |
+    machine:
+      nodeLabels:
+        topology.kubernetes.io/region: onprem
+        topology.kubernetes.io/zone: blix
+---
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-763db095-e7f9-4c9e-91f6-693d4963c5c3-topology-labels
+  labels:
+    omni.sidero.dev/cluster: cyberhawk-talos-k8s-01
+    omni.sidero.dev/cluster-machine: 763db095-e7f9-4c9e-91f6-693d4963c5c3
+  annotations:
+    name: topology-labels-ctrl-02
+spec:
+  data: |
+    machine:
+      nodeLabels:
+        topology.kubernetes.io/region: onprem
+        topology.kubernetes.io/zone: lorenskog
