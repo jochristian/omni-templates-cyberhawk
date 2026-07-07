@@ -1,5 +1,9 @@
 cluster:
-  allowSchedulingOnControlPlanes: true
+  # false restores Talos's default node-role.kubernetes.io/control-plane:NoSchedule
+  # taint, keeping regular workloads (and their iSCSI-backed PVCs) off the CP nodes so
+  # etcd's local fsync disk isn't competing with workload IO. Was true (bootstrap-era
+  # leftover from before any workers existed); flipped back 2026-07-01.
+  allowSchedulingOnControlPlanes: false
   discovery:
     enabled: false
   network:

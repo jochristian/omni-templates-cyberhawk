@@ -16,6 +16,8 @@ patches:
 
 features:
   enableWorkloadProxy: true
+  backupConfiguration:
+    interval: 6h
 
 systemExtensions:
   - siderolabs/qemu-guest-agent
@@ -63,6 +65,23 @@ patches:
       machine:
         nodeLabels:
           topology.kubernetes.io/zone: lorenskog
+          topology.kubernetes.io/region: onprem
+  - name: kubespan-enabled
+    file: patches/kubespan.yml
+  - name: monitoring
+    file: patches/monitoring.yaml
+---
+kind: Workers
+name: blix-static-workers
+machineClass:
+  name: role-worker-blix
+  size: 1
+patches:
+  - name: blix-labels
+    inline:
+      machine:
+        nodeLabels:
+          topology.kubernetes.io/zone: blix
           topology.kubernetes.io/region: onprem
   - name: kubespan-enabled
     file: patches/kubespan.yml

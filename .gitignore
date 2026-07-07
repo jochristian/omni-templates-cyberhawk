@@ -6,3 +6,5 @@ charts
 Chart.lock
 # Claude Code superpowers specs (local design docs, not for repo)
 **/docs/superpowers/
+# Local audit reports
+talos-audit-*.md
