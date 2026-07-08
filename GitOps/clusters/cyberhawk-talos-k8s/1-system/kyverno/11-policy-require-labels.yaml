@@ -37,6 +37,7 @@ spec:
               namespaces:
                 - cert-manager
                 - development
+                - dnscontrol
                 - geopulse
                 - it-tools
                 - karakeep

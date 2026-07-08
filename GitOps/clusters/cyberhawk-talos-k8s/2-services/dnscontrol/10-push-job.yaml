@@ -1,0 +1,52 @@
+# Runs `dnscontrol push` after every sync of this app (PostSync = the updated
+# secret is already applied). The job log contains the full record diff — that
+# is the audit trail for what changed at Cloudflare. Idempotent no-op when the
+# zones already match. BeforeHookCreation keeps the previous job (and its log)
+# around until the next sync.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dnscontrol-push
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        # Image ships no USER (root default); static Go binary needs no privileges.
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dnscontrol
+          image: ghcr.io/dnscontrol/dnscontrol
+          args:
+            - push
+            - --config
+            - /dns/dnsconfig.js
+            - --creds
+            - /dns/creds.json
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /dns
+              readOnly: true
+      volumes:
+        - name: config
+          secret:
+            secretName: dnscontrol-config

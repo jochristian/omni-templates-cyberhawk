@@ -1,0 +1,53 @@
+# Daily off-peak re-push: reverts manual Cloudflare-UI edits back to the
+# committed state, and acts as catch-up if a hook push failed while the
+# Cloudflare API was unreachable. Same pod spec as 10-push-job.yaml.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dnscontrol-drift
+spec:
+  schedule: "30 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            # Image ships no USER (root default); static Go binary needs no privileges.
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: dnscontrol
+              image: ghcr.io/dnscontrol/dnscontrol
+              args:
+                - push
+                - --config
+                - /dns/dnsconfig.js
+                - --creds
+                - /dns/creds.json
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                readOnlyRootFilesystem: true
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: config
+                  mountPath: /dns
+                  readOnly: true
+          volumes:
+            - name: config
+              secret:
+                secretName: dnscontrol-config

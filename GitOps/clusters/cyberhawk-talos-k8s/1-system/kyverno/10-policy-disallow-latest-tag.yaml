@@ -36,6 +36,7 @@ spec:
               namespaces:
                 - cert-manager
                 - development
+                - dnscontrol
                 - geopulse
                 - it-tools
                 - karakeep
@@ -68,6 +69,7 @@ spec:
               namespaces:
                 - cert-manager
                 - development
+                - dnscontrol
                 - geopulse
                 - it-tools
                 - karakeep
