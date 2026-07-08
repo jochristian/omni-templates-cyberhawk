@@ -22,6 +22,8 @@ The cluster is multi-site: nodes in zones `lorenskog` and `blix` are joined over
 |------|---------|
 | `template.yaml` | Omni cluster template: defines the Cluster, ControlPlane (3 nodes), and Workers, and wires in the patches below. |
 | `machineclass.yaml` | Omni `MachineClasses` — how nodes are discovered/auto-provisioned (`role-controlplane`, `proxmox-auto-worker-blix`, `role-worker-lorenskog`). |
+| `machine-patches.yaml` | Per-machine Omni `ConfigPatches` (control-plane topology-zone labels, worker hostnames). The cluster template can't carry per-machine patches for machineClass-allocated machines, so these are applied separately: `omnictl apply -f machine-patches.yaml`. |
+| `renovate.json` | Config for the self-hosted Renovate bot: dependency policy plus regex managers that decode the `# renovate: docker=…` / `helm=…` / `github-release=…` comment pins. The bot itself runs in-cluster (`2-services/monitoring/renovate/`). |
 | `cilium_values.yaml` | Reference copy of the Cilium Helm values used at bootstrap. The GitOps-managed source of truth is `GitOps/.../kube-system/cilium/values.yaml`. |
 | `patches/` | Talos machine-config patches applied by `template.yaml`. |
 
@@ -33,10 +35,11 @@ The cluster is multi-site: nodes in zones `lorenskog` and `blix` are joined over
 | `kubespan.yml` | Enables Kubespan for inter-node/site WireGuard mesh. |
 | `install_cilium.yaml` | Cilium as a Talos **inline manifest**. **Generated, gitignored** (see below). |
 | `install_argocd.yaml` | Argo CD as a Talos **inline manifest**. **Generated, gitignored.** |
-| `extraManifests.yml` | URLs for cluster add-ons: kubelet-serving-cert-approver, metrics-server, Gateway API CRDs, CSI external-snapshotter CRDs. |
+| `extraManifests.yml` | URLs for cluster add-ons: kubelet-serving-cert-approver, metrics-server, Gateway API CRDs, CSI external-snapshotter CRDs. Pinned to release tags; bumps tracked by Renovate. |
 | `monitoring.yaml` / `monitoring-controlplane.yaml` | Kubelet args for metrics scraping. |
 | `gvisor-sysctl.yaml` / `gvisor-runtime-class.yaml` | gVisor runtime class + sysctls. |
-| `etcd-timeouts.yaml`, `zswap.yaml`, `enable_helm.yaml` | etcd tuning, zswap, and Argo CD `--enable-helm` for kustomize helmCharts. |
+| `etcd-timeouts.yaml` | etcd heartbeat/election tuning for the multi-site links. |
+| `zswap.yaml`, `enable_helm.yaml` | **Unreferenced leftovers** — neither is wired into `template.yaml` anymore (zswap was dropped from the template; Argo CD renders kustomize `helmCharts` without a `--enable-helm` build option). Candidates for deletion. |
 
 > **Generated patches:** `install_cilium.yaml` and `install_argocd.yaml` are
 > **gitignored** — they are rendered from Helm charts/kustomize and must be regenerated
@@ -68,6 +71,7 @@ helm template cilium GitOps/clusters/cyberhawk-talos-k8s/1-system/kube-system/ci
 
 # 3. Apply to Omni
 omnictl apply -f machineclass.yaml
+omnictl apply -f machine-patches.yaml   # per-machine ConfigPatches (topology labels, hostnames)
 omnictl cluster template sync --file template.yaml
 ```
 
@@ -93,9 +97,9 @@ Directories are grouped into numbered layers (applied roughly in order):
 
 | Layer | Contains |
 |-------|----------|
-| `1-system/` | Cluster infrastructure: argocd, cilium (+ cilium-bgp), cnpg, mariadb-operator, CSI drivers (nfs, democratic-csi), gateway, tetragon, namespaces. |
-| `2-services/` | Platform services: cert-manager, keda, openbao, newt, volsync-system, and monitoring (kube-prometheus-stack, loki, alloy, gatus, librenms, renovate). |
-| `3-apps/` | Applications: it-tools, karakeep, portfolio. |
+| `1-system/` | Cluster infrastructure: argocd, cilium (+ cilium-bgp), cnpg, mariadb-operator, CSI drivers (nfs, democratic-csi), gateway, kyverno, tetragon, namespaces. |
+| `2-services/` | Platform services: cert-manager, dnscontrol, keda, openbao, newt, volsync-system, and monitoring (kube-prometheus-stack, loki, alloy, gatus, librenms, renovate). |
+| `3-apps/` | Applications: geopulse, it-tools, karakeep. (`.portfolio/` is parked — dot-prefixed dirs are skipped by the generator, which is how you disable an app without deleting it.) |
 | `4-media/` | Media apps: tautulli, tracearr, yamtrack. |
 
 ### Discovery & naming rules
@@ -108,7 +112,7 @@ The ApplicationSet scans each layer at two depths:
   `monitoring` namespace.
 
 Every discovered leaf directory **must contain a `kustomization.yaml`** (which may use
-`helmCharts:` — `--enable-helm` is on). Sync policy is automated with `prune: true`,
+`helmCharts:`). Sync policy is automated with `prune: true`,
 `selfHeal: false`, server-side apply, and `CreateNamespace=true`. Changes take effect
 only **after they are pushed** — Argo CD reconciles `HEAD` of `main`.
 
@@ -116,9 +120,16 @@ only **after they are pushed** — Argo CD reconciles `HEAD` of `main`.
 
 - **Numeric file prefixes** (`01-…`, `10-…`, `31-…`) order how manifests are applied.
 - **Image versions are pinned in `kustomization.yaml`** via the `images:`/`newTag`
-  block — not in the Deployment manifests.
+  block — not in the Deployment manifests. Renovate tracks these natively; pins that
+  live elsewhere (a raw manifest, a CNPG `imageName`, an extraManifests URL) carry a
+  `# renovate: docker=…`/`helm=…`/`github-release=…` comment so the regex managers in
+  `renovate.json` pick them up.
 - **Databases via operators:** MariaDB apps use `MariaDB`/`Database`/`User`/`Grant` CRs
   (mariadb-operator); Postgres uses CNPG. Don't hand-roll DB StatefulSets.
+- **Kyverno policies** (`1-system/kyverno/`) validate workloads: no `:latest` tags,
+  required labels, allowed registries (Enforce in `karakeep`, Audit elsewhere) and a
+  PSS-restricted audit. If a policy blocks an emergency change, see
+  [`docs/kyverno/break-glass.md`](docs/kyverno/break-glass.md).
 
 ### Secrets — SOPS + KSOPS
 
@@ -148,8 +159,22 @@ BGP peering is configured in `1-system/kube-system/cilium-bgp/bgp-config.yaml`. 
 first installed as a Talos inline manifest at bootstrap, then managed in-cluster by Argo
 CD from the chart at `1-system/kube-system/cilium/`.
 
+## DNS
+
+DNS for all public zones is GitOps-managed by **dnscontrol**
+(`2-services/dnscontrol/` — zone config and Cloudflare token in one SOPS secret; a
+PostSync hook Job pushes on sync and a nightly CronJob reverts manual UI edits). See
+[`docs/dnscontrol/README.md`](docs/dnscontrol/README.md) for the edit/preview workflow.
+
 ## Documentation
 
 - [`CLAUDE.md`](CLAUDE.md) — architecture orientation for working in this repo.
 - [`docs/openbao/`](docs/openbao/) — OpenBao operator runbook, user guide, SOPS
   workflow, and agent-injector examples.
+- [`docs/dnscontrol/`](docs/dnscontrol/) — how to change/preview DNS records via GitOps.
+- [`docs/kyverno/`](docs/kyverno/) — break-glass procedure when a Kyverno policy blocks
+  an urgent deploy.
+- [`docs/geopulse/`](docs/geopulse/) — GeoPulse location tracking with Home Assistant as
+  the GPS source.
+- [`docs/tetragon/`](docs/tetragon/) — `policy-matches.sh`, a viewer for Tetragon
+  TracingPolicy matches (live via `tetra`, or `--loki` for durable history).
