@@ -1,8 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Kyverno policy engine + starter policies (Audit on the GitOps-managed
-# namespaces, Enforce in karakeep via failureActionOverrides).
+# Kyverno policy engine + policies. Best-practice policies (10/11/13)
+# Enforce in the app namespaces via failureActionOverrides (Audit holdouts:
+# monitoring, portfolio); PSS-restricted (12) is Audit-only, with narrow
+# PolicyExceptions (20-24) for legitimately-privileged workloads.
 #
 # NOTE: deliberately NO top-level `namespace:` transformer here — kustomize
 # treats unknown kinds as namespaced and would stamp `namespace: kyverno`
@@ -23,6 +25,11 @@ resources:
   - 11-policy-require-labels.yaml
   - 12-policy-podsecurity-restricted.yaml
   - 13-policy-restrict-image-registries.yaml
+  - 20-exception-pss-node-exporter.yaml
+  - 21-exception-pss-gatus.yaml
+  - 22-exception-pss-librenms.yaml
+  - 23-exception-pss-tautulli.yaml
+  - 24-exception-pss-yamtrack.yaml
 
 helmCharts:
   - name: kyverno

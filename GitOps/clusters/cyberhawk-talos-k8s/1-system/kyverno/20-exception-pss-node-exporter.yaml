@@ -1,0 +1,45 @@
+# node-exporter reads host /proc, /sys and / by design — host namespaces,
+# hostPath mounts and the host port are its entire job. Exempt ONLY the
+# failing PSS controls, pinned to the node-exporter image; everything else
+# (and any future sidecar) stays audited.
+# PolicyExceptions are honoured only from the kyverno namespace.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: pss-node-exporter
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: podsecurity-restricted
+      ruleNames:
+        - restricted
+        - autogen-restricted
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+            - DaemonSet
+          namespaces:
+            - monitoring
+          names:
+            - monitoring-prometheus-node-exporter*
+  podSecurity:
+    # Pod-spec-level controls: bare controlName.
+    - controlName: Host Namespaces
+    - controlName: HostPath Volumes
+    - controlName: Volume Types
+    - controlName: Seccomp
+    # Container-level controls need images[]; Seccomp exists at both levels.
+    - controlName: Seccomp
+      images:
+        - quay.io/prometheus/node-exporter*
+    - controlName: Host Ports
+      images:
+        - quay.io/prometheus/node-exporter*
+    - controlName: Privilege Escalation
+      images:
+        - quay.io/prometheus/node-exporter*
+    - controlName: Capabilities
+      images:
+        - quay.io/prometheus/node-exporter*

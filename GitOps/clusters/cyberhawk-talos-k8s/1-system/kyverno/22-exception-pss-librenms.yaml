@@ -1,0 +1,44 @@
+# LibreNMS stack (app, dispatcher, snmp-scan CronJob, rrdcached): SNMP
+# discovery and ICMP polling need NET_ADMIN+NET_RAW, and the librenms image
+# runs its own init as root. rrdcached is included as part of the stack —
+# it only fails the generic root-image controls; revisit if the image ever
+# gains a non-root variant.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: pss-librenms
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: podsecurity-restricted
+      ruleNames:
+        - restricted
+        - autogen-restricted
+        - autogen-cronjob-restricted
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+            - Deployment
+            - ReplicaSet
+            - CronJob
+            - Job
+          namespaces:
+            - monitoring
+          names:
+            - librenms*
+            - rrdcached*
+  podSecurity:
+    # Running as Non-root exists at pod and container level — two entries.
+    - controlName: Running as Non-root
+    - controlName: Running as Non-root
+      images: &librenms-images
+        - librenms/librenms*
+        - docker.io/librenms/librenms*
+        - crazymax/rrdcached*
+        - docker.io/crazymax/rrdcached*
+    - controlName: Privilege Escalation
+      images: *librenms-images
+    - controlName: Capabilities
+      images: *librenms-images

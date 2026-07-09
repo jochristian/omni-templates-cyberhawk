@@ -1,0 +1,37 @@
+# yamtrack's image runs as root with no securityContext knobs in the
+# upstream deployment (linuxserver-style init). Runs under gVisor (media
+# namespace) which mitigates the root exposure.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: pss-yamtrack
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: podsecurity-restricted
+      ruleNames:
+        - restricted
+        - autogen-restricted
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+            - Deployment
+            - ReplicaSet
+          namespaces:
+            - media
+          names:
+            - yamtrack*
+  podSecurity:
+    - controlName: Running as Non-root
+    - controlName: Running as Non-root
+      images: &yamtrack-images
+        - ghcr.io/fuzzygrim/yamtrack*
+    - controlName: Seccomp
+    - controlName: Seccomp
+      images: *yamtrack-images
+    - controlName: Privilege Escalation
+      images: *yamtrack-images
+    - controlName: Capabilities
+      images: *yamtrack-images

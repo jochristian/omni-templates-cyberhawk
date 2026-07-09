@@ -1,0 +1,29 @@
+# Gatus adds NET_RAW for ICMP uptime checks (documented in the gatus dir:
+# without it ping checks need a root pod). Narrowest possible exemption:
+# a single control, pinned to the gatus image. Everything else stays audited.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: pss-gatus
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: podsecurity-restricted
+      ruleNames:
+        - restricted
+        - autogen-restricted
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+            - Deployment
+            - ReplicaSet
+          namespaces:
+            - monitoring
+          names:
+            - gatus*
+  podSecurity:
+    - controlName: Capabilities
+      images:
+        - ghcr.io/twin/gatus*
