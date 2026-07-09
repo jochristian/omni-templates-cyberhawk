@@ -68,7 +68,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: cert-manager
   endpoints:
-    - port: tcp-prometheus-servicemonitor
+    - port: http-metrics
       interval: 60s
 ---
 apiVersion: monitoring.coreos.com/v1
