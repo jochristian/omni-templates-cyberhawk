@@ -8,8 +8,8 @@ cluster:
    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml # renovate: github-release=kubernetes-sigs/gateway-api
    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml # renovate: github-release=kubernetes-sigs/gateway-api
    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml # renovate: github-release=kubernetes-sigs/gateway-api
-   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
-   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
-   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
-   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
-   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.5.0/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
+   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.6.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
+   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.6.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
+   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.6.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
+   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.6.0/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
+   - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.6.0/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
