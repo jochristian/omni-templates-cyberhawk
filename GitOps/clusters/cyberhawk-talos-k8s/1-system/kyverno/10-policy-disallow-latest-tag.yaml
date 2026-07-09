@@ -11,10 +11,12 @@ metadata:
       The ':latest' tag is mutable and can lead to unexpected errors if the
       image changes. This policy validates that every container image
       specifies a tag and that the tag is not 'latest'.
-      Scope: Audit across the GitOps-managed namespaces (declared in
-      1-system/namespaces/, minus infrastructure: tetragon/kyverno/keda),
-      ENFORCE in karakeep. Promote namespaces by adding them to
-      failureActionOverrides. Break-glass: docs/kyverno/break-glass.md.
+      Scope: GitOps-managed namespaces (declared in 1-system/namespaces/,
+      minus infrastructure: tetragon/kyverno/keda). ENFORCE everywhere
+      except monitoring (held in Audit so ad-hoc debug pods aren't blocked)
+      and portfolio (app disabled, never audited). Promote namespaces by
+      adding them to failureActionOverrides. Break-glass:
+      docs/kyverno/break-glass.md.
 spec:
   # Fail OPEN (best-effort enforcement): with a single admission-controller
   # replica, the default failurePolicy (Fail) would block ALL pod/workload
@@ -52,7 +54,17 @@ spec:
         failureActionOverrides:
           - action: Enforce
             namespaces:
+              - cert-manager
+              - development
+              - dnscontrol
+              - geopulse
+              - it-tools
               - karakeep
+              - media
+              - newt
+              - openbao
+              - production
+              - tracearr
         message: "An image tag is required."
         pattern:
           spec:
@@ -85,7 +97,17 @@ spec:
         failureActionOverrides:
           - action: Enforce
             namespaces:
+              - cert-manager
+              - development
+              - dnscontrol
+              - geopulse
+              - it-tools
               - karakeep
+              - media
+              - newt
+              - openbao
+              - production
+              - tracearr
         message: "Using a mutable image tag e.g. 'latest' is not allowed."
         pattern:
           spec:
