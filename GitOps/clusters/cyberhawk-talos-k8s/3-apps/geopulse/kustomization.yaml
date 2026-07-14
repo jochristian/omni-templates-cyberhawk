@@ -19,7 +19,7 @@ images:
   - name: tess1o/geopulse-backend
     newTag: "1.33.0-jvm" # renovate: docker=tess1o/geopulse-backend
   - name: tess1o/geopulse-ui
-    newTag: "1.33.0" # renovate: docker=tess1o/geopulse-ui
+    newTag: "1.34.0" # renovate: docker=tess1o/geopulse-ui
 
 labels:
   - includeSelectors: true
