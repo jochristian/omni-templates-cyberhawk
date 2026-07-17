@@ -16,3 +16,22 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+---
+# Pangolin resource (qbittorrent.cyberhawk.no) reaches the WebUI through the
+# in-cluster newt tunnel client — same pattern as allow-newt-to-yamtrack.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-newt-to-qbittorrent
+spec:
+  endpointSelector:
+    matchLabels:
+      app: qbittorrent
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: newt
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
