@@ -16,7 +16,7 @@ resources:
 
 images:
   - name: qmcgaw/gluetun
-    newTag: v3.40 # renovate: docker=qmcgaw/gluetun
+    newTag: v3.41.1 # renovate: docker=qmcgaw/gluetun
   - name: ghcr.io/home-operations/qbittorrent
     newTag: "5.2.3" # renovate: docker=ghcr.io/home-operations/qbittorrent
   - name: ghcr.io/unpackerr/unpackerr

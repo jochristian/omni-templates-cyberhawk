@@ -24,7 +24,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: gluetun
-          image: qmcgaw/gluetun:v3.40
+          image: qmcgaw/gluetun:v3.41.1
           securityContext:
             runAsUser: 0
             capabilities:
@@ -52,10 +52,8 @@ spec:
               value: "on"
             - name: VPN_PORT_FORWARDING_PROVIDER
               value: "protonvpn"
-            # NOTE: gluetun v3.40 only substitutes {{PORTS}} — the wiki's
-            # {{PORT}}/{{VPN_INTERFACE}} placeholders need v3.41+.
             - name: VPN_PORT_FORWARDING_UP_COMMAND
-              value: /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":{{PORTS}},\"random_port\":false,\"upnp\":false}" http://127.0.0.1:8080/api/v2/app/setPreferences'
+              value: /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}" http://127.0.0.1:8080/api/v2/app/setPreferences'
             - name: VPN_PORT_FORWARDING_DOWN_COMMAND
               value: /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":0}" http://127.0.0.1:8080/api/v2/app/setPreferences'
           envFrom:
