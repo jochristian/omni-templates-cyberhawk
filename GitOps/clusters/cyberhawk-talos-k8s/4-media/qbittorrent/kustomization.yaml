@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: media
+
+generators:
+  - 01-gluetun-secret.yaml
+  - 02-unpackerr-secret.yaml
+
+resources:
+  - 10-storage.yaml
+  - 20-qbittorrent-deployment.yaml
+  - 21-qbittorrent-service.yaml
+  - 22-qbittorrent-httproute.yaml
+  - 30-unpackerr-deployment.yaml
+  - 50-networkpolicies.yaml
+
+images:
+  - name: qmcgaw/gluetun
+    newTag: v3.40 # renovate: docker=qmcgaw/gluetun
+  - name: ghcr.io/home-operations/qbittorrent
+    newTag: "5.2.3" # renovate: docker=ghcr.io/home-operations/qbittorrent
+  - name: ghcr.io/unpackerr/unpackerr
+    newTag: "0.14.5" # renovate: docker=ghcr.io/unpackerr/unpackerr
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: qbittorrent

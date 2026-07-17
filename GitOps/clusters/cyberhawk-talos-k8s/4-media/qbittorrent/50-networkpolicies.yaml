@@ -1,0 +1,18 @@
+# The media namespace carries allow-external-deny-internal (world + same-ns
+# only). Traffic from the Cilium Gateway arrives as the "ingress" entity, which
+# that policy does not cover — allow it explicitly for the WebUI.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-gateway-to-qbittorrent
+spec:
+  endpointSelector:
+    matchLabels:
+      app: qbittorrent
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

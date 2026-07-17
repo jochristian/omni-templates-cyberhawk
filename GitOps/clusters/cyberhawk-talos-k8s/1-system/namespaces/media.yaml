@@ -6,6 +6,10 @@ metadata:
     environment: media
     team: media
     networking-zone: frontend
+    # gluetun (qbittorrent VPN sidecar) needs NET_ADMIN + /dev/net/tun hostPath,
+    # which the cluster-default baseline PSA rejects.
+    pod-security.kubernetes.io/warn: privileged
+    pod-security.kubernetes.io/enforce: privileged
 # TODO: re-enable after assigning 10.50.2.250/32 to lo on gateway nodes (Talos patch needed)
 # ---
 # apiVersion: cilium.io/v2

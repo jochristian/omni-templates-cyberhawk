@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unpackerr
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: unpackerr
+  template:
+    metadata:
+      labels:
+        app: unpackerr
+    spec:
+      nodeSelector:
+        topology.cyberhawk.no/storage: files-nfs
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: unpackerr
+          image: ghcr.io/unpackerr/unpackerr:0.14.5
+          env:
+            - name: TZ
+              value: Europe/Oslo
+            # Sonarr/Radarr are not deployed yet — these point at their future
+            # in-cluster Services; unpackerr retries until they exist.
+            - name: UN_SONARR_0_URL
+              value: "http://sonarr.media.svc:8989"
+            - name: UN_SONARR_0_PATHS_0
+              value: "/files/filserver/download/tv"
+            - name: UN_RADARR_0_URL
+              value: "http://radarr.media.svc:7878"
+            - name: UN_RADARR_0_PATHS_0
+              value: "/files/filserver/download/movies"
+          envFrom:
+            - secretRef:
+                name: unpackerr-apikeys
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+          volumeMounts:
+            - name: files
+              mountPath: /files
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: files

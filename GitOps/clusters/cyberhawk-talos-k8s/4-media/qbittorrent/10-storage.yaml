@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: files-nfs
+spec:
+  capacity:
+    storage: 4Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.1
+    - noatime
+  nfs:
+    server: 10.50.1.200
+    path: /files
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: files
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: files-nfs
+  resources:
+    requests:
+      storage: 4Ti
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbittorrent-config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: democratic-csi-iscsi
+  resources:
+    requests:
+      storage: 2Gi
