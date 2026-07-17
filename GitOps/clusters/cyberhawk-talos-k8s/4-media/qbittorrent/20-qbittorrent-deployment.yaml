@@ -44,6 +44,18 @@ spec:
               value: "off"
             - name: TZ
               value: Europe/Oslo
+            # ProtonVPN NAT-PMP via the custom provider (documented primary use
+            # case of VPN_PORT_FORWARDING_PROVIDER). The up/down commands push
+            # the negotiated port into qBittorrent over pod-local loopback and
+            # need "Bypass authentication for clients on localhost" in the WebUI.
+            - name: VPN_PORT_FORWARDING
+              value: "on"
+            - name: VPN_PORT_FORWARDING_PROVIDER
+              value: "protonvpn"
+            - name: VPN_PORT_FORWARDING_UP_COMMAND
+              value: /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}" http://127.0.0.1:8080/api/v2/app/setPreferences'
+            - name: VPN_PORT_FORWARDING_DOWN_COMMAND
+              value: /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":0}" http://127.0.0.1:8080/api/v2/app/setPreferences'
           envFrom:
             - secretRef:
                 name: gluetun-vpn
