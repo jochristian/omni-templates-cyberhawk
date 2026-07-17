@@ -20,7 +20,7 @@ images:
   - name: ghcr.io/home-operations/qbittorrent
     newTag: "5.2.3" # renovate: docker=ghcr.io/home-operations/qbittorrent
   - name: ghcr.io/unpackerr/unpackerr
-    newTag: "0.14.5" # renovate: docker=ghcr.io/unpackerr/unpackerr
+    newTag: "0.15.2" # renovate: docker=ghcr.io/unpackerr/unpackerr
 
 labels:
   - includeSelectors: true
