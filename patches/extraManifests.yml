@@ -2,12 +2,12 @@ cluster:
   extraManifests:
    - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/v0.11.0/deploy/standalone-install.yaml # renovate: github-release=alex1989hu/kubelet-serving-cert-approver
    - https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.0/components.yaml # renovate: github-release=kubernetes-sigs/metrics-server
-   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml # renovate: github-release=kubernetes-sigs/gateway-api
-   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml # renovate: github-release=kubernetes-sigs/gateway-api
-   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml # renovate: github-release=kubernetes-sigs/gateway-api
-   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml # renovate: github-release=kubernetes-sigs/gateway-api
-   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml # renovate: github-release=kubernetes-sigs/gateway-api
-   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml # renovate: github-release=kubernetes-sigs/gateway-api
+   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml # renovate: github-release=kubernetes-sigs/gateway-api
+   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml # renovate: github-release=kubernetes-sigs/gateway-api
+   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml # renovate: github-release=kubernetes-sigs/gateway-api
+   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml # renovate: github-release=kubernetes-sigs/gateway-api
+   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml # renovate: github-release=kubernetes-sigs/gateway-api
+   - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml # renovate: github-release=kubernetes-sigs/gateway-api
    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.6.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.6.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
    - https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v8.6.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml # renovate: github-release=kubernetes-csi/external-snapshotter
