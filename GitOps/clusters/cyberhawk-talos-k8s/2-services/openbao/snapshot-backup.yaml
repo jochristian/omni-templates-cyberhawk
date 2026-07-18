@@ -42,7 +42,10 @@ spec:
                 - -c
                 - |
                   set -e
-                  export BAO_ADDR=http://openbao-active.openbao.svc:8200
+                  # Generic svc, not openbao-active: the active svc has no
+                  # endpoints (no service_registration stanza in the server
+                  # config); standbys forward requests to the leader anyway.
+                  export BAO_ADDR=http://openbao.openbao.svc:8200
                   TOKEN=$(bao write -field=token auth/kubernetes/login \
                     role=raft-snapshot \
                     jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)")
