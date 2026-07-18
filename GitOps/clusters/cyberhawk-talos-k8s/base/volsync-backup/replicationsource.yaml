@@ -13,11 +13,9 @@ spec:
     retain:
       daily: 7
       weekly: 2
+    # Direct mounts the source PVC as-is — works with any storage class.
     copyMethod: Direct
     cacheCapacity: 5Gi
-    # Matches your cluster's storage setup
-    storageClassName: nfs-csi
-    cacheStorageClassName: nfs-csi
     moverSecurityContext:
       runAsUser: 1000
       runAsGroup: 100
