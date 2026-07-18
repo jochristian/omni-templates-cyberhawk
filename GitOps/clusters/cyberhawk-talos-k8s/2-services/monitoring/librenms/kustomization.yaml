@@ -4,6 +4,10 @@ namespace: monitoring
 
 generators:
   - 01-secret.yaml
+  - 60-volsync-secret.yaml
+
+components:
+  - ../../../base/volsync-backup
 
 resources:
   - 02-configmap.yaml
@@ -32,3 +36,21 @@ labels:
   - includeSelectors: true
     pairs:
       app.kubernetes.io/name: librenms
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: librenms-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: librenms-data
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-hetzner-librenms
+      - op: replace
+        path: /spec/trigger/schedule
+        value: "15 6 * * *"

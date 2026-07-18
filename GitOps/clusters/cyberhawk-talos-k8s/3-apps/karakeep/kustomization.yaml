@@ -4,6 +4,10 @@ namespace: karakeep
 
 generators:
 - 01-secret.yaml
+- 40-volsync-secret.yaml
+
+components:
+- ../../base/volsync-backup
 
 resources:
 - 10-meilisearch-pvc.yaml
@@ -30,3 +34,21 @@ labels:
 - includeSelectors: true
   pairs:
     app.kubernetes.io/name: karakeep
+
+patches:
+- target:
+    kind: ReplicationSource
+    name: backup-placeholder
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: karakeep-backup
+    - op: replace
+      path: /spec/sourcePVC
+      value: karakeep-data
+    - op: replace
+      path: /spec/restic/repository
+      value: s3-backup-hetzner-karakeep
+    - op: replace
+      path: /spec/trigger/schedule
+      value: "45 5 * * *"

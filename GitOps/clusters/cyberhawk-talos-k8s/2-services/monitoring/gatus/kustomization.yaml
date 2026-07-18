@@ -8,6 +8,12 @@ resources:
   - 30-service.yaml
   - 40-servicemonitor.yaml
 
+generators:
+  - 50-volsync-secret.yaml
+
+components:
+  - ../../../base/volsync-backup
+
 # Gatus config as a ConfigMap. Hash suffix is kept (default) so editing config.yaml
 # rolls the Deployment automatically; kustomize rewrites the volume reference.
 configMapGenerator:
@@ -23,3 +29,21 @@ labels:
   - includeSelectors: true
     pairs:
       app.kubernetes.io/name: gatus
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: gatus-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: gatus-data
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-hetzner-gatus
+      - op: replace
+        path: /spec/trigger/schedule
+        value: "0 6 * * *"
