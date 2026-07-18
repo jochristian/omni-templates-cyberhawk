@@ -1,0 +1,90 @@
+# Nightly raft snapshot to Hetzner S3 (restic repo cyberhawk-backup/openbao).
+#
+# Raft storage must NOT be backed up as a file copy (see volsync docs/notes) —
+# only `bao operator raft snapshot` produces a consistent, restorable backup.
+#
+# OpenBao-side prerequisites (policy + kubernetes-auth role) are created by
+# scripts/configure-snapshot-backup.sh, run manually with a root token.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openbao-snapshot
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: openbao-snapshot
+spec:
+  schedule: "30 4 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        spec:
+          serviceAccountName: openbao-snapshot
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: snapshot
+              image: quay.io/openbao/openbao:2.6.0
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  export BAO_ADDR=http://openbao-active.openbao.svc:8200
+                  TOKEN=$(bao write -field=token auth/kubernetes/login \
+                    role=raft-snapshot \
+                    jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)")
+                  BAO_TOKEN=$TOKEN bao operator raft snapshot save /snapshots/openbao-raft.snap
+                  ls -l /snapshots
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: snapshots
+                  mountPath: /snapshots
+          containers:
+            - name: upload
+              image: restic/restic:0.18.1
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  restic cat config >/dev/null 2>&1 || restic init
+                  restic backup --host openbao /snapshots/openbao-raft.snap
+                  restic forget --host openbao --keep-daily 7 --keep-weekly 4 --prune
+              envFrom:
+                - secretRef:
+                    name: s3-backup-hetzner-openbao
+              env:
+                - name: RESTIC_CACHE_DIR
+                  value: /cache
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: snapshots
+                  mountPath: /snapshots
+                - name: cache
+                  mountPath: /cache
+          volumes:
+            - name: snapshots
+              emptyDir: {}
+            - name: cache
+              emptyDir: {}

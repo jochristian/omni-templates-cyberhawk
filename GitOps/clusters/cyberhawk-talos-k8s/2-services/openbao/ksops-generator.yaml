@@ -9,3 +9,4 @@ metadata:
 files:
   - openbao-unseal-keys.sops.yaml
   - openbao-static-unseal.sops.yaml
+  - snapshot-s3-secret.sops.yaml

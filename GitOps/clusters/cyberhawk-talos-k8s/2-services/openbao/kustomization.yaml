@@ -9,6 +9,7 @@ generators:
 resources:
   - serviceaccount-auth.yaml
   - clusterrolebinding-auth.yaml
+  - snapshot-backup.yaml
 
 helmCharts:
   - name: openbao
