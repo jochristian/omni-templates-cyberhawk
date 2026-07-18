@@ -5,6 +5,10 @@ namespace: media
 generators:
   - 01-gluetun-secret.yaml
   - 02-unpackerr-secret.yaml
+  - 03-volsync-secret.yaml
+
+components:
+  - ../../base/volsync-backup
 
 resources:
   - 10-storage.yaml
@@ -26,3 +30,21 @@ labels:
   - includeSelectors: true
     pairs:
       app.kubernetes.io/name: qbittorrent
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: qbittorrent-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: qbittorrent-config
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-hetzner-qbittorrent
+      - op: replace
+        path: /spec/trigger/schedule
+        value: "15 5 * * *"

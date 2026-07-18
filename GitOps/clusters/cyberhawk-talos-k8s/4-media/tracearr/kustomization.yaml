@@ -5,6 +5,10 @@ namespace: tracearr
 generators:
   - 01-secret.yaml
   - 13-timescaledb-secret.yaml
+  - 60-volsync-secret.yaml
+
+components:
+  - ../../base/volsync-backup
 
 resources:
   - 02-configmap.yaml
@@ -31,3 +35,21 @@ labels:
   - includeSelectors: true
     pairs:
       app.kubernetes.io/name: tracearr
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: tracearr-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: tracearr-data
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-hetzner-tracearr
+      - op: replace
+        path: /spec/trigger/schedule
+        value: "30 5 * * *"
