@@ -29,6 +29,9 @@ spec:
         # kubelet can verify runAsNonRoot.
         runAsNonRoot: true
         runAsUser: 1001
+        # fsGroup so the app (uid 1001) can write /data — required for the
+        # built-in backup feature (BACKUP_DIR=/data/backup).
+        fsGroup: 1001
         seccompProfile:
           type: RuntimeDefault
       containers:

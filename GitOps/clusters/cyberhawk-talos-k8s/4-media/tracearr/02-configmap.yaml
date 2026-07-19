@@ -9,3 +9,6 @@ data:
   LOG_LEVEL: "info"
   REDIS_URL: "redis://valkey:6379"
   BACKUP_DIR: "/data/backup"
+  # Behind Cilium Gateway: trust X-Forwarded-For so per-user client IPs work.
+  TRUST_PROXY: "true"
+  CORS_ORIGIN: "https://tracearr.cyberhawk.no"

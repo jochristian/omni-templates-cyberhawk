@@ -83,12 +83,20 @@ spec:
               mountPath: /docker-entrypoint-initdb.d
             - name: pg-run
               mountPath: /var/run/postgresql
+            - name: dshm
+              mountPath: /dev/shm
       volumes:
         - name: initdb
           configMap:
             name: timescaledb-initdb
         - name: pg-run
           emptyDir: {}
+        # Postgres parallel workers use POSIX shm; the 64Mi k8s default causes
+        # "could not resize shared memory segment" failures.
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
   volumeClaimTemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
