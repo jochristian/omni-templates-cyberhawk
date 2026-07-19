@@ -19,7 +19,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: pdns
-          image: powerdns/pdns-auth-49
+          image: powerdns/pdns-auth-51
           # The image startup wrapper reads PDNS_AUTH_API_KEY and generates
           # the webserver/API config into /etc/powerdns/pdns.d/_api.conf.
           env:

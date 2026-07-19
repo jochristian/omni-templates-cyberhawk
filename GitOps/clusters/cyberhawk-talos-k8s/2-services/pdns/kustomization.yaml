@@ -17,9 +17,12 @@ configMapGenerator:
     files:
       - pdns.conf
 
+# NOTE: PowerDNS ships one Docker repo per minor (pdns-auth-51, -52, …), so
+# renovate only sees patch bumps — major/minor upgrades need a manual image
+# rename here and in 20-deployment.yaml.
 images:
-  - name: powerdns/pdns-auth-49
-    newTag: "4.9.16" # renovate: docker=powerdns/pdns-auth-49
+  - name: powerdns/pdns-auth-51
+    newTag: "5.1.3" # renovate: docker=powerdns/pdns-auth-51
 
 labels:
   - includeSelectors: true
