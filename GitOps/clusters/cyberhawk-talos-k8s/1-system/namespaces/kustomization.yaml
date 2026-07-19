@@ -16,3 +16,4 @@ resources:
   - keda.yaml
   - kyverno.yaml
   - dnscontrol.yaml
+  - pdns.yaml

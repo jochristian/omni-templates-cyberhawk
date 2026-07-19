@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: pdns
+
+generators:
+  - 01-secret.yaml
+
+resources:
+  - 10-storage.yaml
+  - 20-deployment.yaml
+  - 21-service.yaml
+  - 50-networkpolicies.yaml
+
+# Hash-suffixed so config edits roll the pod.
+configMapGenerator:
+  - name: pdns-conf
+    files:
+      - pdns.conf
+
+images:
+  - name: powerdns/pdns-auth-49
+    newTag: "4.9.16" # renovate: docker=powerdns/pdns-auth-49
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: pdns

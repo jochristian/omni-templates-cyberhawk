@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdns
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # single LMDB writer on a RWO volume
+  selector:
+    matchLabels:
+      app: pdns
+  template:
+    metadata:
+      labels:
+        app: pdns
+    spec:
+      securityContext:
+        fsGroup: 953
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: pdns
+          image: powerdns/pdns-auth-49
+          # The image startup wrapper reads PDNS_AUTH_API_KEY and generates
+          # the webserver/API config into /etc/powerdns/pdns.d/_api.conf.
+          env:
+            - name: PDNS_AUTH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pdns-api-key
+                  key: PDNS_AUTH_API_KEY
+          ports:
+            - name: dns-udp
+              containerPort: 5300
+              protocol: UDP
+            - name: dns-tcp
+              containerPort: 5300
+              protocol: TCP
+            - name: api
+              containerPort: 8081
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: dns-tcp
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: dns-tcp
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 953 # pdns user in the official image
+            runAsGroup: 953
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/powerdns
+            - name: conf
+              mountPath: /etc/powerdns/pdns.conf
+              subPath: pdns.conf
+              readOnly: true
+            - name: pdns-d
+              mountPath: /etc/powerdns/pdns.d
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pdns-data
+        - name: conf
+          configMap:
+            name: pdns-conf
+        - name: pdns-d
+          emptyDir: {}

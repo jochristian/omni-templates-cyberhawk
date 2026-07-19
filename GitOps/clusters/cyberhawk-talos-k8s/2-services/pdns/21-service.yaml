@@ -1,0 +1,36 @@
+# LB IP 10.50.2.53 is BGP-advertised to both site routers (same pool as the
+# gateway) — the routers' DNS secondaries AXFR from this address.
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdns
+  annotations:
+    io.cilium/lb-ipam-ips: "10.50.2.53"
+spec:
+  type: LoadBalancer
+  allocateLoadBalancerNodePorts: false
+  ports:
+    - name: dns-udp
+      port: 53
+      protocol: UDP
+      targetPort: dns-udp
+    - name: dns-tcp
+      port: 53
+      protocol: TCP
+      targetPort: dns-tcp
+  selector:
+    app: pdns
+---
+# In-cluster API endpoint for the dnscontrol push/drift jobs.
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdns-api
+spec:
+  ports:
+    - name: api
+      port: 8081
+      protocol: TCP
+      targetPort: api
+  selector:
+    app: pdns

@@ -1,0 +1,27 @@
+# DNS (5300 behind the :53 LB) from the routers (world) and cluster/nodes
+# (probes, SNATed LB traffic); the HTTP API only from the dnscontrol jobs.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-dns-and-dnscontrol-to-pdns
+spec:
+  endpointSelector:
+    matchLabels:
+      app: pdns
+  ingress:
+    - fromEntities:
+        - world
+        - cluster
+      toPorts:
+        - ports:
+            - port: "5300"
+              protocol: UDP
+            - port: "5300"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: dnscontrol
+      toPorts:
+        - ports:
+            - port: "8081"
+              protocol: TCP
