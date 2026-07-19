@@ -1,0 +1,37 @@
+# The media namespace carries allow-external-deny-internal (world + same-ns
+# only). Traffic from the Cilium Gateway arrives as the "ingress" entity, which
+# that policy does not cover — allow it explicitly for the WebUI/API.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-gateway-to-radarr
+spec:
+  endpointSelector:
+    matchLabels:
+      app: radarr
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "7878"
+              protocol: TCP
+---
+# Pangolin resource (radarr.cyberhawk.no) reaches the WebUI through the
+# in-cluster newt tunnel client — same pattern as allow-newt-to-qbittorrent.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-newt-to-radarr
+spec:
+  endpointSelector:
+    matchLabels:
+      app: radarr
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: newt
+      toPorts:
+        - ports:
+            - port: "7878"
+              protocol: TCP

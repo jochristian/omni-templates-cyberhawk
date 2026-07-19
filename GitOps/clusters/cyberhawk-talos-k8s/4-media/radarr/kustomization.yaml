@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: media
+
+generators:
+  - 01-volsync-secret.yaml
+
+components:
+  - ../../base/volsync-backup
+
+resources:
+  - 10-storage.yaml
+  - 20-radarr-deployment.yaml
+  - 21-radarr-service.yaml
+  - 22-radarr-httproute.yaml
+  - 50-networkpolicies.yaml
+
+images:
+  - name: ghcr.io/home-operations/radarr
+    newTag: "6.3.0.10514" # renovate: docker=ghcr.io/home-operations/radarr
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: radarr
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: radarr-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: radarr-config
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-hetzner-radarr
+      - op: replace
+        path: /spec/trigger/schedule
+        value: "30 5 * * *"

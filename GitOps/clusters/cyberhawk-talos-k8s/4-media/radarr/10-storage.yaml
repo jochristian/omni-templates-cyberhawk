@@ -1,0 +1,13 @@
+# The shared NFS media PV/PVC ("files") is declared once in ../qbittorrent
+# and reused here — same namespace, RWX.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: radarr-config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: democratic-csi-iscsi
+  resources:
+    requests:
+      storage: 5Gi
