@@ -17,7 +17,7 @@ resources:
 
 images:
   - name: ghcr.io/home-operations/radarr
-    newTag: "6.3.0.10514" # renovate: docker=ghcr.io/home-operations/radarr
+    newTag: "6.4.0.10523" # renovate: docker=ghcr.io/home-operations/radarr
 
 labels:
   - includeSelectors: true
