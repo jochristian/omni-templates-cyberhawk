@@ -11,7 +11,7 @@ resources:
 
 images:
   - name: ghcr.io/dnscontrol/dnscontrol
-    newTag: "4.42.0" # renovate: docker=ghcr.io/dnscontrol/dnscontrol
+    newTag: "4.43.2" # renovate: docker=ghcr.io/dnscontrol/dnscontrol
 
 # includeSelectors must stay false: kustomize would inject the label into
 # Job spec.selector, which the job controller manages (immutable/auto-set).
