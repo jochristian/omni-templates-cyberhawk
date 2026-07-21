@@ -26,7 +26,7 @@ images:
 - name: getmeili/meilisearch
   # v1.49+ refuses to open the v1.48 database; upgrading needs a dump/restore
   # (or wiping the PVC and letting karakeep reindex). Held back until done.
-  newTag: "v1.48.3" # renovate: docker=getmeili/meilisearch
+  newTag: "v1.50.0" # renovate: docker=getmeili/meilisearch
 - name: gcr.io/zenika-hub/alpine-chrome
   newTag: "124" # renovate: docker=gcr.io/zenika-hub/alpine-chrome
 
