@@ -13,7 +13,7 @@ images:
   # Renovate self-hosted runner. Renovate updates THIS tag via PR too (see the
   # annotation, decoded by the customManager in the repo-root renovate.json).
   - name: renovate/renovate
-    newTag: "43.239.0" # renovate: docker=renovate/renovate
+    newTag: "43.279.1" # renovate: docker=renovate/renovate
 
 labels:
   - includeSelectors: true
