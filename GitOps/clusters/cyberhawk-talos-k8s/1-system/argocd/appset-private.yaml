@@ -29,8 +29,8 @@ spec:
         path: '{{ .path.path }}'
       destination:
         name: in-cluster
-        # Kustomizations set their own namespace (media / tracearr); this only
-        # feeds CreateNamespace, mirroring the main ApplicationSet's basename rule.
+        # Kustomizations set their own namespace; this only feeds
+        # CreateNamespace, mirroring the main ApplicationSet's basename rule.
         namespace: '{{ .path.basename }}'
       syncPolicy:
         automated:

@@ -18,12 +18,10 @@ spec:
           - path: "GitOps/clusters/cyberhawk-talos-k8s/1-system/*"
           - path: "GitOps/clusters/cyberhawk-talos-k8s/2-services/*"
           - path: "GitOps/clusters/cyberhawk-talos-k8s/3-apps/*"
-          - path: "GitOps/clusters/cyberhawk-talos-k8s/4-media/*"
           # Scan for app directories under namespaces (level 2) - these are deployed to parent namespace
           - path: "GitOps/clusters/cyberhawk-talos-k8s/1-system/*/*"
           - path: "GitOps/clusters/cyberhawk-talos-k8s/2-services/*/*"
           - path: "GitOps/clusters/cyberhawk-talos-k8s/3-apps/*/*"
-          - path: "GitOps/clusters/cyberhawk-talos-k8s/4-media/*/*"
   template:
     metadata:
       annotations:

@@ -100,7 +100,9 @@ Directories are grouped into numbered layers (applied roughly in order):
 | `1-system/` | Cluster infrastructure: argocd, cilium (+ cilium-bgp), cnpg, mariadb-operator, CSI drivers (nfs, democratic-csi), gateway, kyverno, tetragon, namespaces. |
 | `2-services/` | Platform services: cert-manager, dnscontrol, keda, openbao, newt, volsync-system, and monitoring (kube-prometheus-stack, loki, alloy, gatus, librenms, renovate). |
 | `3-apps/` | Applications: geopulse, it-tools, karakeep. (`.portfolio/` is parked — dot-prefixed dirs are skipped by the generator, which is how you disable an app without deleting it.) |
-| `4-media/` | Media apps: tautulli, tracearr, yamtrack. |
+
+Additional workloads live in a separate private repo, sourced by a second
+ApplicationSet (`1-system/argocd/appset-private.yaml`) via a read-only SSH deploy key.
 
 ### Discovery & naming rules
 

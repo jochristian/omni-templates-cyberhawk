@@ -65,7 +65,10 @@ Directories are organized into numbered layers, scanned at two depths:
 - `1-system/` — cluster infrastructure (argocd, cilium, cnpg, mariadb-operator, CSI, gateway, kyverno, tetragon)
 - `2-services/` — platform services (cert-manager, dnscontrol, monitoring, openbao, newt, volsync, keda)
 - `3-apps/` — applications (geopulse, it-tools, karakeep)
-- `4-media/` — media apps (tautulli, tracearr, yamtrack)
+
+Additional workloads live in a separate **private** repo, sourced by a second
+ApplicationSet (`1-system/argocd/appset-private.yaml`) using the SOPS-encrypted
+deploy-key credential in `1-system/argocd/repo-private-secret.sops.yaml`.
 
 Discovery & naming rules baked into the generator:
 
@@ -102,7 +105,7 @@ chart) that Argo CD can build. Sync policy is automated with `prune: true` and
   workload proxy `:50083`, `release: monitoring` ServiceMonitor feeds `gatus_*` into
   Prometheus. Checks are grouped `cyberhawk-talos-k8s (cluster)` / `External hosts` /
   `Internet / DNS`. **Probe user apps via their public hostname, not internal Services** —
-  user apps (karakeep, tracearr, …) carry `allow-external-deny-internal` CiliumNetworkPolicies,
+  user apps (karakeep, …) carry `allow-external-deny-internal` CiliumNetworkPolicies,
   so a monitoring→app Service probe is denied (false "down"). ICMP checks need `NET_RAW`
   on the pod (otherwise it's drop-ALL caps / non-root / RO-rootfs).
 - **Runtime security:** **Tetragon** (`1-system/tetragon/`) runs **observe-only**

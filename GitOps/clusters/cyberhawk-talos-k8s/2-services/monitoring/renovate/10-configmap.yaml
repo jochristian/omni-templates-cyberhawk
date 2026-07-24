@@ -9,7 +9,7 @@ data:
     {
       "platform": "github",
       "endpoint": "https://api.github.com/",
-      "repositories": ["jochristian/omni-templates-cyberhawk"],
+      "repositories": ["jochristian/omni-templates-cyberhawk", "jochristian/cyberhawk-gitops-private"],
       "autodiscover": false,
       "onboarding": false,
       "requireConfig": "required",
