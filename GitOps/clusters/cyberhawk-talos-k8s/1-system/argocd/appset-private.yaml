@@ -14,12 +14,16 @@ spec:
         repoURL: git@github.com:jochristian/cyberhawk-gitops-private.git
         revision: HEAD
         directories:
-          - path: "media/*"
+          # <group>/<app> -> app <group>-<app> in namespace <group>
+          - path: "*/*"
+          # base/ holds shared kustomize components, not standalone apps
+          - path: "base/*"
+            exclude: true
   template:
     metadata:
       annotations:
         argocd.argoproj.io/compare-options: ServerSideDiff=true
-      name: 'media-{{ .path.basename }}'
+      name: '{{ index (splitList "/" .path.path) 0 }}-{{ .path.basename }}'
       namespace: argocd
     spec:
       project: default
@@ -29,9 +33,10 @@ spec:
         path: '{{ .path.path }}'
       destination:
         name: in-cluster
-        # Kustomizations set their own namespace; this only feeds
-        # CreateNamespace, mirroring the main ApplicationSet's basename rule.
-        namespace: '{{ .path.basename }}'
+        # Parent directory = namespace. An app whose kustomization sets its own
+        # namespace overrides this per-resource; this feeds CreateNamespace and
+        # the UI's destination display.
+        namespace: '{{ index (splitList "/" .path.path) 0 }}'
       syncPolicy:
         automated:
           prune: true
