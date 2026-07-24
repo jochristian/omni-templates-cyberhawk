@@ -5,6 +5,10 @@ metadata:
   namespace: argocd
 spec:
   goTemplate: true
+  # Never cascade-delete workloads when a generated Application is removed
+  # (e.g. a directory disappears from the generator) - orphan them instead.
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
     - git:
         repoURL: https://github.com/jochristian/omni-templates-cyberhawk.git
