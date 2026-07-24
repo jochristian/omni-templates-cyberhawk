@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cyberhawk-private
+  namespace: argocd
+spec:
+  goTemplate: true
+  # Never cascade-delete workloads when a generated Application is removed -
+  # orphan them instead (same protection as the main ApplicationSet).
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - git:
+        repoURL: git@github.com:jochristian/cyberhawk-gitops-private.git
+        revision: HEAD
+        directories:
+          - path: "media/*"
+  template:
+    metadata:
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true
+      name: 'media-{{ .path.basename }}'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: git@github.com:jochristian/cyberhawk-gitops-private.git
+        targetRevision: HEAD
+        path: '{{ .path.path }}'
+      destination:
+        name: in-cluster
+        # Kustomizations set their own namespace (media / tracearr); this only
+        # feeds CreateNamespace, mirroring the main ApplicationSet's basename rule.
+        namespace: '{{ .path.basename }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: false
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - ApplyOutOfSyncOnly=true
+          - RespectIgnoreDifferences=true
+          - SkipDryRunOnMissingResource=true
