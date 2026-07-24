@@ -46,13 +46,11 @@ spec:
                 - geopulse
                 - it-tools
                 - karakeep
-                - media
                 - monitoring
                 - newt
                 - openbao
                 - portfolio
                 - production
-                - tracearr
       validate:
         failureAction: Audit
         failureActionOverrides:
@@ -64,11 +62,9 @@ spec:
               - geopulse
               - it-tools
               - karakeep
-              - media
               - newt
               - openbao
               - production
-              - tracearr
         message: >-
           Image is not from an approved registry (docker.io, ghcr.io,
           quay.io, lscr.io, gcr.io, registry.k8s.io,

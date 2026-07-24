@@ -42,13 +42,11 @@ spec:
                 - geopulse
                 - it-tools
                 - karakeep
-                - media
                 - monitoring
                 - newt
                 - openbao
                 - portfolio
                 - production
-                - tracearr
       validate:
         failureAction: Audit
         podSecurity:

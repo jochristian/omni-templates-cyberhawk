@@ -28,8 +28,6 @@ resources:
   - 20-exception-pss-node-exporter.yaml
   - 21-exception-pss-gatus.yaml
   - 22-exception-pss-librenms.yaml
-  - 23-exception-pss-tautulli.yaml
-  - 24-exception-pss-yamtrack.yaml
 
 helmCharts:
   - name: kyverno

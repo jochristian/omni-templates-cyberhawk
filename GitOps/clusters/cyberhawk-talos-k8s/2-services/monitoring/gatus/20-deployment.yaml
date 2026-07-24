@@ -65,9 +65,16 @@ spec:
             - name: tmp
               mountPath: /tmp
       volumes:
+        # GATUS_CONFIG_PATH is a directory: Gatus merges every file in it.
+        # The optional second ConfigMap lets other repos contribute endpoints.
         - name: config
-          configMap:
-            name: gatus-config
+          projected:
+            sources:
+              - configMap:
+                  name: gatus-config
+              - configMap:
+                  name: gatus-config-private
+                  optional: true
         - name: data
           persistentVolumeClaim:
             claimName: gatus-data

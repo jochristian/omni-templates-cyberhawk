@@ -42,13 +42,11 @@ spec:
                 - geopulse
                 - it-tools
                 - karakeep
-                - media
                 - monitoring
                 - newt
                 - openbao
                 - portfolio
                 - production
-                - tracearr
       validate:
         failureAction: Audit
         failureActionOverrides:
@@ -60,11 +58,9 @@ spec:
               - geopulse
               - it-tools
               - karakeep
-              - media
               - newt
               - openbao
               - production
-              - tracearr
         message: "An image tag is required."
         pattern:
           spec:
@@ -85,13 +81,11 @@ spec:
                 - geopulse
                 - it-tools
                 - karakeep
-                - media
                 - monitoring
                 - newt
                 - openbao
                 - portfolio
                 - production
-                - tracearr
       validate:
         failureAction: Audit
         failureActionOverrides:
@@ -103,11 +97,9 @@ spec:
               - geopulse
               - it-tools
               - karakeep
-              - media
               - newt
               - openbao
               - production
-              - tracearr
         message: "Using a mutable image tag e.g. 'latest' is not allowed."
         pattern:
           spec:
