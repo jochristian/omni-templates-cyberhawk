@@ -12,10 +12,14 @@ resources:
   - 21-valkey-pvc.yaml
   - 22-valkey-deployment.yaml
   - 23-valkey-service.yaml
+  - 30-deployment.yaml
+  - 31-service.yaml
 
 images:
   - name: valkey/valkey
     newTag: "9.1-alpine" # renovate: docker=valkey/valkey
+  - name: ghcr.io/patchmon/patchmon-server
+    newTag: "2.0.2" # renovate: docker=ghcr.io/patchmon/patchmon-server
 
 labels:
   - includeSelectors: true

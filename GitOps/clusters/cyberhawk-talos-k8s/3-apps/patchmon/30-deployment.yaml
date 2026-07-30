@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patchmon
+spec:
+  replicas: 1
+  # Schema migrations run at boot — two versions must never overlap.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: patchmon
+  template:
+    metadata:
+      labels:
+        app: patchmon
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        # The image declares USER as the *name* "nonroot"; the kubelet cannot
+        # verify a non-numeric user against runAsNonRoot, so the uid is pinned
+        # explicitly. Verified from the image: nonroot:x:65532:65532.
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: patchmon
+          image: ghcr.io/patchmon/patchmon-server
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: patchmon-config
+            - secretRef:
+                name: patchmon-secret
+          env:
+            # CNPG-generated; points at patchmon-db-rw. Never written to the repo.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: patchmon-db-app
+                  key: uri
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              # Image sets GOMEMLIMIT=256MiB; the limit must sit above it.
+              memory: 512Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          # Startup probe covers boot-time schema migrations (up to 5 minutes).
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: tmp
+          emptyDir: {}
