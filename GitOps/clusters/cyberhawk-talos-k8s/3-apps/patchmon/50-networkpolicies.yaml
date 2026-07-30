@@ -1,0 +1,83 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: patchmon
+spec:
+  endpointSelector:
+    matchLabels:
+      app: patchmon
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+        - ingress
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: newt
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+  egress:
+    # PostgreSQL (5432), Valkey (6379), and outbound HTTPS for update metadata.
+    - toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "6379"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: patchmon-valkey
+spec:
+  endpointSelector:
+    matchLabels:
+      app: patchmon-valkey
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: patchmon
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: patchmon-db
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: patchmon-db
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: patchmon
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # CNPG operator: status/readiness queries against the instance manager
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+  # NO egress section: the CNPG instance manager must reach the API server.

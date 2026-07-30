@@ -14,6 +14,8 @@ resources:
   - 23-valkey-service.yaml
   - 30-deployment.yaml
   - 31-service.yaml
+  - 40-httproute.yaml
+  - 50-networkpolicies.yaml
 
 images:
   - name: valkey/valkey
