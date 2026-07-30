@@ -9,6 +9,7 @@ resources:
   - monitoring.yaml
   - it-tools.yaml
   - karakeep.yaml
+  - patchmon.yaml
 #  - portfolio.yaml
   - openbao.yaml
   - tracearr.yaml
