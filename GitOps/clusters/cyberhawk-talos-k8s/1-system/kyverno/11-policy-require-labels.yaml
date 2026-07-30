@@ -46,6 +46,7 @@ spec:
                 - monitoring
                 - newt
                 - openbao
+                - patchmon
                 - portfolio
                 - production
       validate:
@@ -61,6 +62,7 @@ spec:
               - karakeep
               - newt
               - openbao
+              - patchmon
               - production
         message: "The label app.kubernetes.io/name is required."
         pattern:
