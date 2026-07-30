@@ -6,7 +6,9 @@ generators:
   - 01-secret.yaml
   - 20-valkey-secret.yaml
 
-resources: []
+resources:
+  - 02-configmap.yaml
+  - 10-cnpg-cluster.yaml
 
 labels:
   - includeSelectors: true
