@@ -67,11 +67,22 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+          # All three probes MUST send an explicit Host header. PatchMon 2.0.2
+          # enforces a Host allowlist and answers 403 to anything unrecognised;
+          # the kubelet otherwise probes with Host: <podIP>, which is rejected,
+          # so the pod would never become Ready. Verified against the running
+          # pod: Host 127.0.0.1 -> 200, Host <podIP> -> 403, Host
+          # patchmon.cyberhawk.no -> 200. Upstream never hits this because their
+          # Docker HEALTHCHECK runs inside the container against localhost.
+          # Keep this value in sync with CORS_ORIGIN in 02-configmap.yaml.
           # Startup probe covers boot-time schema migrations (up to 5 minutes).
           startupProbe:
             httpGet:
               path: /health
               port: 3000
+              httpHeaders:
+                - name: Host
+                  value: patchmon.cyberhawk.no
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 3
@@ -80,6 +91,9 @@ spec:
             httpGet:
               path: /health
               port: 3000
+              httpHeaders:
+                - name: Host
+                  value: patchmon.cyberhawk.no
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
@@ -87,6 +101,9 @@ spec:
             httpGet:
               path: /health
               port: 3000
+              httpHeaders:
+                - name: Host
+                  value: patchmon.cyberhawk.no
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
