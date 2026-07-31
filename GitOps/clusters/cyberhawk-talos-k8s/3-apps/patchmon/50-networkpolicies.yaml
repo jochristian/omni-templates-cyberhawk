@@ -68,6 +68,9 @@ spec:
     - fromEndpoints:
         - matchLabels:
             app: patchmon
+        - matchLabels:
+            # nightly pg_dump CronJob (61-backup-cronjob.yaml)
+            app: patchmon-db-dump
       toPorts:
         - ports:
             - port: "5432"
