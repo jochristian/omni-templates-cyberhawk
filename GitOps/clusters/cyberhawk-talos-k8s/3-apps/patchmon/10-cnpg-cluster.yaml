@@ -1,0 +1,32 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: patchmon-db
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17 # renovate: docker=ghcr.io/cloudnative-pg/postgresql
+  inheritedMetadata:
+    labels:
+      app.kubernetes.io/name: patchmon
+  storage:
+    size: 5Gi
+    storageClass: democratic-csi-iscsi
+  bootstrap:
+    initdb:
+      database: patchmon_db
+      owner: patchmon_user
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                  - blix
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi

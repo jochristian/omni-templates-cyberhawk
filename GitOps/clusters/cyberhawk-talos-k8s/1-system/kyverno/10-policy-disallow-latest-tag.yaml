@@ -45,6 +45,7 @@ spec:
                 - monitoring
                 - newt
                 - openbao
+                - patchmon
                 - portfolio
                 - production
       validate:
@@ -60,6 +61,7 @@ spec:
               - karakeep
               - newt
               - openbao
+              - patchmon
               - production
         message: "An image tag is required."
         pattern:
@@ -84,6 +86,7 @@ spec:
                 - monitoring
                 - newt
                 - openbao
+                - patchmon
                 - portfolio
                 - production
       validate:
@@ -99,6 +102,7 @@ spec:
               - karakeep
               - newt
               - openbao
+              - patchmon
               - production
         message: "Using a mutable image tag e.g. 'latest' is not allowed."
         pattern:

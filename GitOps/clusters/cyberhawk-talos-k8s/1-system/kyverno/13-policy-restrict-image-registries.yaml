@@ -49,6 +49,7 @@ spec:
                 - monitoring
                 - newt
                 - openbao
+                - patchmon
                 - portfolio
                 - production
       validate:
@@ -64,6 +65,7 @@ spec:
               - karakeep
               - newt
               - openbao
+              - patchmon
               - production
         message: >-
           Image is not from an approved registry (docker.io, ghcr.io,

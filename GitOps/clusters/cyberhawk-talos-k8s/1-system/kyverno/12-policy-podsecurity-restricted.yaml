@@ -45,6 +45,7 @@ spec:
                 - monitoring
                 - newt
                 - openbao
+                - patchmon
                 - portfolio
                 - production
       validate:

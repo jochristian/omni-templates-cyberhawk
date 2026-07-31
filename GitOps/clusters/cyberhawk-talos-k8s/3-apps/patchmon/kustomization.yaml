@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: patchmon
+
+generators:
+  - 01-secret.yaml
+  - 20-valkey-secret.yaml
+  - 62-volsync-secret.yaml
+
+components:
+  - ../../base/volsync-backup
+
+resources:
+  - 02-configmap.yaml
+  - 10-cnpg-cluster.yaml
+  - 21-valkey-pvc.yaml
+  - 22-valkey-deployment.yaml
+  - 23-valkey-service.yaml
+  - 30-deployment.yaml
+  - 31-service.yaml
+  - 40-httproute.yaml
+  - 50-networkpolicies.yaml
+  - 60-backup-pvc.yaml
+  - 61-backup-cronjob.yaml
+
+images:
+  - name: valkey/valkey
+    newTag: "9.1-alpine" # renovate: docker=valkey/valkey
+  - name: ghcr.io/patchmon/patchmon-server
+    newTag: "2.0.2" # renovate: docker=ghcr.io/patchmon/patchmon-server
+  - name: ghcr.io/cloudnative-pg/postgresql
+    newTag: "17" # renovate: docker=ghcr.io/cloudnative-pg/postgresql
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: patchmon
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: patchmon-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: patchmon-backup
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-hetzner-patchmon
+      - op: replace
+        path: /spec/trigger/schedule
+        value: "15 5 * * *"

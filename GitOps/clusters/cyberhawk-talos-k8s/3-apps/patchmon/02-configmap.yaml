@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patchmon-config
+data:
+  # Public URL is stored in the `settings` table (carried over in the dump);
+  # CORS still has to be told what origin to accept.
+  CORS_ORIGIN: "https://patchmon.cyberhawk.no"
+  TZ: "Europe/Oslo"
+  PORT: "3000"
+  # Valkey (Asynq job queue). Password comes from patchmon-secret.
+  REDIS_HOST: "patchmon-valkey"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  LOG_LEVEL: "info"
