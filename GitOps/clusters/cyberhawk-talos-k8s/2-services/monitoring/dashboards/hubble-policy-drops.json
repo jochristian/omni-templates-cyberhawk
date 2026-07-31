@@ -1,0 +1,370 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Cilium network policy drops, streamed from hubble-relay into Loki by the hubble-export deployment and collected by Alloy under job=\"hubble\". Steady state is empty — anything here is traffic the datapath refused.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "description": "Every drop shipped by hubble-export in the selected range. ICMPv6 NDP noise (UNSUPPORTED_L3_PROTOCOL) is already filtered out at the exporter, so this counts real refusals only.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [{ "options": { "match": "null", "result": { "text": "0" } }, "type": "special" }],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({job=\"hubble\"} | json [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Dropped flows",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "description": "Drops attributed to network policy. Note Cilium names the policy that ALLOWED a flow, never the one that denied it — allow-by-omission policies produce policy-verdict:none with no ingress_denied_by.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [{ "options": { "match": "null", "result": { "text": "0" } }, "type": "special" }],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({job=\"hubble\"} | json | flow_drop_reason_desc=\"POLICY_DENIED\" [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Policy denied",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "description": "Distinct destination namespaces refusing traffic. A single namespace usually means one misconfigured policy; several at once usually means something upstream changed.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [{ "options": { "match": "null", "result": { "text": "0" } }, "type": "special" }],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "count(sum by (flow_destination_namespace) (count_over_time({job=\"hubble\"} | json | flow_drop_reason_desc=\"POLICY_DENIED\" [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Destination namespaces",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "description": "Distinct source -> destination namespace pairs being refused.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [{ "options": { "match": "null", "result": { "text": "0" } }, "type": "special" }],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "count(sum by (flow_source_namespace, flow_destination_namespace) (count_over_time({job=\"hubble\"} | json | flow_drop_reason_desc=\"POLICY_DENIED\" [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Source -> destination pairs",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "description": "Drops over time, split by reason. Usually a single series (POLICY_DENIED); a second reason appearing is itself the signal.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 4 },
+      "id": 5,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "sum by (flow_drop_reason_desc) (count_over_time({job=\"hubble\"} | json [$__auto]))",
+          "legendFormat": "{{flow_drop_reason_desc}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Dropped flows over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 4 },
+      "id": 6,
+      "options": {
+        "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false },
+        "content": "### Reading these drops\n\n**Cilium names the policy that ALLOWED a flow, never the one that denied it.**\n\nThe `allow-external-deny-internal` policies work by omission — they permit `world` plus same-namespace and let everything else fall through to default deny. Those drops arrive as `policy-verdict:none` with **no** `ingress_denied_by`.\n\nSo diagnose from:\n\n- `flow_traffic_direction` — `INGRESS` means the **destination** namespace has no rule admitting that source.\n- `flow_destination_namespace` — where to look for the missing rule.\n\n`ingress_denied_by` only populates for explicit `ingressDeny` / `egressDeny` rules, which this cluster does not use.\n\nSource: `2-services/monitoring/hubble-export`.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "11.0.0",
+      "title": "How to read this",
+      "type": "text"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "description": "Who is being refused, most-denied first. A table rather than a chart because the pairs are high-cardinality and every one of them carries meaning.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "displayName", "value": "Drops" },
+              { "id": "custom.width", "value": 90 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 12 },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Drops" }]
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "sum by (flow_source_namespace, flow_source_pod_name, flow_destination_namespace, flow_destination_pod_name, flow_traffic_direction, flow_node_name) (count_over_time({job=\"hubble\"} | json | flow_drop_reason_desc=\"POLICY_DENIED\" [$__range]))",
+          "instant": true,
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Denied flows by source -> destination",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "indexByName": {
+              "flow_source_namespace": 0,
+              "flow_source_pod_name": 1,
+              "flow_destination_namespace": 2,
+              "flow_destination_pod_name": 3,
+              "flow_traffic_direction": 4,
+              "flow_node_name": 5,
+              "Value": 6
+            },
+            "renameByName": {
+              "flow_destination_namespace": "Dest namespace",
+              "flow_destination_pod_name": "Dest pod",
+              "flow_node_name": "Node",
+              "flow_source_namespace": "Source namespace",
+              "flow_source_pod_name": "Source pod",
+              "flow_traffic_direction": "Direction"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "description": "Raw flows as emitted by hubble. Expand a line to see the full JSON, including destination workloads and node labels.",
+      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 21 },
+      "id": 8,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${datasource}" },
+          "editorMode": "code",
+          "expr": "{job=\"hubble\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Raw dropped flows",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["hubble", "cilium", "network", "security"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Loki datasource",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Hubble — Network Policy Drops",
+  "uid": "hubble-policy-drops",
+  "version": 1,
+  "weekStart": ""
+}

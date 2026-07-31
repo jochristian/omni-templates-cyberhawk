@@ -70,3 +70,14 @@ configMapGenerator:
       disableNameSuffixHash: true
     files:
       - keda.json
+
+  # Loki-backed, not Prometheus: fed by 2-services/monitoring/hubble-export via
+  # Alloy under job="hubble". Distinct from hubble.json, which is the official
+  # metrics dashboard built on the hubble_* series.
+  - name: grafana-dashboard-hubble-policy-drops
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+    files:
+      - hubble-policy-drops.json
