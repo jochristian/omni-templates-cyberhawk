@@ -1,5 +1,8 @@
 cilium:
-  mtu: 1450
+  # Chart key is MTU (uppercase) — a lowercase `mtu:` here is silently ignored,
+  # which left the pinned MTU undeclared and only present as a manual kubectl
+  # edit on the live ConfigMap. Pinned for the inter-site WireGuard path.
+  MTU: 1450
   kubeProxyReplacement: true
   # Talos specific
   k8sServiceHost: localhost
