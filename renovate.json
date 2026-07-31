@@ -55,6 +55,15 @@
       "matchPackageNames": ["renovate/renovate"],
       "automerge": true,
       "automergeType": "branch"
+    },
+    {
+      "description": "Never offer MAJOR bumps for the CloudNativePG postgres images. CNPG does not perform a major PostgreSQL upgrade in place: bumping a Cluster's imageName from 17 to 18 leaves the instance dead with 'database files are incompatible with server'. Both pins are bare majors (patchmon 'postgresql:17', geopulse 'postgis:17-3.5'), so a major bump would arrive looking like a routine image update. Minor/patch bumps still flow normally; a major is a deliberate manual CNPG procedure.",
+      "matchPackageNames": [
+        "ghcr.io/cloudnative-pg/postgresql",
+        "ghcr.io/cloudnative-pg/postgis"
+      ],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }
