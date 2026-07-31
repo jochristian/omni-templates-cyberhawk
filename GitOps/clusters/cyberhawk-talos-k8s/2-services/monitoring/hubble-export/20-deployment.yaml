@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hubble-export
+spec:
+  replicas: 1
+  # Relay already aggregates every node's flows, so a second replica would only
+  # duplicate every line into Loki. Recreate avoids a brief double-writer during
+  # rollouts for the same reason.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hubble-export
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hubble-export
+    spec:
+      # Nothing here talks to the API server — flows come from hubble-relay over gRPC.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        # Container name is the selector Alloy relabels on — see the alloy
+        # kustomization. Renaming it here silently stops log collection.
+        - name: hubble-export
+          # The cilium agent image, not quay.io/cilium/hubble: the standalone CLI
+          # image is stale (newest tag v1.16.4) and a version-skewed client fails
+          # to decode the traffic-direction enum, printing
+          # TRAFFIC_DIRECTION_UNKNOWN instead of INGRESS/EGRESS — which is the
+          # whole diagnostic value here. The agent image ships a version-matched
+          # hubble and is already pulled on every node.
+          image: quay.io/cilium/cilium
+          command: ["/bin/sh", "-c"]
+          # `hubble observe -f` exits whenever the relay connection drops (relay
+          # restart, upgrade). Loop instead of relying on container restarts so we
+          # don't end up in CrashLoopBackOff with its exponential delay. The
+          # reconnect notice is emitted as JSON so the stream stays uniformly
+          # parseable by any downstream pipeline stage.
+          args:
+            - |
+              while true; do
+                hubble observe \
+                  --server "$HUBBLE_RELAY" \
+                  --follow \
+                  --verdict DROPPED \
+                  --not --drop-reason-desc UNSUPPORTED_L3_PROTOCOL \
+                  --output json || true
+                echo '{"hubble_export":"relay connection lost, reconnecting"}'
+                sleep 5
+              done
+          env:
+            - name: HUBBLE_RELAY
+              value: hubble-relay.kube-system.svc.cluster.local:80
+            # hubble writes its config/cache under $HOME; with a read-only
+            # rootfs that has to point at the emptyDir below.
+            - name: HOME
+              value: /tmp
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

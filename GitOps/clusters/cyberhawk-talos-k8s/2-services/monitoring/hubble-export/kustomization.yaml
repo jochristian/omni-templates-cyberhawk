@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Hubble flow exporter — makes policy drops greppable in Loki.
+#
+# Runs a single `hubble observe --follow --verdict DROPPED` against hubble-relay
+# and writes each flow as JSON to stdout; Alloy tails this container over the
+# Kubernetes API (same pattern as the Tetragon export-stdout sidecar) and pushes
+# it to Loki under job="hubble".
+#
+# Why only DROPPED: shipping all policy-verdict flows would be orders of
+# magnitude more volume for a single-binary Loki on iSCSI, and drops are the
+# signal worth alerting on. Drop *reason* is in the JSON, so filter further at
+# query time rather than narrowing here and losing non-policy drops.
+#
+# Why UNSUPPORTED_L3_PROTOCOL is excluded: every pod emits IPv6 NDP (neighbour /
+# router solicitations) at startup, and Cilium drops them because IPv6 is
+# disabled on this cluster. That is pure pod-churn noise — measured 26 flows in
+# ~25s during a rollout, essentially all of it ICMPv6 — and it would swamp the
+# real signal. Filtered by drop reason rather than `--ip-version v4` so that
+# genuine IPv6 policy drops still surface if dual-stack is ever enabled.
+#
+# Note on what this can and cannot tell you: Cilium names the policy that ALLOWED
+# a flow, not the one that denied it. The `allow-external-deny-internal` policies
+# work by omission, so their drops arrive as `policy-verdict:none` with no
+# ingress_denied_by — the signal is the verdict and direction, not a policy name.
+
+namespace: monitoring
+
+resources:
+  - 20-deployment.yaml
+
+images:
+  # Keep this pinned to the same version as the Cilium chart in
+  # 1-system/kube-system/cilium/Chart.yaml. A skewed hubble client still streams
+  # flows but mis-renders newer enum fields.
+  - name: quay.io/cilium/cilium
+    newTag: v1.20.0
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: hubble-export
