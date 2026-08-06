@@ -22,7 +22,7 @@ configMapGenerator:
 # rename here and in 20-deployment.yaml.
 images:
   - name: powerdns/pdns-auth-51
-    newTag: "5.1.3" # renovate: docker=powerdns/pdns-auth-51
+    newTag: "5.1.4" # renovate: docker=powerdns/pdns-auth-51
 
 labels:
   - includeSelectors: true
