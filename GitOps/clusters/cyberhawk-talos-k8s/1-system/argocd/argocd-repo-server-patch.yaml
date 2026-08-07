@@ -16,10 +16,18 @@ spec:
           image: viaductoss/ksops:v4.5.1
           # Image is distroless from v4.4.0 onward (no shell), so the install is
           # done via the built-in `ksops install` subcommand rather than `sh -c`/mv.
-          # `--with-kustomize` keeps overriding ArgoCD's bundled kustomize with the
-          # KSOPS-supplied one (paired with the kustomize override mount below).
+          # Only the ksops plugin binary is installed — deliberately NOT
+          # `--with-kustomize`. KSOPS pins kustomize v5.3.0 (hardcoded in its
+          # scripts/install-kustomize.sh, still true as of v4.5.1), and kustomize
+          # only learned to drive Helm 4 in v5.8.1 (kubernetes-sigs/kustomize#6013:
+          # older kustomize probes `helm version -c --short`, and Helm 4 removed
+          # -c/--client). ArgoCD 3.5 ships Helm 4 as the only helm binary, so
+          # overriding its kustomize would break every `helmCharts:` render.
+          # ksops is an exec plugin (KRM function protocol) and does not need a
+          # version-matched kustomize — just --enable-alpha-plugins --enable-exec,
+          # set in argocd-cm.
           command:
-            ["/usr/local/bin/ksops", "install", "--with-kustomize", "/custom-tools"]
+            ["/usr/local/bin/ksops", "install", "/custom-tools"]
           # Match the hardened securityContext of the sibling containers (copyutil /
           # repo-server). runAsUser must be the numeric distroless `nonroot` uid (65532):
           # with only `runAsNonRoot: true` the kubelet refuses to start the container
@@ -46,9 +54,8 @@ spec:
             - name: SOPS_AGE_KEY_FILE
               value: /.config/sops/age/keys.txt
           volumeMounts:
-            - mountPath: /usr/local/bin/kustomize
-              name: custom-tools
-              subPath: kustomize
+            # No /usr/local/bin/kustomize mount: ArgoCD's own kustomize is used
+            # (see the install-ksops comment above).
             - mountPath: /usr/local/bin/ksops
               name: custom-tools
               subPath: ksops
