@@ -37,6 +37,13 @@ spec:
                   key: NEXTAUTH_URL
             - name: DATA_DIR
               value: "/data"
+            # Single-user instance: close public registration. Karakeep defaults
+            # DISABLE_SIGNUPS to "false", i.e. anyone reaching the UI can create an
+            # account — and the UI is exposed to `world` by the karakeep
+            # CiliumNetworkPolicy. Existing users are unaffected; new accounts must be
+            # made via an admin invite.
+            - name: DISABLE_SIGNUPS
+              value: "true"
             - name: MEILI_ADDR
               value: "http://meilisearch:7700"
             - name: BROWSER_WEB_URL
