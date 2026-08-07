@@ -20,3 +20,30 @@ spec:
     - fromEndpoints:
         - matchLabels:
             "k8s:io.kubernetes.pod.namespace": "karakeep"
+---
+# Newt (the Pangolin tunnel client in the `newt` namespace) proxies external traffic
+# to in-cluster services. It is an in-cluster endpoint, so it matches neither `world`
+# nor the karakeep namespace above and is denied by default — verified: newt reaches
+# gatus (no policy) with 200 OK but times out against karakeep's ClusterIP and LB IP.
+#
+# CiliumNetworkPolicies are additive, so this grants the one path newt needs rather
+# than widening allow-external-deny-internal. Deliberately scoped to the web pod
+# (`app: karakeep`) on port 3000: newt has no reason to reach meilisearch or chrome.
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-newt-to-karakeep-web
+  namespace: karakeep
+spec:
+  endpointSelector:
+    matchLabels:
+      app: karakeep
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": "newt"
+            app: newt
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
