@@ -24,3 +24,24 @@ helmCharts:
       extraArgs:
         - --dns01-recursive-nameservers-only=true
         - --dns01-recursive-nameservers=1.1.1.1:53,1.0.0.1:53
+      # Keep all three components on blix. All of them were running at lørenskog and
+      # all restarted during the 2026-08-07 link flaps (cainjector 6, controller 2,
+      # webhook 1) — cainjector died with
+      # `dial tcp 10.96.0.1:443: i/o timeout` at 05:01:20.
+      # The webhook matters most: it is an admission webhook, so while it is
+      # unreachable the API server rejects cert-manager resource writes. Two of the
+      # three control planes are at blix, so blix is also the better side for it.
+      #
+      # These merge with the chart's per-component default nodeSelector, so
+      # `kubernetes.io/os: linux` must be repeated here or it would be dropped.
+      nodeSelector:
+        kubernetes.io/os: linux
+        topology.kubernetes.io/zone: blix
+      cainjector:
+        nodeSelector:
+          kubernetes.io/os: linux
+          topology.kubernetes.io/zone: blix
+      webhook:
+        nodeSelector:
+          kubernetes.io/os: linux
+          topology.kubernetes.io/zone: blix

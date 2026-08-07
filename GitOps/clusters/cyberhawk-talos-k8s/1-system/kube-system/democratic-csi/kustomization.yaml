@@ -40,6 +40,20 @@ helmCharts:
         image:
           tag: next
 
+      # Keep the controller Deployment on blix. Its sidecars (external-attacher,
+      # -provisioner, -resizer, -snapshotter) are leader-elected and fatally exit on
+      # lost leadership by design; at lørenskog every lease renewal crosses the
+      # inter-site link, so each blip restarts them. This pod accumulated 43 restarts
+      # on 2026-08-07, dying with `error retrieving resource lock
+      # leases/org-democratic-csi-iscsi: context deadline exceeded` -> `stopped
+      # leading`. The restarts were the symptom, not a driver fault.
+      #
+      # This applies ONLY to the controller. The `node:` DaemonSet below must stay on
+      # every node — it is what actually attaches volumes.
+      controller:
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
+
       node:
         hostPID: true                    # Required for nsenter on Talos
         # Control-plane nodes carry the iscsi-tools extension too; the node
@@ -96,6 +110,12 @@ helmCharts:
           driver: freenas-api-iscsi
         image:
           tag: next
+
+      # Same reasoning as the iscsi chart above — this controller had 42 restarts on
+      # 2026-08-07. Controller only; the node DaemonSet stays everywhere.
+      controller:
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
 
       node:
         hostPID: true

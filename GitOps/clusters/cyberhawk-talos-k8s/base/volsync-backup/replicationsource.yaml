@@ -16,6 +16,30 @@ spec:
     # Direct mounts the source PVC as-is — works with any storage class.
     copyMethod: Direct
     cacheCapacity: 5Gi
+    # Keep the mover on blix. It mounts the source PVC directly, so for an iSCSI
+    # volume it carries the same cross-site risk as the app itself: the target is
+    # blix-side, and a lørenskog mover runs its block I/O over the inter-site link
+    # (which flipped three volumes to emergency_ro on 2026-08-07). The app pods are
+    # already pinned via nodeSelector, but the mover is created by the operator and
+    # inherits nothing from them.
+    #
+    # NOTE: VolSync 0.15 has no `moverNodeSelector` — node placement is expressed
+    # through `moverAffinity`, which takes a normal core/v1 Affinity.
+    #
+    # All current consumers are safe: karakeep-data, patchmon-backup and gatus-data
+    # are RWO iSCSI whose apps already run on blix, and librenms-data is RWX NFS
+    # (node-agnostic). Adding a consumer whose RWO volume attaches at lørenskog would
+    # make its mover unschedulable — pin that app to blix first, or drop this block
+    # for it.
+    moverAffinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: topology.kubernetes.io/zone
+                  operator: In
+                  values:
+                    - blix
     moverSecurityContext:
       runAsUser: 1000
       runAsGroup: 100

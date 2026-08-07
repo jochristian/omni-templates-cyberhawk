@@ -11,3 +11,10 @@ helmCharts:
     valuesInline:
       monitoring:
         podMonitorEnabled: false
+      # Keep the operator on blix. It is a leader-elected controller watching the API
+      # server continuously, so at lørenskog every lease renewal crosses the inter-site
+      # link and it restarts on each blip (8 restarts on 2026-08-07, alongside the CSI
+      # controllers). Nothing about the operator needs to be at lørenskog — the
+      # Postgres clusters it manages are scheduled independently of it.
+      nodeSelector:
+        topology.kubernetes.io/zone: blix
