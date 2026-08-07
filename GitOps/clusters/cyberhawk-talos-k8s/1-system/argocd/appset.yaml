@@ -22,6 +22,15 @@ spec:
           - path: "GitOps/clusters/cyberhawk-talos-k8s/1-system/*/*"
           - path: "GitOps/clusters/cyberhawk-talos-k8s/2-services/*/*"
           - path: "GitOps/clusters/cyberhawk-talos-k8s/3-apps/*/*"
+          # `charts/` is kustomize's Helm chart cache: when the repo-server renders a
+          # `helmCharts:` kustomization it pulls the chart into <app>/charts/ inside its
+          # own checkout. Those directories are not in git, but the level-2 glob above
+          # still discovers them and turns each into an empty Application
+          # (1-system-kyverno-charts, 2-services-cert-manager-charts appeared this way
+          # on 2026-08-07). Excluding them costs nothing: the parent app still renders
+          # the chart from that same directory - this only stops it becoming an app.
+          - path: "GitOps/clusters/cyberhawk-talos-k8s/*/*/charts"
+            exclude: true
   template:
     metadata:
       annotations:
