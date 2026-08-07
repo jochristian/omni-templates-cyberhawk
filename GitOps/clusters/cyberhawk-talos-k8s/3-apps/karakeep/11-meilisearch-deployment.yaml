@@ -15,6 +15,11 @@ spec:
       labels:
         app: meilisearch
     spec:
+      # iSCSI PVC: must stay on blix, where the target lives. See the note in
+      # 2-services/pdns/20-deployment.yaml — a lørenskog pod runs its block I/O over
+      # the inter-site link and a blip leaves the volume stuck read-only.
+      nodeSelector:
+        topology.kubernetes.io/zone: blix
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

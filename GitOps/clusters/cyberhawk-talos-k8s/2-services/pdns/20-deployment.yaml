@@ -14,6 +14,14 @@ spec:
       labels:
         app: pdns
     spec:
+      # The democratic-csi iSCSI target (192.168.141.150) is blix-side. Scheduling a
+      # pod with an iSCSI PVC onto lørenskog sends all block I/O across the inter-site
+      # WireGuard link, where a single blip produces an EIO storm that flips ext4 to
+      # emergency_ro — and democratic-csi never fscks on NodeStage, so the volume stays
+      # read-only until it is manually detached. That happened to this volume on
+      # 2026-08-07. Keep every iSCSI-backed workload on blix.
+      nodeSelector:
+        topology.kubernetes.io/zone: blix
       securityContext:
         fsGroup: 953
         fsGroupChangePolicy: OnRootMismatch
