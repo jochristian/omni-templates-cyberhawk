@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netbox-config
+data:
+  # NetBox enforces Django's ALLOWED_HOSTS. The probes send an explicit Host
+  # header (see 31-netbox-deployment.yaml) rather than relying on a wildcard.
+  ALLOWED_HOSTS: "netbox.cyberhawk.no netbox netbox.netbox.svc.cluster.local localhost 127.0.0.1"
+  # TLS terminates at the Cilium Gateway, so Django sees a plain-HTTP request on
+  # an https:// origin. Without this every login POST is rejected with a CSRF 403.
+  CSRF_TRUSTED_ORIGINS: "https://netbox.cyberhawk.no"
+
+  # Valkey. NetBox's own configuration.example.py uses one instance with two
+  # logical databases: 0 for the RQ task queue, 1 for the cache. The password is
+  # the same for both and comes from netbox-secret.
+  REDIS_HOST: "netbox-valkey"
+  REDIS_PORT: "6379"
+  REDIS_DATABASE: "0"
+  REDIS_SSL: "false"
+  REDIS_CACHE_HOST: "netbox-valkey"
+  REDIS_CACHE_PORT: "6379"
+  REDIS_CACHE_DATABASE: "1"
+  REDIS_CACHE_SSL: "false"
+
+  METRICS_ENABLED: "true"
+  GRAPHQL_ENABLED: "true"
+  WEBHOOKS_ENABLED: "true"
+  # Empty disables the outbound GitHub poll for new releases. Renovate already
+  # tracks the image tag in kustomization.yaml.
+  RELEASE_CHECK_URL: ""
+
+  # Granian worker processes (netbox-docker 5.x replaced nginx-unit with Granian).
+  GRANIAN_WORKERS: "2"
+
+  # The entrypoint waits for Postgres before migrating. The 30s default is too
+  # tight if CNPG is still electing a primary.
+  DB_WAIT_TIMEOUT: "5"
+  MAX_DB_WAIT_TIME: "120"
+
+  # Created on first boot only; the password/token come from netbox-secret.
+  SUPERUSER_NAME: "admin"
+  SUPERUSER_EMAIL: "jochristian@cyberhawk.no"
+
+  TZ: "Europe/Oslo"

@@ -1,0 +1,149 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: netbox
+spec:
+  endpointSelector:
+    matchLabels:
+      app: netbox
+  ingress:
+    # `ingress` is the Cilium Gateway API entity — without it, traffic arriving
+    # through cilium-gateway is dropped even though `host`/`remote-node` are allowed.
+    - fromEntities:
+        - host
+        - remote-node
+        - ingress
+    # Prometheus scraping /metrics (see 51-servicemonitor.yaml).
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    # PostgreSQL (5432), Valkey (6379), and outbound HTTPS for webhooks and
+    # custom scripts.
+    - toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "6379"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: netbox-worker
+spec:
+  endpointSelector:
+    matchLabels:
+      app: netbox-worker
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+  egress:
+    # The worker is what actually delivers webhooks, so 443 matters here.
+    - toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "6379"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: netbox-housekeeping
+spec:
+  endpointSelector:
+    matchLabels:
+      app: netbox-housekeeping
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+  egress:
+    - toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "6379"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: netbox-valkey
+spec:
+  endpointSelector:
+    matchLabels:
+      app: netbox-valkey
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: netbox
+        - matchLabels:
+            app: netbox-worker
+        - matchLabels:
+            app: netbox-housekeeping
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: netbox-db
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: netbox-db
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: netbox
+        - matchLabels:
+            app: netbox-worker
+        - matchLabels:
+            app: netbox-housekeeping
+        - matchLabels:
+            # nightly pg_dump CronJob (61-backup-cronjob.yaml)
+            app: netbox-db-dump
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # CNPG operator: status/readiness queries against the instance manager
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+  # NO egress section: the CNPG instance manager must reach the API server.

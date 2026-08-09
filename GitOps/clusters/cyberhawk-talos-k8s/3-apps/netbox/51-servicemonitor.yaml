@@ -1,0 +1,21 @@
+# NetBox exposes django-prometheus metrics at /metrics when METRICS_ENABLED=true
+# (02-configmap.yaml). Prometheus only scrapes monitors carrying the
+# `release: monitoring` label — see the kube-prometheus-stack notes in CLAUDE.md.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: netbox
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      # Applied to every resource by the kustomization's `labels:` block. The
+      # named port is what narrows this to the web Service — netbox-valkey shares
+      # the label but has no port called `http`.
+      app.kubernetes.io/name: netbox
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 60s
+      scrapeTimeout: 30s
