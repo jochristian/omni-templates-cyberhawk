@@ -27,7 +27,9 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
-        runAsGroup: 0
+        # Must be the primary gid to write the NFS media volume — see the note in
+        # 31-netbox-deployment.yaml.
+        runAsGroup: 999
         fsGroup: 999
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
