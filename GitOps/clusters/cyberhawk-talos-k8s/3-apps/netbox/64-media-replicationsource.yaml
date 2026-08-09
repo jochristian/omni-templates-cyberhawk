@@ -1,0 +1,39 @@
+# Second backup stream for this app. The shared base/volsync-backup component
+# supplies exactly one ReplicationSource (retargeted to netbox-backup, the
+# pg_dump PVC, in kustomization.yaml), so the media volume needs its own
+# hand-written one.
+#
+# Deliberately NO moverAffinity, unlike the component's blix pin: that pin exists
+# because the component's consumers are RWO iSCSI volumes whose block I/O would
+# otherwise cross the inter-site link. netbox-media is RWX NFS — node-agnostic,
+# and it reconnects rather than flipping to emergency_ro if the link blips — so
+# the mover can run wherever there is room.
+#
+# The mover runs as uid 1000 and only needs to read: media files land as
+# 999:999 with world-readable modes under a drwxrwsr-x directory.
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: netbox-media-backup
+spec:
+  sourcePVC: netbox-media
+  trigger:
+    # 04:00, ahead of the netbox-db dump chain (02:30 dump / 04:45 replicate) and
+    # clear of every other ReplicationSource in the cluster.
+    schedule: "0 4 * * *"
+  restic:
+    pruneIntervalDays: 3
+    repository: s3-backup-hetzner-netbox-media
+    retain:
+      daily: 7
+      weekly: 2
+    # Mounts the source PVC as-is — works with any storage class, and RWX means
+    # it never contends with the running pods for the volume.
+    copyMethod: Direct
+    cacheCapacity: 2Gi
+    moverSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 100
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault

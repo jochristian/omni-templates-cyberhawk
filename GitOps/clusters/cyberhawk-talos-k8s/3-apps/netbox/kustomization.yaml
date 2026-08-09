@@ -6,6 +6,7 @@ generators:
   - 01-secret.yaml
   - 20-valkey-secret.yaml
   - 62-volsync-secret.yaml
+  - 63-media-volsync-secret.yaml
 
 components:
   - ../../base/volsync-backup
@@ -26,6 +27,7 @@ resources:
   - 51-servicemonitor.yaml
   - 60-backup-pvc.yaml
   - 61-backup-cronjob.yaml
+  - 64-media-replicationsource.yaml
 
 images:
   # netbox-docker builds. The plain vX.Y.Z tag is the same image as the compound
