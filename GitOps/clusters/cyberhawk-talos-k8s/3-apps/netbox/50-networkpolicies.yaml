@@ -21,6 +21,20 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+    # newt (the Pangolin tunnel client) carries the public path:
+    # internet -> pangolin -> newt -> this Service. newt is an in-cluster
+    # endpoint, so it matches neither `world` nor `ingress` and would otherwise
+    # be denied. Scoped to the web port; it has no reason to reach valkey or the
+    # database. The LAN path does not use this rule — split DNS sends internal
+    # clients straight to the gateway VIP, which arrives as the `ingress` entity.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: newt
+            app: newt
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
   egress:
     # PostgreSQL (5432), Valkey (6379), and outbound HTTPS for webhooks and
     # custom scripts.
