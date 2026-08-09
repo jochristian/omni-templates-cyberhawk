@@ -31,7 +31,8 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 999
-            runAsGroup: 0
+            # No media mount here, but kept identical to the web/worker pods.
+            runAsGroup: 999
             seccompProfile:
               type: RuntimeDefault
           containers:

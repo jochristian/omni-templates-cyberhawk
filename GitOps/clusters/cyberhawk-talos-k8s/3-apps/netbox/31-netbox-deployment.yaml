@@ -30,13 +30,18 @@ spec:
                     values:
                       - blix
       securityContext:
-        # The image creates `netbox` with uid 999 and gid 0 (`useradd --uid 999
-        # --gid 0`); media/reports/scripts are group-root writable, so runAsGroup
-        # must stay 0. fsGroup 999 is what gives the process write access to the
-        # NFS-backed media volume.
+        # The image creates `netbox` with uid 999 and gid 0, and its in-image
+        # dirs are group-root writable — but nothing writes to them at runtime
+        # (rootfs is read-only, and NetBox 4.x keeps scripts in the database).
+        #
+        # runAsGroup must be 999, not 0: fsGroup 999 lands on the media volume as
+        # a *supplementary* group, and the NFS server behind nfs-csi ignores the
+        # client's supplementary group list (manage-gids), so the media dir
+        # (root:999, drwxrwsr-x) is not writable unless 999 is the primary gid.
+        # Verified against the live volume: gid 0 -> EACCES, gid 999 -> write OK.
         runAsNonRoot: true
         runAsUser: 999
-        runAsGroup: 0
+        runAsGroup: 999
         fsGroup: 999
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
@@ -107,7 +112,11 @@ spec:
           # `Host: <podIP>`, which is not in the list — so every HTTP probe must
           # send an explicit Host header. Same trap as patchmon. Keep this value
           # in sync with ALLOWED_HOSTS/CSRF_TRUSTED_ORIGINS in 02-configmap.yaml.
-          # The startup probe covers first-boot schema migrations (up to 10 min).
+          # The startup probe covers first-boot schema migrations. A fresh NetBox
+          # 4.6 install applies ~300 migrations and measured over 11 minutes on
+          # worker-02, so the budget is 30 min (30s + 180 x 10s). Overshooting it
+          # is not destructive — Django commits per migration and the entrypoint
+          # resumes where it stopped — but it costs a full restart cycle.
           startupProbe:
             httpGet:
               path: /login/
@@ -118,7 +127,7 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 60
+            failureThreshold: 180
           readinessProbe:
             httpGet:
               path: /login/
