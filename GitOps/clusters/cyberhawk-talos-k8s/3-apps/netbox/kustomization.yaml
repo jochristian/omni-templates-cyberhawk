@@ -1,0 +1,61 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: netbox
+
+generators:
+  - 01-secret.yaml
+  - 20-valkey-secret.yaml
+  - 62-volsync-secret.yaml
+
+components:
+  - ../../base/volsync-backup
+
+resources:
+  - 02-configmap.yaml
+  - 10-cnpg-cluster.yaml
+  - 21-valkey-pvc.yaml
+  - 22-valkey-deployment.yaml
+  - 23-valkey-service.yaml
+  - 30-media-pvc.yaml
+  - 31-netbox-deployment.yaml
+  - 32-netbox-service.yaml
+  - 33-worker-deployment.yaml
+  - 34-housekeeping-cronjob.yaml
+  - 40-httproute.yaml
+  - 50-networkpolicies.yaml
+  - 51-servicemonitor.yaml
+  - 60-backup-pvc.yaml
+  - 61-backup-cronjob.yaml
+
+images:
+  # netbox-docker builds. The plain vX.Y.Z tag is the same image as the compound
+  # vX.Y.Z-<netbox-docker version> tag, but sorts cleanly for Renovate.
+  - name: ghcr.io/netbox-community/netbox
+    newTag: "v4.6.7" # renovate: docker=ghcr.io/netbox-community/netbox
+  - name: valkey/valkey
+    newTag: "9.1-alpine" # renovate: docker=valkey/valkey
+  - name: ghcr.io/cloudnative-pg/postgresql
+    newTag: "17" # renovate: docker=ghcr.io/cloudnative-pg/postgresql
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: netbox
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: netbox-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: netbox-backup
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-hetzner-netbox
+      - op: replace
+        path: /spec/trigger/schedule
+        value: "45 4 * * *"

@@ -146,6 +146,15 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
+  # /login/ rather than /, so the check exercises a rendered page instead of the
+  # redirect NetBox serves to anonymous callers at the root.
+  - name: netbox (public)
+    group: "cyberhawk-talos-k8s (cluster)"
+    url: "https://netbox.cyberhawk.no/login/"
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
 
   # ===== External hosts (not part of the cluster) =========================
   # ICMP host check. Needs CAP_NET_RAW on the pod (added in 20-deployment.yaml) so

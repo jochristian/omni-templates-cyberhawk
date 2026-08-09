@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox-worker
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: netbox-worker
+  template:
+    metadata:
+      labels:
+        app: netbox-worker
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 0
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      # Only the web pod runs migrations (its ENTRYPOINT does). Setting `command`
+      # below replaces the ENTRYPOINT, so this pod would otherwise happily start
+      # rqworker against a half-migrated schema. Upstream's chart solves this with
+      # a kubectl-based wait; polling `migrate --check` needs no extra image and
+      # no ServiceAccount/RBAC.
+      initContainers:
+        - name: wait-for-migrations
+          image: ghcr.io/netbox-community/netbox
+          imagePullPolicy: IfNotPresent
+          workingDir: /opt/netbox/netbox
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -u
+              until /opt/netbox/venv/bin/python manage.py migrate --check; do
+                echo "waiting for netbox schema migrations…"
+                sleep 5
+              done
+              echo "schema is up to date"
+          envFrom:
+            - configMapRef:
+                name: netbox-config
+            - secretRef:
+                name: netbox-secret
+          env: &dbenv
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-app
+                  key: host
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-app
+                  key: dbname
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-app
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-app
+                  key: password
+            - name: REDIS_CACHE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: REDIS_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: netbox-worker
+          image: ghcr.io/netbox-community/netbox
+          imagePullPolicy: IfNotPresent
+          # Replaces the ENTRYPOINT, so no migrations/superuser bootstrap here.
+          command:
+            - /opt/netbox/venv/bin/python
+            - /opt/netbox/netbox/manage.py
+            - rqworker
+          envFrom:
+            - configMapRef:
+                name: netbox-config
+            - secretRef:
+                name: netbox-secret
+          env: *dbenv
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            # Scripts and reports write their artefacts here, same volume the web
+            # pod serves them from.
+            - name: media
+              mountPath: /opt/netbox/netbox/media
+            - name: tmp
+              mountPath: /tmp
+          # No probes, same as the upstream chart: rqworker runs in the
+          # foreground, so if it dies the container exits and the kubelet
+          # restarts it. There is no listener to probe.
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: netbox-media
+        - name: tmp
+          emptyDir: {}

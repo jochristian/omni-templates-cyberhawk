@@ -1,0 +1,35 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: netbox
+spec:
+  parentRefs:
+    - name: cilium-gateway
+      namespace: kube-system
+  hostnames:
+    - netbox.cyberhawk.no
+  rules:
+    # NetBox 4.x has no global login-required middleware — LOGIN_REQUIRED is
+    # applied per view, and django_prometheus's /metrics view is not one of them.
+    # With METRICS_ENABLED=true it would be world-readable through the gateway.
+    # Gateway API matches the most specific path first, so this rule shadows the
+    # catch-all below and bounces external callers to the login page. Prometheus
+    # scrapes the ClusterIP Service directly and is unaffected.
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /metrics
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /login/
+            statusCode: 302
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: netbox
+          port: 8080

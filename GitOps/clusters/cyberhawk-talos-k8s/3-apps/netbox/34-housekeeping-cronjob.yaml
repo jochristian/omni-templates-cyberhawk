@@ -1,0 +1,93 @@
+# NetBox's own maintenance pass: expires sessions, trims the changelog and job
+# results per the retention settings. Upstream runs it daily.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: netbox-housekeeping
+spec:
+  schedule: "0 3 * * *"
+  timeZone: "Europe/Oslo"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: netbox-housekeeping
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: topology.kubernetes.io/zone
+                        operator: In
+                        values:
+                          - blix
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: housekeeping
+              image: ghcr.io/netbox-community/netbox
+              imagePullPolicy: IfNotPresent
+              # Replaces the ENTRYPOINT — no migrations run from here.
+              command:
+                - /opt/netbox/venv/bin/python
+                - /opt/netbox/netbox/manage.py
+                - housekeeping
+              envFrom:
+                - configMapRef:
+                    name: netbox-config
+                - secretRef:
+                    name: netbox-secret
+              env:
+                - name: DB_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: netbox-db-app
+                      key: host
+                - name: DB_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: netbox-db-app
+                      key: dbname
+                - name: DB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: netbox-db-app
+                      key: username
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: netbox-db-app
+                      key: password
+                - name: REDIS_CACHE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: netbox-secret
+                      key: REDIS_PASSWORD
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}

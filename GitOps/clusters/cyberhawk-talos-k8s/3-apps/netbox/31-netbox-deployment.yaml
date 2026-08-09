@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox
+spec:
+  replicas: 1
+  # The image's ENTRYPOINT chain (tini -> docker-entrypoint.sh -> launch-netbox.sh)
+  # runs `manage.py migrate`, `remove_stale_contenttypes` and `trace_paths` at boot.
+  # Two versions must never overlap.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: netbox
+  template:
+    metadata:
+      labels:
+        app: netbox
+    spec:
+      automountServiceAccountToken: false
+      # No iSCSI volume here (media is NFS), but keep the web tier next to the
+      # CNPG primary, which is blix-pinned.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        # The image creates `netbox` with uid 999 and gid 0 (`useradd --uid 999
+        # --gid 0`); media/reports/scripts are group-root writable, so runAsGroup
+        # must stay 0. fsGroup 999 is what gives the process write access to the
+        # NFS-backed media volume.
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 0
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: netbox
+          image: ghcr.io/netbox-community/netbox
+          imagePullPolicy: IfNotPresent
+          # Deliberately no command/args: the entrypoint has to run here.
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: netbox-config
+            - secretRef:
+                name: netbox-secret
+          env:
+            # CNPG generates netbox-db-app and points `host` at netbox-db-rw.
+            # netbox-docker has no DATABASE_URL support, so the parts are mapped
+            # individually.
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-app
+                  key: host
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-app
+                  key: dbname
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-app
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-app
+                  key: password
+            # Same Valkey instance as the task queue, different logical DB.
+            - name: REDIS_CACHE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: REDIS_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            # Static assets are collected at image-build time and the entrypoint
+            # never runs collectstatic, so nothing outside /tmp and the mounted
+            # volumes is written at runtime.
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: media
+              mountPath: /opt/netbox/netbox/media
+            - name: tmp
+              mountPath: /tmp
+          # NetBox enforces ALLOWED_HOSTS, and the kubelet probes with
+          # `Host: <podIP>`, which is not in the list — so every HTTP probe must
+          # send an explicit Host header. Same trap as patchmon. Keep this value
+          # in sync with ALLOWED_HOSTS/CSRF_TRUSTED_ORIGINS in 02-configmap.yaml.
+          # The startup probe covers first-boot schema migrations (up to 10 min).
+          startupProbe:
+            httpGet:
+              path: /login/
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: netbox.cyberhawk.no
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /login/
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: netbox.cyberhawk.no
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # TCP rather than HTTP on purpose (this is what the upstream chart does):
+          # a slow database query should not get the pod killed.
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: netbox-media
+        - name: tmp
+          emptyDir: {}

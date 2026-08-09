@@ -1,0 +1,15 @@
+# Shared by the web pod and the rqworker pod (image attachments, uploaded files),
+# so it has to be ReadWriteMany. nfs-csi is the only RWX class in this cluster and
+# it is node-agnostic — unlike democratic-csi-iscsi, an NFS mount survives an
+# inter-site link blip instead of flipping the filesystem to emergency_ro.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netbox-media
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs-csi

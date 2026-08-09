@@ -10,6 +10,7 @@ resources:
   - it-tools.yaml
   - karakeep.yaml
   - patchmon.yaml
+  - netbox.yaml
 #  - portfolio.yaml
   - openbao.yaml
   - tracearr.yaml
