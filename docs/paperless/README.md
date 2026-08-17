@@ -30,6 +30,20 @@ removing an entry from the YAML leaves it untouched in paperless. That means a
 typo can add clutter but cannot destroy your filing. Anything you tune in the UI
 that the YAML does not mention survives a re-run.
 
+### Saved view visibility is a user preference, not a view property
+
+`show_on_dashboard` / `show_in_sidebar` in `taxonomy.yaml` do not map to fields on
+the saved view. Paperless 3.x removed them from the model; API v10 (the default)
+neither accepts nor returns them, so sending them is silently ignored. They now
+live per-user in
+`UiSettings.settings.saved_views.{dashboard,sidebar}_views_visible_ids`, and
+`seed.py` applies them there in a separate step.
+
+Two consequences: the placement is **per user**, so a second paperless user gets
+the views but not your dashboard layout; and `POST /api/ui_settings/` replaces the
+entire settings blob, so the seeder reads-merges-writes rather than posting the two
+keys alone. Posting a partial object would wipe every other UI preference you have.
+
 ## Why it is shaped this way
 
 **Few, broad document types (13).** Upstream guidance is ~10–15 doing the heavy

@@ -43,14 +43,20 @@ COMPARE = {
     "correspondents": ["matching_algorithm", "match"],
     "storage_paths": ["path", "matching_algorithm", "match"],
     "custom_fields": ["data_type"],
-    "saved_views": [
-        "show_on_dashboard",
-        "show_in_sidebar",
-        "sort_field",
-        "sort_reverse",
-        "filter_rules",
-    ],
+    # show_on_dashboard / show_in_sidebar are deliberately absent. They are no
+    # longer fields on SavedView: as of API v10 (the default in 3.x) they are
+    # neither accepted on write nor returned on read, so including them here
+    # produced a permanent no-op update loop — every run reported the same six
+    # views as drifted (None -> True) and changed nothing. Their real home is
+    # per-user UiSettings; see sync_view_visibility().
+    "saved_views": ["sort_field", "sort_reverse", "filter_rules"],
 }
+
+# Keys the ui_settings GET injects server-side on every read. They are not real
+# stored preferences, so they must not be written back.
+UI_SETTINGS_READONLY = frozenset(
+    {"trash_delay", "version", "app_title", "app_logo", "auditlog_enabled"}
+)
 
 
 class Paperless:
@@ -62,7 +68,7 @@ class Paperless:
         self.updated = 0
         self.unchanged = 0
 
-    def _request(self, method: str, path: str, body: dict | None = None) -> Any:
+    def request(self, method: str, path: str, body: dict | None = None) -> Any:
         url = path if path.startswith("http") else f"{self.base}{path}"
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(url, data=data, method=method)
@@ -87,7 +93,7 @@ class Paperless:
         out: list[dict] = []
         url = f"{self.base}/api/{endpoint}/?page_size=250"
         while url:
-            page = self._request("GET", url)
+            page = self.request("GET", url)
             out.extend(page.get("results", []))
             url = page.get("next")
         return out
@@ -96,7 +102,7 @@ class Paperless:
         if not self.apply:
             self.created += 1
             return None
-        obj = self._request("POST", f"/api/{endpoint}/", payload)
+        obj = self.request("POST", f"/api/{endpoint}/", payload)
         self.created += 1
         return obj
 
@@ -104,7 +110,7 @@ class Paperless:
         if not self.apply:
             self.updated += 1
             return None
-        obj = self._request("PATCH", f"/api/{endpoint}/{obj_id}/", payload)
+        obj = self.request("PATCH", f"/api/{endpoint}/{obj_id}/", payload)
         self.updated += 1
         return obj
 
@@ -152,6 +158,56 @@ def sync(
         else:
             api.unchanged += 1
     return ids
+
+
+def sync_view_visibility(
+    api: Paperless, views: list[dict], view_ids: dict[str, int]
+) -> None:
+    """Place saved views on the dashboard / in the sidebar.
+
+    In paperless 3.x this is a per-user UI preference, not a property of the view:
+    UiSettings.settings["saved_views"]["dashboard_views_visible_ids"] (and the
+    sidebar equivalent) hold lists of saved-view ids.
+
+    POST /api/ui_settings/ does update_or_create on the whole settings blob, so
+    this reads, merges and writes back rather than posting the two keys alone —
+    posting a partial object would wipe every other UI preference.
+    """
+    wanted_dash, wanted_side = set(), set()
+    for view in views:
+        vid = view_ids.get(view["name"])
+        if vid is None:  # dry run: the view was never created
+            continue
+        if view.get("show_on_dashboard"):
+            wanted_dash.add(vid)
+        if view.get("show_in_sidebar"):
+            wanted_side.add(vid)
+
+    current = api.request("GET", "/api/ui_settings/") or {}
+    settings_blob = {
+        k: v for k, v in current.items() if k not in UI_SETTINGS_READONLY
+    }
+    saved = dict(settings_blob.get("saved_views") or {})
+
+    have_dash = set(saved.get("dashboard_views_visible_ids") or [])
+    have_side = set(saved.get("sidebar_views_visible_ids") or [])
+    if have_dash == wanted_dash and have_side == wanted_side:
+        api.unchanged += 1
+        return
+
+    print(
+        f"  ~ visibility: dashboard {sorted(have_dash)} -> {sorted(wanted_dash)}, "
+        f"sidebar {sorted(have_side)} -> {sorted(wanted_side)}"
+    )
+    if not api.apply:
+        api.updated += 1
+        return
+
+    saved["dashboard_views_visible_ids"] = sorted(wanted_dash)
+    saved["sidebar_views_visible_ids"] = sorted(wanted_side)
+    settings_blob["saved_views"] = saved
+    api.request("POST", "/api/ui_settings/", {"settings": settings_blob})
+    api.updated += 1
 
 
 def order_tags(tags: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -363,7 +419,19 @@ def main() -> int:
             for r in rules
         ]
         views.append(payload)
-    sync(api, "saved_views", views, label="view")
+
+    # Strip the visibility flags from what goes to /api/saved_views/ — the v10
+    # API ignores them. They are applied separately, against UiSettings.
+    view_ids = sync(
+        api,
+        "saved_views",
+        [
+            {k: v for k, v in p.items() if k not in ("show_on_dashboard", "show_in_sidebar")}
+            for p in views
+        ],
+        label="view",
+    )
+    sync_view_visibility(api, views, view_ids)
 
     print(
         f"\n{'Created' if api.apply else 'Would create'}: {api.created}   "
