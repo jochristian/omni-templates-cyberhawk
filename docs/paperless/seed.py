@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.parse
@@ -203,6 +204,39 @@ def resolve_rule_value(
     return value
 
 
+# Very common Norwegian words. As a bare token in an `any`/`all` match these
+# match almost every document, because paperless splits the match on whitespace
+# and searches each token as \bword\b — an unquoted "vann og avløp" becomes three
+# tokens, and `og` alone tags everything. Multi-word terms must be "quoted".
+STOPWORDS = {
+    "og", "i", "på", "av", "til", "for", "med", "en", "et", "som", "er", "den",
+    "det", "de", "har", "kan", "skal", "ved", "om", "at", "fra", "eller", "ikke",
+    "over", "under", "mot", "nr", "per", "pr", "du", "vi", "jeg", "alle", "hver",
+    "kr", "the", "and", "of", "to",
+}
+
+# Mirrors documents/matching.py::_split_match — quoted groups stay together.
+_SPLIT_MATCH = re.compile(r'"([^"]+)"|(\S+)').findall
+
+
+def lint_matches(tax: dict) -> list[str]:
+    """Warn about match tokens that will fire on nearly every document."""
+    problems = []
+    for section in ("document_types", "tags", "correspondents"):
+        for item in tax.get(section) or []:
+            # Only any(1)/all(2) tokenise; literal/regex/fuzzy are matched whole.
+            if item.get("matching_algorithm") not in (1, 2):
+                continue
+            for group in _SPLIT_MATCH(item.get("match") or ""):
+                token = (group[0] or group[1]).strip()
+                if token.lower() in STOPWORDS:
+                    problems.append(
+                        f"{item['name']!r}: bare token {token!r} is a stopword and "
+                        f"will match nearly every document — quote the phrase"
+                    )
+    return problems
+
+
 def check_view_references(views: list[dict], tax: dict) -> None:
     """Catch typos in @tag:/@document_type: references before touching the API."""
     known = {
@@ -251,6 +285,10 @@ def main() -> int:
 
     tax = yaml.safe_load(args.taxonomy.read_text(encoding="utf-8")) or {}
     check_view_references(tax.get("saved_views") or [], tax)
+
+    for problem in lint_matches(tax):
+        print(f"WARNING  {problem}", file=sys.stderr)
+
     api = Paperless(args.url, token, apply=args.apply)
 
     mode = "APPLY" if args.apply else "DRY RUN (nothing will be written)"

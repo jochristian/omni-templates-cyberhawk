@@ -47,8 +47,13 @@ document_types:
   - name: Purring
     # Worth its own type rather than a tag: it is the one document class where
     # "did I miss this?" is the whole question, and a saved view on it is useful.
+    #
+    # Deliberately does NOT match the bare word "purring". Norwegian invoices
+    # carry payment-terms boilerplate along the lines of "Ved purring beregnes
+    # gebyr kr 35,00", so that token appears on ordinary invoices that are not
+    # reminders at all. Only inkasso-stage vocabulary is specific enough.
     matching_algorithm: 1
-    match: purring inkassovarsel betalingsoppfordring inkassokrav
+    match: inkassovarsel betalingsoppfordring inkassokrav purringsgebyr
   - name: Attest
     matching_algorithm: 1
     match: attest vitnemål karakterutskrift sertifikat
@@ -130,7 +135,11 @@ tags:
     parent: Bolig
     color: "#388e3c"
     matching_algorithm: 1
-    match: kommunale avgifter renovasjon vann og avløp feiing
+    # Multi-word terms MUST be quoted. `any` splits on whitespace and searches
+    # each token as \bword\b, so the unquoted form of this rule contained the
+    # standalone token `og` — which matches virtually every Norwegian document.
+    # It put this tag on a broadband invoice on day one.
+    match: '"kommunale avgifter" renovasjon "vann og avløp" feiing'
   - name: Internett og TV
     parent: Bolig
     color: "#388e3c"
@@ -170,7 +179,9 @@ tags:
   - name: Forsikring
     color: "#0097a7"
     matching_algorithm: 1
-    match: forsikringsnummer forsikringspremie egenandel
+    # `egenandel` deliberately removed: it is equally at home on a health
+    # document, so it put both Forsikring and Helse on the same paper.
+    match: forsikringsnummer forsikringspremie forsikringsbevis polisenummer
   - name: Helse
     color: "#c2185b"
     matching_algorithm: 1

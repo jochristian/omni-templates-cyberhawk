@@ -87,8 +87,22 @@ document type you are missing.
 ## Next steps, roughly in order of payoff
 
 - **Tune the match rules.** The strings in `taxonomy.yaml` are educated guesses at
-  Norwegian invoice vocabulary, not tested against your documents. After the first
-  ~50, check what auto-assigned wrongly and adjust. This is where the real value is.
+  Norwegian invoice vocabulary. After the first ~50 documents, check what
+  auto-assigned wrongly and adjust. This is where the real value is.
+
+  Two traps, both found by the very first real document:
+
+  **Quote multi-word terms.** `any`/`all` split the match on whitespace and search
+  each token as `\bword\b`, so an unquoted `vann og avløp` becomes three tokens —
+  and the bare `og` matches essentially every Norwegian document. Write
+  `"vann og avløp"`. `seed.py` warns on bare stopword tokens before it writes
+  anything, but it only knows the words in its `STOPWORDS` set.
+
+  **Beware boilerplate vocabulary.** Norwegian invoices carry payment terms like
+  "Ved purring beregnes gebyr kr 35,00", so matching the bare word `purring` tags
+  ordinary invoices as reminders. Match the inkasso-stage words instead. The same
+  logic applies to any word that appears in the small print rather than the
+  subject of the document.
 - **Mail rules** (`/settings/mail`). Most bills arrive by email and never touch a
   scanner. Bigger practical win than anything scanner-related.
 - **ASN + physical binder.** If you keep paper: write an ascending number on each
