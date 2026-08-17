@@ -17,6 +17,18 @@ spec:
         app: paperless
     spec:
       automountServiceAccountToken: false
+      # MUST stay false. The Service in this namespace is called `paperless`, so
+      # the kubelet's legacy Docker-link injection sets PAPERLESS_PORT=tcp://<clusterIP>:8000
+      # — and paperless-ngx reads PAPERLESS_PORT as the port granian binds. The
+      # result is a crash-loop-without-restarting: s6 keeps respawning granian with
+      # `Invalid value for '--port': 'tcp://10.97.255.89:8000' is not a valid integer`,
+      # nothing ever listens on :8000, and the only outward symptom is a startup
+      # probe failing with `connection refused`.
+      #
+      # Any app whose config env prefix matches a Service name in its own namespace
+      # hits this. Disabling the links is the root fix; PAPERLESS_PORT is also
+      # pinned explicitly in 02-configmap.yaml as a second line of defence.
+      enableServiceLinks: false
       # The data PVC is iSCSI (blix-side target), so the pod has to live on blix.
       # This also keeps it next to the CNPG primary, which is pinned the same way.
       affinity:

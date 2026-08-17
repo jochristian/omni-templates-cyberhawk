@@ -54,6 +54,15 @@ probe budget is 10 minutes.
 
 ## Gotchas
 
+- **`enableServiceLinks: false` is load-bearing.** The Service is named `paperless`
+  in namespace `paperless`, so the kubelet injects `PAPERLESS_PORT=tcp://<clusterIP>:8000`
+  — and paperless-ngx reads `PAPERLESS_PORT` as the port granian binds. Turning the
+  links back on gives you a pod that is `Running`, never restarts, and never listens:
+  s6 respawns granian forever with `Invalid value for '--port'`, and the only visible
+  symptom is a startup probe `connection refused`. Bit us on the very first sync.
+  `PAPERLESS_PORT` is also pinned in `02-configmap.yaml` as a second line of defence.
+  The general rule: any app whose config env prefix collides with a Service name in
+  its own namespace needs this.
 - **Probes must send an explicit `Host` header.** `PAPERLESS_ALLOWED_HOSTS` is
   pinned, and the kubelet probes with `Host: <podIP>` → Django 400 `DisallowedHost`.
   Keep the probe header and the configmap value in sync. Same trap as netbox and

@@ -38,6 +38,12 @@ data:
   PAPERLESS_CONSUMER_POLLING: "30"
   PAPERLESS_CONSUMER_POLLING_RETRY_COUNT: "5"
 
+  # The port granian binds. Pinned rather than left to default because the Service
+  # is also called `paperless`: with serviceLinks enabled the kubelet would set
+  # PAPERLESS_PORT=tcp://<clusterIP>:8000 and granian would refuse to start. See
+  # the enableServiceLinks comment in 33-paperless-deployment.yaml.
+  PAPERLESS_PORT: "8000"
+
   PAPERLESS_TASK_WORKERS: "2"
   PAPERLESS_THREADS_PER_WORKER: "2"
   PAPERLESS_WEBSERVER_WORKERS: "2"
