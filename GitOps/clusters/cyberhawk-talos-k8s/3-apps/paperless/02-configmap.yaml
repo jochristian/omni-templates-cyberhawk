@@ -56,6 +56,36 @@ data:
   # the enableServiceLinks comment in 33-paperless-deployment.yaml.
   PAPERLESS_PORT: "8000"
 
+  # ---- AI (suggestions only) ---------------------------------------------
+  # DO NOT set any of these in the web UI under Settings -> Application
+  # Configuration. AIConfig resolves each value as `app_config.X or settings.X`,
+  # so anything stored in the database that is truthy permanently shadows the
+  # environment variable, and no ConfigMap edit will ever win it back — you would
+  # have to clear the field in the UI again. Keep the whole AI config here.
+  #
+  # (The database currently holds ai_enabled = false, which is *falsy*, so it
+  # falls through to PAPERLESS_AI_ENABLED below. That is why this works at all.)
+  PAPERLESS_AI_ENABLED: "1"
+  PAPERLESS_AI_LLM_BACKEND: "openai-like"
+  # No endpoint is set: for OpenAI proper the client falls back to api.openai.com.
+  # An endpoint is only needed to target a different provider or a local gateway.
+  PAPERLESS_AI_LLM_MODEL: "gpt-5.6-luna"
+  # Refuse LLM endpoints that resolve to private addresses. Nothing here needs
+  # one, and this is the guard against an endpoint change turning the document
+  # pipeline into an SSRF primitive. Env-only — this key is not readable from the
+  # database at all.
+  PAPERLESS_AI_LLM_ALLOW_INTERNAL_ENDPOINTS: "false"
+  #
+  # PAPERLESS_AI_LLM_API_KEY deliberately lives in 01-secret.sops.yaml, not here.
+  # The deployment does envFrom: secretRef, so any key in that secret becomes an
+  # environment variable automatically — no Deployment change is needed to add it.
+  #
+  # No PAPERLESS_AI_LLM_EMBEDDING_BACKEND on purpose: without it llm_index_enabled
+  # is false, so there is no RAG index, no nightly embedding job and no extra
+  # memory. That means no similar-documents and no document chat — only the
+  # opt-in "Suggest" button. Add `huggingface` (local embeddings) later if the
+  # suggestions prove useful, and raise the memory limit to 6Gi at the same time.
+
   # Tika + Gotenberg. Required for HTML email, not just for Office documents:
   # the mail parser sends any HTML mail body to Tika, so without these every
   # HTML-only receipt fails to consume with "Connection refused" against
