@@ -77,17 +77,18 @@ tags:
   #
   # Max nesting depth is 5. This template uses 2.
 
-  # ---- Workflow tags (never auto-matched) --------------------------------
+  # ---- Ingest triage ------------------------------------------------------
+  # This is an ARCHIVE, not a task system. Bills are paid elsewhere (AvtaleGiro,
+  # nettbank); paperless exists so the paper can be found again years later.
+  # So there is no TODO tag and nothing here tracks outstanding action.
+  #
+  # Innboks stays, because it is not a task marker — it is the difference between
+  # "arrived" and "checked and filed", which is archival hygiene. Auto-matching
+  # also ignores anything still carrying an inbox tag, so the queue is what keeps
+  # the classifier learning from reviewed documents only.
   - name: Innboks
     color: "#d32f2f"
     is_inbox_tag: true
-    matching_algorithm: 0
-    match: ""
-  - name: TODO
-    # Something is required of you: pay it, sign it, dispute it, cancel it.
-    # Cannot be auto-matched — the docs call this out explicitly, since nothing
-    # in the document text distinguishes "I still need to act on this".
-    color: "#f57c00"
     matching_algorithm: 0
     match: ""
 
@@ -245,15 +246,20 @@ tags:
 
 custom_fields:
   # data_type: string url date boolean integer float monetary documentlink select
+  #
+  # Archive test for whether a field belongs here: does it help you FIND or VERIFY
+  # something later? Forfallsdato failed it — a due date only has value while the
+  # bill is unpaid, which is a job this system does not do. Dropped.
   - name: Beløp
     data_type: monetary
-  - name: Forfallsdato
-    data_type: date
   - name: Fakturanummer
+    # The reference you quote when disputing a charge or chasing a refund.
     data_type: string
   - name: Kontonummer
     data_type: string
   - name: Garanti utløper
+    # Kept despite being a date: this is looked UP ("is this still covered?"),
+    # not warned about.
     data_type: date
   - name: Oppbevares til
     data_type: date
@@ -273,6 +279,11 @@ storage_paths:
 saved_views:
   # rule_type reference: 3=correspondent is  4=document type is  5=is in inbox
   # 6=has tag  7=has any tag  17=does not have tag
+  #
+  # Only ONE view is on the dashboard: the ingest queue. An archive's front page
+  # should answer "is there anything left to file?" and nothing else — every
+  # other view here is a filter you go looking for, not something that presents
+  # itself as needing attention.
   - name: Innboks
     show_on_dashboard: true
     show_in_sidebar: true
@@ -282,27 +293,29 @@ saved_views:
       - rule_type: 5
         value: "true"
 
-  - name: Må følges opp
-    show_on_dashboard: true
+  # ---- Retrieval / hygiene (sidebar only) ---------------------------------
+  # These trend toward empty in a healthy archive. Correspondent and document
+  # type are the two axes you actually search on years later, so a document
+  # missing either is a document you will struggle to find again.
+  - name: Uten korrespondent
+    show_on_dashboard: false
     show_in_sidebar: true
-    sort_field: created
+    sort_field: added
     sort_reverse: true
     rules:
-      - rule_type: 6
-        value: "@tag:TODO"
+      - rule_type: 3
+        value: null
 
-  - name: Purringer
-    # Cheap insurance. If one of these ever shows up, you want to know today.
-    show_on_dashboard: true
+  - name: Uten dokumenttype
+    show_on_dashboard: false
     show_in_sidebar: true
-    sort_field: created
+    sort_field: added
     sort_reverse: true
     rules:
       - rule_type: 4
-        value: "@document_type:Purring"
+        value: null
 
   - name: Uten tagger
-    # Hygiene view: filed but uncategorised. Should trend to empty.
     show_on_dashboard: false
     show_in_sidebar: true
     sort_field: added
@@ -311,15 +324,18 @@ saved_views:
       - rule_type: 7
         value: "false"
 
-  - name: Uten dokumenttype
-    # Hygiene view. Also the shortlist for "which document types am I missing?"
+  - name: Purringer
+    # Sidebar, deliberately NOT the dashboard. As a retrieval filter ("have I
+    # ever been chased by these people?") this earns its place in an archive.
+    # On the dashboard it would be an alarm, which is the job this system does
+    # not have.
     show_on_dashboard: false
     show_in_sidebar: true
-    sort_field: added
+    sort_field: created
     sort_reverse: true
     rules:
       - rule_type: 4
-        value: null
+        value: "@document_type:Purring"
 
   - name: Sist lagt til
     show_on_dashboard: false

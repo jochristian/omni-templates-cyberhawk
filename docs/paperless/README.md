@@ -82,21 +82,53 @@ genuinely better grown than seeded: you only want entries for entities you
 actually hear from, and twenty guesses gives you twenty correspondents with zero
 documents and a match rule you never tuned.
 
-## The weekly loop
+## This is an archive, not a task system
 
-Seeding the taxonomy is the easy half. The habit is what keeps it usable.
+Worth stating plainly, because it decides what belongs here. Bills are paid
+elsewhere — AvtaleGiro, nettbank, eFaktura. Paperless exists so a document can be
+found again in three years, not so it can remind you of anything.
+
+Consequences, all of them deliberate:
+
+- **No `TODO` tag** and no due-date tracking. A `Forfallsdato` custom field was in
+  the first draft and has been removed: a due date only has value while the bill is
+  unpaid, which is a job this system does not do.
+- **No scheduled workflows.** Paperless can fire a workflow N days before a date
+  field. Do not wire one up here; it would turn the archive into a second, worse
+  inbox competing with the one that actually pays things.
+- **One dashboard view**, the ingest queue. The front page answers "is there
+  anything left to file?" and nothing else.
+- **`Purringer` is sidebar-only.** As a retrieval filter it earns its place; on the
+  dashboard it would be an alarm.
+- **Retention tags matter more, not less.** `Oppbevaring` is the archive's own
+  lifecycle, and the only axis correspondent-and-type does not capture.
+
+`Innboks` survives all this because it is not a task marker — it is the difference
+between "arrived" and "checked and filed". It also does real work: auto-matching
+ignores anything still carrying an inbox tag, so the queue is what keeps the
+classifier learning from reviewed documents only.
+
+## The filing loop
+
+Seeding the taxonomy is the easy half. The habit is what keeps it findable.
 
 1. New documents arrive tagged `Innboks` automatically.
-2. Once a week, work the inbox: check the auto-assigned correspondent and type,
-   fix what is wrong, set the title, **verify the date** (paperless guesses it from
-   OCR and gets it wrong on bad scans), add a retention tag, remove `Innboks`.
-3. Anything needing action gets `TODO`, which is on the dashboard.
-4. Keep the inbox under ~50. Past that it stops being a queue and becomes a pile,
+2. Periodically, work the inbox: check the auto-assigned correspondent and type,
+   fix what is wrong, set a title **you would actually search for** (not the
+   filename — scanners and billing portals produce things like
+   `922177724-arkiv_INVOICE_8032452057`), **verify the date** (paperless guesses it
+   from OCR and gets it wrong on bad scans), add a retention tag, remove `Innboks`.
+3. Keep the inbox from becoming a pile. Past a few dozen it stops being a queue,
    and the auto-matcher has nothing clean to learn from.
 
-The `Uten tagger` and `Uten dokumenttype` views are hygiene checks — both should
-trend toward empty. `Uten dokumenttype` is also the shortlist for deciding which
-document type you are missing.
+`Uten korrespondent`, `Uten dokumenttype` and `Uten tagger` are the hygiene views
+and should trend toward empty. The first two matter most: correspondent and
+document type are the axes you will actually search on years later, so a document
+missing either is one you will struggle to find again.
+
+Once a year, filter on `Oppbevaring > 1 år` and delete what has aged out. Nothing
+does this for you — paperless never deletes on its own, which is the correct
+default for an archive.
 
 ## Next steps, roughly in order of payoff
 
@@ -122,10 +154,10 @@ document type you are missing.
 - **ASN + physical binder.** If you keep paper: write an ascending number on each
   sheet before scanning, file by that number only, and never sort the binder any
   other way. Retrieval is then always search → read ASN → grab.
-- **Scheduled workflows.** A scheduled trigger can fire N days before a date custom
-  field — e.g. `Forfallsdato` minus 14 days → add `TODO`. Left out of the seeder on
-  purpose: workflows reference custom field IDs and are much easier to reason about
-  in the UI than in YAML.
+- **Consumption workflows, if anything.** Not *scheduled* ones — see the archive
+  note above. A "consumption started" workflow can assign an owner or a tag based
+  on which folder a file arrived in, which is useful if you ever ingest from more
+  than one source. Reminder-style triggers are out of scope by design.
 - **Built-in AI.** 3.x ships its own LLM features (`PAPERLESS_AI_*`): suggestions,
   RAG-backed similar documents, and document chat, with an `ollama` or
   `openai-like` backend. Off by default. This overlaps almost entirely with the
