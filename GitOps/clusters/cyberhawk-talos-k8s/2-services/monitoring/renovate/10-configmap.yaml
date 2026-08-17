@@ -5,11 +5,14 @@ metadata:
 data:
   # Bot-level (self-hosted) config only. Dependency policy, custom managers and
   # package rules live in the repo-root renovate.json so they're reviewable in-repo.
+  #
+  # GitHub repos only. cyberhawk-gitops-private moved to self-hosted Forgejo and
+  # is handled by the gitea-platform run in 11-configmap-forgejo.yaml.
   config.json: |
     {
       "platform": "github",
       "endpoint": "https://api.github.com/",
-      "repositories": ["jochristian/omni-templates-cyberhawk", "jochristian/cyberhawk-gitops-private"],
+      "repositories": ["jochristian/omni-templates-cyberhawk"],
       "autodiscover": false,
       "onboarding": false,
       "requireConfig": "required",

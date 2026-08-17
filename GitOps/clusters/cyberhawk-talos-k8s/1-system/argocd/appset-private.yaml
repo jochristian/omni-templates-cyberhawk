@@ -11,7 +11,7 @@ spec:
     preserveResourcesOnDeletion: true
   generators:
     - git:
-        repoURL: git@github.com:jochristian/cyberhawk-gitops-private.git
+        repoURL: https://git.cyberhawk.no/CyberHawk/cyberhawk-gitops-private.git
         revision: HEAD
         directories:
           # <group>/<app> -> app <group>-<app> in namespace <group>
@@ -28,7 +28,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: git@github.com:jochristian/cyberhawk-gitops-private.git
+        repoURL: https://git.cyberhawk.no/CyberHawk/cyberhawk-gitops-private.git
         targetRevision: HEAD
         path: '{{ .path.path }}'
       destination:

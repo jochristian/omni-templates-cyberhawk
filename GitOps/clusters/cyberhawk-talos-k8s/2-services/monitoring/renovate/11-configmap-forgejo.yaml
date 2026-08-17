@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: renovate-forgejo-config
+data:
+  # Second bot-level config. A Renovate run targets exactly one platform, so the
+  # self-hosted Forgejo repos need their own config + CronJob alongside the
+  # GitHub one in 10-configmap.yaml. Dependency policy still lives in each
+  # repo's own renovate.json.
+  config.json: |
+    {
+      "platform": "gitea",
+      "endpoint": "https://git.cyberhawk.no/api/v1/",
+      "repositories": ["cyberhawk/cyberhawk-gitops-private"],
+      "autodiscover": false,
+      "onboarding": false,
+      "requireConfig": "required",
+      "gitAuthor": "Renovate Bot <renovate@cyberhawk.no>"
+    }

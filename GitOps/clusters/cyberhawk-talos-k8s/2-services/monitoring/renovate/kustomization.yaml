@@ -4,10 +4,13 @@ namespace: monitoring
 
 generators:
   - 01-secret.yaml
+  - 02-secret-forgejo.yaml
 
 resources:
   - 10-configmap.yaml
+  - 11-configmap-forgejo.yaml
   - 20-cronjob.yaml
+  - 21-cronjob-forgejo.yaml
 
 images:
   # Renovate self-hosted runner. Renovate updates THIS tag via PR too (see the
