@@ -130,6 +130,24 @@ Once a year, filter on `Oppbevaring > 1 år` and delete what has aged out. Nothi
 does this for you — paperless never deletes on its own, which is the correct
 default for an archive.
 
+## Duplicate detection can lose a race
+
+Paperless rejects a re-upload whose checksum already exists, but the check is not
+atomic: with `PAPERLESS_TASK_WORKERS: 2`, two byte-identical files consumed at the
+same moment can both pass it and both be stored. Seen on the first bulk upload —
+two invoices landed twice, identical checksums and identical original filenames.
+
+Worth running occasionally, and after any bulk import:
+
+```sql
+select checksum, count(*), string_agg(id::text, ',' order by id)
+from documents_document group by checksum having count(*) > 1;
+```
+
+Delete the extras **through the UI or API, never in the database** — paperless has
+to remove the stored original and the archive rendition alongside the row. UI
+deletes go to the trash and are recoverable for `trash_delay` days (30 here).
+
 ## Next steps, roughly in order of payoff
 
 - **Tune the match rules.** The strings in `taxonomy.yaml` are educated guesses at
@@ -143,6 +161,12 @@ default for an archive.
   and the bare `og` matches essentially every Norwegian document. Write
   `"vann og avløp"`. `seed.py` warns on bare stopword tokens before it writes
   anything, but it only knows the words in its `STOPWORDS` set.
+
+  **Not everything arrives in Norwegian.** Travel documents especially: an SAS
+  e-ticket is issued entirely in English, and a foreign transit statement may be in
+  a third language. `Reise` and `Billett` are therefore bilingual regexes. A
+  Norwegian-only word list silently never matches these, and they land in
+  `Uten dokumenttype` looking like an oversight rather than a gap.
 
   **Beware boilerplate vocabulary.** Norwegian invoices carry payment terms like
   "Ved purring beregnes gebyr kr 35,00", so matching the bare word `purring` tags

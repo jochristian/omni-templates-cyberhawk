@@ -63,6 +63,13 @@ document_types:
   - name: Bruksanvisning
     matching_algorithm: 1
     match: bruksanvisning brukerhåndbok brukerveiledning
+  - name: Billett
+    # Flight/train/event tickets and their receipts. Regex and bilingual on
+    # purpose: travel documents arrive in English far more often than Norwegian
+    # (an SAS e-ticket is issued entirely in English), so a Norwegian-only word
+    # list never matches them.
+    matching_algorithm: 4
+    match: billett|itinerary|electronic ticket|e-?ticket|boarding pass
   - name: Brev
     # No match: far too generic to auto-assign. This is the manual fallback for
     # anything that is simply a letter.
@@ -209,6 +216,17 @@ tags:
     color: "#00796b"
     matching_algorithm: 1
     match: abonnement bindingstid oppsigelsesfrist
+  - name: Reise
+    # Flights, hotels, foreign transit. Kept flat rather than nested (Fly /
+    # Hotell / Transport) until the volume justifies it — subcategories with two
+    # documents in them are just extra clicks.
+    #
+    # Bilingual regex, same reason as the Billett type: these documents are
+    # rarely in Norwegian, and a foreign transit statement may be in a third
+    # language entirely.
+    color: "#ef6c00"
+    matching_algorithm: 4
+    match: flybillett|reisedokument|itinerary|electronic ticket|e-?ticket|booking reference|boarding pass|travel product
   - name: Offentlig
     color: "#616161"
     matching_algorithm: 1
