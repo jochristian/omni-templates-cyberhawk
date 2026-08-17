@@ -173,8 +173,14 @@ tags:
   - name: Bompenger
     parent: Kjøretøy
     color: "#7b1fa2"
-    matching_algorithm: 1
-    match: bompenger autopass ferjekort
+    # Regex rather than `any`, because this vocabulary inflects heavily and `any`
+    # is word-bounded: \bbompenger\b misses "bompengepassering", \bbombrikke\b
+    # misses "bombrikken". A real AutoSync invoice matched none of the original
+    # word list (bompenger / autopass / ferjekort) — it says "bombrikke" and
+    # "bom- og ferjepasseringer", and the operator is not AutoPASS-branded.
+    # Stems catch every form. Operator names belong in correspondents, not here.
+    matching_algorithm: 4
+    match: bompeng|bombrikk|bompasser|ferjepasser|autopass
 
   - name: Forsikring
     color: "#0097a7"

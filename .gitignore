@@ -8,3 +8,9 @@ Chart.lock
 **/docs/superpowers/
 # Local audit reports
 talos-audit-*.md
+
+# Real paperless correspondent list is personal data and lives in
+# ~/paperless-seed/. Defensive: never let a copy land in this public repo.
+# (correspondents.example.yaml is placeholders and IS tracked.)
+docs/paperless/correspondents.yaml
+paperless-seed/
