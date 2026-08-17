@@ -1,0 +1,38 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: paperless-db
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17 # renovate: docker=ghcr.io/cloudnative-pg/postgresql
+  inheritedMetadata:
+    labels:
+      app.kubernetes.io/name: paperless
+  storage:
+    size: 10Gi
+    storageClass: democratic-csi-iscsi
+  bootstrap:
+    initdb:
+      database: paperless
+      owner: paperless
+      # Deliberately no locale override. The CNPG image only ships C / C.UTF-8 /
+      # en_US.UTF-8, so asking for nb_NO.UTF-8 fails initdb outright. Paperless
+      # does its full-text search in the Whoosh index on the data PVC, not in
+      # Postgres, so database collation does not affect Norwegian search.
+  # iSCSI target is blix-side; a lørenskog attachment runs its block I/O over the
+  # inter-site WireGuard link and flips ext4 to emergency_ro on a blip.
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                  - blix
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 200m
+    limits:
+      memory: 1Gi

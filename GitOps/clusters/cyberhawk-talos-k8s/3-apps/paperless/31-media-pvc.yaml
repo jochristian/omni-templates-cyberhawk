@@ -1,0 +1,25 @@
+# The documents themselves — originals, archived PDF/A renders, thumbnails. The
+# irreplaceable volume.
+#
+# nfs-csi rather than democratic-csi-iscsi even though a single pod mounts it:
+# the iSCSI target is blix-side, and an ext4-on-iSCSI mount flips to permanent
+# emergency_ro when the inter-site link blips (three volumes did on 2026-08-07,
+# silently — the pods stayed Running). An NFS mount reconnects instead. Same
+# reasoning as 3-apps/netbox/30-media-pvc.yaml.
+#
+# CAVEAT: nfs-csi has reclaimPolicy Delete (democratic-csi-iscsi has Retain), and
+# the ApplicationSet syncs with prune: true. Deleting or renaming this app's
+# directory therefore destroys the documents. The restic backup in
+# 64-media-replicationsource.yaml is the only thing standing between a bad `git mv`
+# and total loss — do not remove it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-media
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: nfs-csi

@@ -1,0 +1,18 @@
+# Whoosh full-text index, the trained document classifier, and the sqlite
+# django-q broker state. Small, rewritten constantly, and heavily lock-dependent
+# — which is exactly what NFS is bad at, so this one stays on iSCSI block storage
+# and the pod is pinned to blix along with it.
+#
+# Deliberately NOT backed up: the index is rebuildable with
+# `document_index reindex` and the classifier retrains itself from the database.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: democratic-csi-iscsi

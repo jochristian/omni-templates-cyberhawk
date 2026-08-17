@@ -1,0 +1,175 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless
+spec:
+  replicas: 1
+  # The s6 init chain runs `manage.py migrate` and rebuilds the search index at
+  # boot, and the data PVC is ReadWriteOnce. Two versions must never overlap.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: paperless
+  template:
+    metadata:
+      labels:
+        app: paperless
+    spec:
+      automountServiceAccountToken: false
+      # The data PVC is iSCSI (blix-side target), so the pod has to live on blix.
+      # This also keeps it next to the CNPG primary, which is pinned the same way.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        # NOTE: this container runs as ROOT, unlike every other app in 3-apps/.
+        # It is not an oversight and it is not cosmetic — two things in the image
+        # require it, and both run before the app does:
+        #
+        #   1. init-tesseract-langs `apt-get install tesseract-ocr-nor` on every
+        #      start (PAPERLESS_OCR_LANGUAGES in 02-configmap.yaml). Non-root is
+        #      detected by the image and logs "Unable to install language as
+        #      non-root, startup may fail".
+        #   2. init-folders `chown paperless:paperless` across data/media/consume,
+        #      then init-modify-user remaps that account to USERMAP_UID/GID.
+        #
+        # s6 drops to uid 1000 (`s6-setuidgid paperless`) before anything listens
+        # on :8000, so the Django process itself is unprivileged. If you ever drop
+        # PAPERLESS_OCR_LANGUAGES, this whole block can become runAsNonRoot: true
+        # + runAsUser/runAsGroup 1000 + readOnlyRootFilesystem: true.
+        #
+        # fsGroup 1000 matters independently of the chown: the NFS server behind
+        # nfs-csi may squash root, in which case init-folders' chown silently
+        # fails and group ownership from fsGroup is what makes media/ writable.
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: paperless
+          image: ghcr.io/paperless-ngx/paperless-ngx
+          imagePullPolicy: IfNotPresent
+          # Deliberately no command/args: ENTRYPOINT is s6-overlay's /init.
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: paperless-config
+            - secretRef:
+                name: paperless-secret
+          env:
+            # CNPG generates paperless-db-app and points `host` at paperless-db-rw.
+            # Paperless has no DATABASE_URL support, so the parts are mapped
+            # individually.
+            - name: PAPERLESS_DBENGINE
+              value: postgresql
+            - name: PAPERLESS_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-db-app
+                  key: host
+            - name: PAPERLESS_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-db-app
+                  key: port
+            - name: PAPERLESS_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-db-app
+                  key: dbname
+            - name: PAPERLESS_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-db-app
+                  key: username
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-db-app
+                  key: password
+          securityContext:
+            allowPrivilegeEscalation: false
+            # apt/dpkg writes to /var/lib/dpkg and /usr/share/tesseract-ocr, so
+            # the rootfs cannot be read-only while PAPERLESS_OCR_LANGUAGES is set.
+            readOnlyRootFilesystem: false
+            capabilities:
+              # Everything root actually needs here: chown/fowner for init-folders,
+              # dac_override for apt writing into root-owned dirs, setgid/setuid
+              # for s6-setuidgid dropping to the paperless account.
+              # If dpkg errors with EPERM on first boot, that list is the thing to
+              # widen — check `kubectl -n paperless logs deploy/paperless` for
+              # [init-tesseract-langs] before assuming the network is at fault.
+              drop: ["ALL"]
+              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              # OCR is bursty: a multi-page scan runs tesseract at
+              # TASK_WORKERS x THREADS_PER_WORKER = 4 threads.
+              memory: 4Gi
+          volumeMounts:
+            - name: data
+              mountPath: /usr/src/paperless/data
+            - name: media
+              mountPath: /usr/src/paperless/media
+            - name: consume
+              mountPath: /usr/src/paperless/consume
+          # PAPERLESS_ALLOWED_HOSTS is pinned in 02-configmap.yaml, and the kubelet
+          # probes with `Host: <podIP>`, which is not in the list — so every HTTP
+          # probe must send an explicit Host header or Django answers 400
+          # DisallowedHost. Same trap as netbox and patchmon. Keep this value in
+          # sync with PAPERLESS_ALLOWED_HOSTS.
+          #
+          # The startup budget is 10 min (30s + 57 x 10s). First boot has to run
+          # `apt-get install tesseract-ocr-nor` over the network, apply the full
+          # Django migration set, and build an empty search index.
+          startupProbe:
+            httpGet:
+              path: /accounts/login/
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: paperless.cyberhawk.no
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 57
+          readinessProbe:
+            httpGet:
+              path: /accounts/login/
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: paperless.cyberhawk.no
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # TCP rather than HTTP on purpose: a pod busy OCRing a large scan should
+          # not get killed for a slow response.
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: paperless-data
+        - name: media
+          persistentVolumeClaim:
+            claimName: paperless-media
+        - name: consume
+          persistentVolumeClaim:
+            claimName: paperless-consume

@@ -1,0 +1,20 @@
+# Drop folder. RWX on nfs-csi so it can also be written from outside the pod —
+# the provisioner creates a subdirectory under 10.50.1.200:/files/kubernetes_csi
+# named pvc-<uuid>, which the NAS can re-export to a scanner or a sync client.
+#
+# Transient by design: the consumer deletes each file after ingesting it into
+# media, so there is nothing here worth backing up.
+#
+# Note that PAPERLESS_CONSUMER_POLLING is set in 02-configmap.yaml — inotify does
+# not fire across NFS, so without polling nothing dropped here is ever picked up.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-consume
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs-csi

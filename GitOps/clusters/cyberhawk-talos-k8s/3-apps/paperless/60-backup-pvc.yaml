@@ -1,0 +1,16 @@
+# Landing pad for the nightly pg_dump. Small on purpose — it holds the database
+# only (document metadata, tags, correspondents, users, permissions). The
+# documents themselves are backed up straight from paperless-media by
+# 64-media-replicationsource.yaml rather than being copied through here, which is
+# why this is 2Gi and not 50Gi.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: democratic-csi-iscsi

@@ -1,0 +1,44 @@
+# Second backup stream for this app. The shared base/volsync-backup component
+# supplies exactly one ReplicationSource (retargeted to paperless-backup, the
+# pg_dump PVC, in kustomization.yaml), so the media volume needs its own
+# hand-written one.
+#
+# This is the important one. paperless-media sits on nfs-csi, which has
+# reclaimPolicy: Delete — an Argo prune of this app destroys the documents, and
+# these snapshots are the only copy that survives that.
+#
+# Deliberately NO moverAffinity, unlike the component's blix pin: that pin exists
+# because the component's consumers are RWO iSCSI volumes whose block I/O would
+# otherwise cross the inter-site link. paperless-media is RWX NFS — node-agnostic,
+# and it reconnects rather than flipping to emergency_ro if the link blips — so
+# the mover can run wherever there is room.
+#
+# The mover runs as uid 1000 and only needs to read; paperless writes its media
+# as 1000:1000 (USERMAP_UID/GID in 02-configmap.yaml).
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: paperless-media-backup
+spec:
+  sourcePVC: paperless-media
+  trigger:
+    # 05:00 — clear of the netbox chain (02:30/04:00/04:45), openbao (04:30) and
+    # karakeep (05:45), and after this app's own pg_dump at 02:45 so a same-night
+    # restore pairs a database snapshot with media at least as new.
+    schedule: "0 5 * * *"
+  restic:
+    pruneIntervalDays: 3
+    repository: s3-backup-hetzner-paperless-media
+    retain:
+      daily: 7
+      weekly: 2
+    # Mounts the source PVC as-is — works with any storage class, and RWX means
+    # it never contends with the running pod for the volume.
+    copyMethod: Direct
+    cacheCapacity: 4Gi
+    moverSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 100
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault

@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperless-config
+data:
+  TZ: "Europe/Oslo"
+  PAPERLESS_TIME_ZONE: "Europe/Oslo"
+
+  # TLS terminates at the Cilium Gateway, so Django sees a plain-HTTP request on
+  # an https:// origin. Without PAPERLESS_URL every login POST is rejected with a
+  # CSRF 403 — paperless derives CSRF_TRUSTED_ORIGINS from this value.
+  PAPERLESS_URL: "https://paperless.cyberhawk.no"
+  # Defaults to "*" when unset. Pinned instead, which means the kubelet's
+  # `Host: <podIP>` probe would be rejected — hence the explicit Host header on
+  # every probe in 33-paperless-deployment.yaml. Keep the two in sync.
+  PAPERLESS_ALLOWED_HOSTS: "paperless.cyberhawk.no,localhost,127.0.0.1"
+
+  # OCR. `nor+eng` is the tesseract language string used per document.
+  PAPERLESS_OCR_LANGUAGE: "nor+eng"
+  # Space-separated list of tesseract-ocr-<lang> APT PACKAGES, installed by the
+  # init-tesseract-langs s6 service on EVERY container start (`apt-get install
+  # tesseract-ocr-nor`). This is why the container runs as root with a writable
+  # rootfs and why the egress policy has to allow :80/:443 — see the securityContext
+  # comment in 33-paperless-deployment.yaml and the egress rule in
+  # 50-networkpolicies.yaml. `eng` ships in the image, so only `nor` is listed.
+  PAPERLESS_OCR_LANGUAGES: "nor"
+
+  # Human-navigable media tree, which is what makes a restore from the media PVC
+  # (or its restic snapshot) tractable without the database.
+  PAPERLESS_FILENAME_FORMAT: "{created_year}/{correspondent}/{created}_{title}"
+  # Empty tag/correspondent components collapse instead of leaving stray dirs.
+  PAPERLESS_FILENAME_FORMAT_REMOVE_NONE: "true"
+
+  PAPERLESS_CONSUMER_RECURSIVE: "true"
+  PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
+  # The consume dir is an NFS mount; inotify does not fire reliably across NFS,
+  # so poll it instead. 30s is the upstream-recommended value for network shares.
+  PAPERLESS_CONSUMER_POLLING: "30"
+  PAPERLESS_CONSUMER_POLLING_RETRY_COUNT: "5"
+
+  PAPERLESS_TASK_WORKERS: "2"
+  PAPERLESS_THREADS_PER_WORKER: "2"
+  PAPERLESS_WEBSERVER_WORKERS: "2"
+
+  # init-modify-user remaps the in-image `paperless` account to these before
+  # chowning the volumes. Must match fsGroup in the pod securityContext.
+  USERMAP_UID: "1000"
+  USERMAP_GID: "1000"
+
+  # Created on first boot only; the password comes from paperless-secret.
+  PAPERLESS_ADMIN_USER: "admin"
+  PAPERLESS_ADMIN_MAIL: "jochristian@cyberhawk.no"

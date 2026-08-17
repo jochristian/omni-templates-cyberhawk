@@ -1,0 +1,130 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: paperless
+spec:
+  endpointSelector:
+    matchLabels:
+      app: paperless
+  ingress:
+    # `ingress` is the Cilium Gateway API entity — without it, traffic arriving
+    # through cilium-gateway is dropped even though `host`/`remote-node` are
+    # allowed. This is the LAN path: split DNS points paperless.cyberhawk.no at
+    # the gateway VIP 10.50.2.6 for internal clients.
+    - fromEntities:
+        - host
+        - remote-node
+        - ingress
+    # newt (the Pangolin tunnel client) carries the public path:
+    # internet -> pangolin -> newt -> this Service. newt is an in-cluster
+    # endpoint, so it matches neither `world` nor `ingress` and would otherwise
+    # be denied. Scoped to the web port; it has no reason to reach valkey or the
+    # database.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: newt
+            app: newt
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+  egress:
+    - toPorts:
+        - ports:
+            # PostgreSQL
+            - port: "5432"
+              protocol: TCP
+            # Valkey
+            - port: "6379"
+              protocol: TCP
+            # HTTPS: IMAP-over-TLS mail rules, remote OCR/classification calls,
+            # and the APT mirror redirect.
+            - port: "443"
+              protocol: TCP
+            # Plain HTTP is required, not optional: init-tesseract-langs runs
+            # `apt-get install tesseract-ocr-nor` on EVERY container start and
+            # deb.debian.org is served over :80. Remove this and the pod will
+            # hang in startup with "[init-tesseract-langs] Could not install".
+            - port: "80"
+              protocol: TCP
+            # IMAP/IMAPS, for the mail-fetching consumer. Harmless if unused.
+            - port: "993"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: paperless-valkey
+spec:
+  endpointSelector:
+    matchLabels:
+      app: paperless-valkey
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: paperless
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: paperless-db
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: paperless-db
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: paperless
+        - matchLabels:
+            # nightly pg_dump CronJob (61-backup-cronjob.yaml)
+            app: paperless-db-dump
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # CNPG operator: status/readiness queries against the instance manager
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+  # NO egress section: the CNPG instance manager must reach the API server.
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: paperless-db-dump
+spec:
+  endpointSelector:
+    matchLabels:
+      app: paperless-db-dump
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+  egress:
+    - toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
