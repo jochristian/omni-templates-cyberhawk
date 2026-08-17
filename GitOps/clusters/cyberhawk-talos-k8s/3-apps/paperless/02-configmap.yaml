@@ -69,7 +69,22 @@ data:
   PAPERLESS_AI_LLM_BACKEND: "openai-like"
   # No endpoint is set: for OpenAI proper the client falls back to api.openai.com.
   # An endpoint is only needed to target a different provider or a local gateway.
-  PAPERLESS_AI_LLM_MODEL: "gpt-5.6-luna"
+  # MUST be a non-reasoning model. Paperless classifies via chat_with_tools, i.e.
+  # function calling against /v1/chat/completions, and OpenAI rejects that on
+  # reasoning models (the whole GPT-5.x family) with:
+  #
+  #   "Function tools with reasoning_effort are not supported for <model> in
+  #    /v1/chat/completions. To use function tools, use /v1/responses or set
+  #    reasoning_effort to 'none'."
+  #
+  # The server applies that default itself — llama-index is not sending
+  # reasoning_effort — and paperless builds OpenAILike() with no additional_kwargs,
+  # so there is no setting anywhere that can override it. gpt-5.6-luna failed here
+  # with a 500 on /api/documents/<id>/ai_suggestions/.
+  #
+  # Verified working against the real function-tool call shape: gpt-4.1-mini,
+  # gpt-4.1-nano, gpt-4o-mini. Retest before changing this.
+  PAPERLESS_AI_LLM_MODEL: "gpt-4.1-mini"
   # Refuse LLM endpoints that resolve to private addresses. Nothing here needs
   # one, and this is the guard against an endpoint change turning the document
   # pipeline into an SSRF primitive. Env-only — this key is not readable from the
