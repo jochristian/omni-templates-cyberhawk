@@ -27,16 +27,28 @@ data:
 
   # Human-navigable media tree, which is what makes a restore from the media PVC
   # (or its restic snapshot) tractable without the database.
-  PAPERLESS_FILENAME_FORMAT: "{created_year}/{correspondent}/{created}_{title}"
+  #
+  # Double-brace Jinja syntax: 3.x deprecated the single-brace form and logs
+  # "is using the old style" on every system check. Single braces still work for
+  # now, but the tree this produces is the restore path — do not risk it silently
+  # changing shape on a future upgrade.
+  PAPERLESS_FILENAME_FORMAT: "{{ created_year }}/{{ correspondent }}/{{ created }}_{{ title }}"
   # Empty tag/correspondent components collapse instead of leaving stray dirs.
   PAPERLESS_FILENAME_FORMAT_REMOVE_NONE: "true"
 
   PAPERLESS_CONSUMER_RECURSIVE: "true"
   PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
   # The consume dir is an NFS mount; inotify does not fire reliably across NFS,
-  # so poll it instead. 30s is the upstream-recommended value for network shares.
-  PAPERLESS_CONSUMER_POLLING: "30"
-  PAPERLESS_CONSUMER_POLLING_RETRY_COUNT: "5"
+  # so poll it instead.
+  #
+  # The variable is PAPERLESS_CONSUMER_POLLING_*INTERVAL* — 3.x renamed it from
+  # PAPERLESS_CONSUMER_POLLING, and the old name is not aliased, it is simply
+  # ignored. Nothing warns about it: the app starts fine and the only trace is
+  # the consumer logging "Watching /usr/src/paperless/consume using native file
+  # system events" instead of "using polling (interval: 30.0s)". Check that line
+  # after any change here. (PAPERLESS_CONSUMER_POLLING_RETRY_COUNT is gone in 3.x
+  # too — the setting no longer exists, so it is not set.)
+  PAPERLESS_CONSUMER_POLLING_INTERVAL: "30"
 
   # The port granian binds. Pinned rather than left to default because the Service
   # is also called `paperless`: with serviceLinks enabled the kubelet would set

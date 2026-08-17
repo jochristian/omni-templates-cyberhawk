@@ -67,8 +67,15 @@ probe budget is 10 minutes.
   pinned, and the kubelet probes with `Host: <podIP>` → Django 400 `DisallowedHost`.
   Keep the probe header and the configmap value in sync. Same trap as netbox and
   patchmon.
-- **`PAPERLESS_CONSUMER_POLLING` is mandatory here.** The consume dir is NFS and
-  inotify does not fire across it; without polling nothing dropped in is ingested.
+- **`PAPERLESS_CONSUMER_POLLING_INTERVAL` is mandatory here.** The consume dir is
+  NFS and inotify does not fire across it; without polling nothing dropped in is
+  ingested. Note the name — 3.x renamed it from `PAPERLESS_CONSUMER_POLLING` and
+  does **not** alias the old one, it just ignores it. There is no warning; the
+  only symptom is the consumer logging `using native file system events` instead
+  of `using polling (interval: 30.0s)`. Shipped wrong on the first sync.
+- **This ConfigMap is a plain resource, not a `configMapGenerator`,** so editing it
+  does not roll the Deployment (same as netbox). After changing anything here:
+  `kubectl -n paperless rollout restart deploy/paperless`.
 - The public path needs a matching Pangolin resource configured on the pangolin
   side. The in-cluster half is the `newt` rule in `50-networkpolicies.yaml`.
 
