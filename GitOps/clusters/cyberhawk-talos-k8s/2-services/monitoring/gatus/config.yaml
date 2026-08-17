@@ -155,6 +155,16 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
+  # /accounts/login/ rather than /, which 302s an anonymous caller into the
+  # Angular app shell. Django rejects any Host not in PAPERLESS_ALLOWED_HOSTS
+  # with a 400, so this also catches a mismatched hostname config.
+  - name: paperless (public)
+    group: "cyberhawk-talos-k8s (cluster)"
+    url: "https://paperless.cyberhawk.no/accounts/login/"
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
 
   # ===== External hosts (not part of the cluster) =========================
   # ICMP host check. Needs CAP_NET_RAW on the pod (added in 20-deployment.yaml) so
