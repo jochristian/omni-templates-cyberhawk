@@ -11,6 +11,7 @@ resources:
   - karakeep.yaml
   - patchmon.yaml
   - netbox.yaml
+  - paperless.yaml
 #  - portfolio.yaml
   - openbao.yaml
   - tracearr.yaml
