@@ -183,10 +183,14 @@ def sync_view_visibility(
         if view.get("show_in_sidebar"):
             wanted_side.add(vid)
 
-    current = api.request("GET", "/api/ui_settings/") or {}
-    settings_blob = {
-        k: v for k, v in current.items() if k not in UI_SETTINGS_READONLY
-    }
+    # GET returns a WRAPPER — {"user": ..., "settings": {...}, "permissions": [...]} —
+    # not the preferences themselves. POST, by contrast, takes {"settings": {...}}
+    # and overwrites the stored blob wholesale. Writing back what GET returned
+    # verbatim therefore buries every real preference one level deep under a
+    # "settings" key the frontend does not read, and leaves the user object and
+    # the permission list stranded in the preferences blob. Unwrap first.
+    current = (api.request("GET", "/api/ui_settings/") or {}).get("settings") or {}
+    settings_blob = {k: v for k, v in current.items() if k not in UI_SETTINGS_READONLY}
     saved = dict(settings_blob.get("saved_views") or {})
 
     have_dash = set(saved.get("dashboard_views_visible_ids") or [])
