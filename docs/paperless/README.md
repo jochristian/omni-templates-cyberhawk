@@ -130,6 +130,38 @@ Once a year, filter on `Oppbevaring > 1 år` and delete what has aged out. Nothi
 does this for you — paperless never deletes on its own, which is the correct
 default for an archive.
 
+## Where the match vocabulary comes from
+
+The match strings are not guesses about what a document *might* say. Where possible
+they are terms that are legally required to appear, or that identify a thing nothing
+else identifies:
+
+- **Faktura** — Norwegian bookkeeping rules mandate an unbroken invoice number,
+  both an issue date and a due date, and the seller's organisasjonsnummer with
+  "MVA" appended if VAT-registered. So `fakturanummer` / `fakturadato` /
+  `forfallsdato` are effectively guaranteed on any compliant invoice.
+- **Lønnsslipp** — skattebetalingsforskriften requires the payslip to show the pay
+  calculation, tax withheld and the holiday-pay basis, which is why `bruttolønn`,
+  `forskuddstrekk` and `feriepenger` are reliable.
+- **Strøm** — every Norwegian electricity bill is three parts (energy, nettleie,
+  state levies), so `nettleie`, `elsertifikat`, `forbruksavgift` and `enova` appear
+  regardless of supplier. `målepunkt` and `målernummer` identify the meter and
+  appear on nothing else.
+- **Skatt** — the document names are fixed: `skattemelding`, `skatteoppgjør`,
+  `skattekort`, `frikort`, `restskatt`, `tilgodebeløp`. `selvangivelse` is the
+  pre-2019 name, kept so older scans still classify.
+- **Bil** — `trafikkforsikringsavgift` replaced `årsavgift` in 2018 and is now
+  collected with the insurance premium rather than as a separate state bill. Both
+  are matched, since the archive will contain documents from before the change.
+
+Two rules of thumb learned the hard way here:
+
+1. **Match what identifies the document, not what appears in its small print.**
+   `purring` fails this — it is in the payment terms of ordinary invoices.
+2. **Prefer stems via regex where Norwegian inflects.** `\bbompenger\b` misses
+   "bompengepassering"; `bompeng` catches every form. Word lists are fine for
+   fixed nouns like `skattemelding`.
+
 ## Duplicate detection can lose a race
 
 Paperless rejects a re-upload whose checksum already exists, but the check is not

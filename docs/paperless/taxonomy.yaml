@@ -28,22 +28,27 @@ document_types:
     match: kvittering kjøpskvittering salgskvittering
   - name: Kontoutskrift
     matching_algorithm: 1
-    match: kontoutskrift kontoutdrag kontoutskift
+    match: kontoutskrift kontoutdrag transaksjonsoversikt "account statement"
   - name: Årsoppgave
     matching_algorithm: 1
-    match: årsoppgave årsoppgåve årsavregning
+    match: årsoppgave årsoppgåve årsavregning årsoversikt
   - name: Lønnsslipp
+    # Verified against the mandatory content of a Norwegian lønnsslipp
+    # (skattebetalingsforskriften): the calculation of pay, tax withheld and the
+    # holiday-pay basis must all appear, so these terms are effectively
+    # guaranteed to be present.
     matching_algorithm: 1
-    match: lønnsslipp lønnsspesifikasjon lønnsutbetaling
+    match: lønnsslipp lønnsspesifikasjon lønnsutbetaling bruttolønn nettolønn forskuddstrekk feriepenger payslip
   - name: Skattedokument
+    # selvangivelse is the pre-2019 name, kept so older scans still classify.
     matching_algorithm: 1
-    match: skattemelding skatteoppgjør skattekort selvangivelse
+    match: skattemelding skatteoppgjør skattekort frikort restskatt tilgodebeløp forskuddsskatt skattetrekksmelding selvangivelse
   - name: Kontrakt
     matching_algorithm: 1
-    match: avtaledokument kontraktsvilkår leiekontrakt
+    match: avtaledokument kontraktsvilkår leiekontrakt arbeidsavtale kjøpekontrakt
   - name: Forsikringsdokument
     matching_algorithm: 1
-    match: forsikringsbevis forsikringsavtale forsikringspolise
+    match: forsikringsbevis forsikringsavtale forsikringspolise polisenummer "insurance policy"
   - name: Purring
     # Worth its own type rather than a tag: it is the one document class where
     # "did I miss this?" is the whole question, and a saved view on it is useful.
@@ -56,13 +61,13 @@ document_types:
     match: inkassovarsel betalingsoppfordring inkassokrav purringsgebyr
   - name: Attest
     matching_algorithm: 1
-    match: attest vitnemål karakterutskrift sertifikat
+    match: attest vitnemål karakterutskrift sertifikat fagbrev kompetansebevis
   - name: Garantibevis
     matching_algorithm: 1
-    match: garantibevis garantivilkår reklamasjonsrett
+    match: garantibevis garantivilkår reklamasjonsrett garantiperiode
   - name: Bruksanvisning
     matching_algorithm: 1
-    match: bruksanvisning brukerhåndbok brukerveiledning
+    match: bruksanvisning brukerhåndbok brukerveiledning "user manual" "instruction manual"
   - name: Billett
     # Flight/train/event tickets and their receipts. Regex and bilingual on
     # purpose: travel documents arrive in English far more often than Norwegian
@@ -112,8 +117,8 @@ tags:
   - name: Lån
     parent: Økonomi
     color: "#1976d2"
-    matching_algorithm: 1
-    match: lånenummer nedbetalingsplan terminbeløp
+    matching_algorithm: 4
+    match: lånenummer|nedbetalingsplan|terminbeløp|restgjeld|avdrag|nominell rente|effektiv rente
   - name: Sparing
     parent: Økonomi
     color: "#1976d2"
@@ -137,8 +142,12 @@ tags:
   - name: Strøm
     parent: Bolig
     color: "#388e3c"
-    matching_algorithm: 1
-    match: strømforbruk nettleie kwh strømregning
+    # A Norwegian strømfaktura is always three parts — energy, nettleie, and
+    # state levies — so nettleie/elsertifikat/forbruksavgift/Enova appear on
+    # essentially every one regardless of supplier. målepunkt-ID and målernummer
+    # identify the meter and appear nowhere else at all.
+    matching_algorithm: 4
+    match: nettleie|elsertifikat|forbruksavgift|elavgift|enova|målepunkt|målernummer|strømforbruk|strømregning|spotpris|fastledd|energiledd|\bkwh\b
   - name: Kommunale avgifter
     parent: Bolig
     color: "#388e3c"
@@ -171,13 +180,18 @@ tags:
   - name: Bil
     parent: Kjøretøy
     color: "#7b1fa2"
-    matching_algorithm: 1
-    match: registreringsnummer kjøretøy vognkort
+    # trafikkforsikringsavgift replaced the old årsavgift in 2018 and is now
+    # collected with the insurance premium, so it lands on insurance documents
+    # rather than a separate state bill — both spellings kept for older scans.
+    matching_algorithm: 4
+    match: registreringsnummer|kjøretøy|vognkort|trafikkforsikringsavgift|årsavgift|omregistrering|understellsnummer|statens vegvesen
   - name: Verksted
     parent: Kjøretøy
     color: "#7b1fa2"
+    # "periodisk kjøretøykontroll" quoted — unquoted it would split into three
+    # tokens and `kontroll` alone matches far too much.
     matching_algorithm: 1
-    match: eu-kontroll periodisk kjøretøykontroll verkstedregning
+    match: eu-kontroll "periodisk kjøretøykontroll" verkstedregning kilometerstand
   - name: Bompenger
     parent: Kjøretøy
     color: "#7b1fa2"
@@ -198,12 +212,14 @@ tags:
     match: forsikringsnummer forsikringspremie forsikringsbevis polisenummer
   - name: Helse
     color: "#c2185b"
-    matching_algorithm: 1
-    match: egenandel frikort helsenorge resept henvisning
+    matching_algorithm: 4
+    match: egenandel|frikort|helsenorge|resept|henvisning|pasientjournal|legeerklær|sykmelding|helfo
   - name: Jobb
     color: "#5d4037"
-    matching_algorithm: 0
-    match: ""
+    # arbeidsgiver appears on every lønnsslipp, which is the point — the payslip
+    # gets the Lønnsslipp type and this tag, and both are useful.
+    matching_algorithm: 4
+    match: arbeidsgiver|arbeidsforhold|arbeidsavtale|stillingsinstruks|ansettelse|permittering
   - name: Skatt
     color: "#455a64"
     matching_algorithm: 1
@@ -216,6 +232,18 @@ tags:
     color: "#00796b"
     matching_algorithm: 1
     match: abonnement bindingstid oppsigelsesfrist
+  - name: Utdanning
+    # Lånekassen is also matched by Offentlig; both tags on a student loan
+    # statement is correct, not a conflict.
+    color: "#512da8"
+    matching_algorithm: 4
+    match: lånekassen|vitnemål|karakterutskrift|studiepoeng|semesteravgift|studentbevis|eksamensresultat
+  - name: Medlemskap
+    # Fagforening, professional bodies, clubs. Distinct from Abonnement: a
+    # membership has terms and a ballot, a subscription just bills you.
+    color: "#00838f"
+    matching_algorithm: 4
+    match: medlemskontingent|medlemsnummer|fagforening|kontingent|medlemskap
   - name: Reise
     # Flights, hotels, foreign transit. Kept flat rather than nested (Fly /
     # Hotell / Transport) until the volume justifies it — subcategories with two
