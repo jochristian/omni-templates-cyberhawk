@@ -337,6 +337,14 @@ mail_rules:
   #   action:                    1=delete 2=move 3=mark-read 4=flag 5=tag
   #   assign_title_from:         1=subject 2=attachment filename 3=none
   #   assign_correspondent_from: 1=none 2=email address 3=name 4=fixed
+  #
+  # assign_correspondent_from is deliberately 1 (none). Option 3 sounds right but
+  # falls back to the mail address when the sender has no display name, and the
+  # first import produced correspondents called "noreply@posten.no",
+  # "donotreply@elkjop.no" and "GastroPlanner Order". A correspondent is a
+  # retrieval axis you live with for years, so it is better derived from the
+  # document content by the literal match rules in ~/paperless-seed/correspondents.yaml
+  # ("Posten", "Elkjøp") than from whichever mailbox happened to send it.
   #   attachment_type:           1=attachments only 2=include inline attachments
   #   consumption_scope:         1=attachments only 2=.eml only 3=.eml + attachments
   #
@@ -360,7 +368,7 @@ mail_rules:
     attachment_type: 1
     filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
     assign_title_from: 1
-    assign_correspondent_from: 3
+    assign_correspondent_from: 1
     assign_document_type: Kvittering
 
   - name: Fakturaer
@@ -375,7 +383,7 @@ mail_rules:
     attachment_type: 1
     filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
     assign_title_from: 1
-    assign_correspondent_from: 3
+    assign_correspondent_from: 1
     assign_document_type: Faktura
 
   - name: Billetter
@@ -390,7 +398,7 @@ mail_rules:
     attachment_type: 1
     filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
     assign_title_from: 1
-    assign_correspondent_from: 3
+    assign_correspondent_from: 1
     assign_document_type: Billett
     assign_tags:
       - Reise
@@ -410,7 +418,7 @@ mail_rules:
     attachment_type: 1
     filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
     assign_title_from: 1
-    assign_correspondent_from: 3
+    assign_correspondent_from: 1
     assign_document_type: Ordrebekreftelse
 
 saved_views:

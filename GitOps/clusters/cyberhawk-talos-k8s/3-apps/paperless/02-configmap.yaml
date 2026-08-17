@@ -56,6 +56,15 @@ data:
   # the enableServiceLinks comment in 33-paperless-deployment.yaml.
   PAPERLESS_PORT: "8000"
 
+  # Tika + Gotenberg. Required for HTML email, not just for Office documents:
+  # the mail parser sends any HTML mail body to Tika, so without these every
+  # HTML-only receipt fails to consume with "Connection refused" against
+  # localhost:9998. The endpoints must be set explicitly — the defaults point at
+  # localhost, which is correct for docker-compose and wrong for Kubernetes.
+  PAPERLESS_TIKA_ENABLED: "1"
+  PAPERLESS_TIKA_ENDPOINT: "http://tika:9998"
+  PAPERLESS_TIKA_GOTENBERG_ENDPOINT: "http://gotenberg:3000"
+
   PAPERLESS_TASK_WORKERS: "2"
   PAPERLESS_THREADS_PER_WORKER: "2"
   PAPERLESS_WEBSERVER_WORKERS: "2"

@@ -47,8 +47,14 @@ spec:
             # hang in startup with "[init-tesseract-langs] Could not install".
             - port: "80"
               protocol: TCP
-            # IMAP/IMAPS, for the mail-fetching consumer. Harmless if unused.
+            # IMAP/IMAPS, for the mail-fetching consumer.
             - port: "993"
+              protocol: TCP
+            # Tika (text extraction) and Gotenberg (HTML -> PDF). Consuming any
+            # HTML email fails without both.
+            - port: "9998"
+              protocol: TCP
+            - port: "3000"
               protocol: TCP
     - toPorts:
         - ports:
@@ -106,6 +112,62 @@ spec:
             - port: "8000"
               protocol: TCP
   # NO egress section: the CNPG instance manager must reach the API server.
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: tika
+spec:
+  endpointSelector:
+    matchLabels:
+      app: tika
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: paperless
+      toPorts:
+        - ports:
+            - port: "9998"
+              protocol: TCP
+  # No egress rules beyond DNS: Tika parses what it is handed and has no reason
+  # to reach anything, least of all the internet on behalf of an email body.
+  egress:
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: gotenberg
+spec:
+  endpointSelector:
+    matchLabels:
+      app: gotenberg
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEndpoints:
+        - matchLabels:
+            app: paperless
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+  # Same reasoning as Tika, and it matters more here: Gotenberg drives Chromium
+  # over untrusted HTML. --chromium-allow-list already restricts it to file:///tmp,
+  # and having no egress makes tracking pixels and remote CSS unreachable even if
+  # that flag were lost.
+  egress:
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

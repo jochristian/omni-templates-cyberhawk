@@ -1,0 +1,73 @@
+# Extracts text from HTML email bodies (and from Office documents, if any ever
+# arrive). Paired with gotenberg — see 70-gotenberg-deployment.yaml for why both
+# are required rather than optional.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tika
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tika
+  template:
+    metadata:
+      labels:
+        app: tika
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        # The image declares a numeric USER (35002:35002), so unlike gotenberg
+        # the kubelet can verify this and runAsNonRoot is safe to assert.
+        runAsNonRoot: true
+        runAsUser: 35002
+        runAsGroup: 35002
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: tika
+          image: apache/tika
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 9998
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              # JVM. 1Gi is comfortable for text extraction from mail bodies.
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /tika
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: tmp
+          emptyDir: {}

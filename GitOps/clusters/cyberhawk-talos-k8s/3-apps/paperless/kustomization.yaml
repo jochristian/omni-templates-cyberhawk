@@ -27,6 +27,10 @@ resources:
   - 60-backup-pvc.yaml
   - 61-backup-cronjob.yaml
   - 64-media-replicationsource.yaml
+  - 70-gotenberg-deployment.yaml
+  - 71-gotenberg-service.yaml
+  - 72-tika-deployment.yaml
+  - 73-tika-service.yaml
 
 images:
   - name: ghcr.io/paperless-ngx/paperless-ngx
@@ -36,6 +40,12 @@ images:
     newTag: "9.1-alpine" # renovate: docker=valkey/valkey
   - name: ghcr.io/cloudnative-pg/postgresql
     newTag: "17" # renovate: docker=ghcr.io/cloudnative-pg/postgresql
+  - name: gotenberg/gotenberg
+    newTag: "8.36.0" # renovate: docker=gotenberg/gotenberg
+  - name: apache/tika
+    # Four-part version (Tika release + image revision). The `-full` variants add
+    # OCR and extra parsers that paperless does not need for mail bodies.
+    newTag: "3.3.1.0" # renovate: docker=apache/tika
 
 labels:
   - includeSelectors: true

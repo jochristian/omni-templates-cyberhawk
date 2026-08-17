@@ -1,0 +1,84 @@
+# Renders HTML email bodies to PDF. Required, not optional: paperless's mail
+# parser hands HTML content to Tika and Gotenberg, and without them any .eml
+# whose body is HTML fails to consume outright. On the first Gmail import 3 of 8
+# receipts were HTML-only and were lost entirely — see docs/paperless/gmail.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gotenberg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gotenberg
+  template:
+    metadata:
+      labels:
+        app: gotenberg
+    spec:
+      automountServiceAccountToken: false
+      # No storage of its own, but paperless calls it synchronously per document.
+      # Keeping it on blix avoids putting the inter-site WireGuard link in the
+      # middle of every consume.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        # Deliberately no runAsNonRoot: the image declares USER as the *name*
+        # "gotenberg" rather than a uid, and the kubelet refuses to start a
+        # container with runAsNonRoot when it cannot prove the name is not root
+        # ("image has non-numeric user"). The image still drops to that user on
+        # its own. Pin runAsUser to the numeric id only after confirming it from
+        # a running pod.
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: gotenberg
+          image: gotenberg/gotenberg
+          imagePullPolicy: IfNotPresent
+          args:
+            - gotenberg
+            # Upstream's own hardening for the .eml route: email bodies are
+            # hostile input, so no JavaScript and no fetching remote resources
+            # (tracking pixels, external CSS) during rendering.
+            - --chromium-disable-javascript=true
+            - --chromium-allow-list=file:///tmp/.*
+          ports:
+            - name: http
+              containerPort: 3000
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              # Chromium is the memory consumer here and it is bursty.
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: tmp
+          emptyDir: {}
