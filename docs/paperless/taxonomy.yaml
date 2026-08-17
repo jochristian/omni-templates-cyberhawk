@@ -413,7 +413,10 @@ mail_rules:
 
   - name: Bestillinger
     account: gmail
-    enabled: false
+    # `enabled` is seeder-managed, so flipping it in the web UI is reverted on the
+    # next ./seed.py --apply. Change it here instead. (If you would rather toggle
+    # rules from the UI, drop "enabled" from COMPARE["mail_rules"] in seed.py.)
+    enabled: true
     # Lowest priority: a Gmail message can carry several labels, and paperless
     # records the first rule that consumes it. An order confirmation that is also
     # labelled _Kvitteringer should be filed as the receipt, so this runs last.
