@@ -68,6 +68,12 @@ document_types:
   - name: Bruksanvisning
     matching_algorithm: 1
     match: bruksanvisning brukerhåndbok brukerveiledning "user manual" "instruction manual"
+  - name: Ordrebekreftelse
+    # For the Gmail _viktig/_bestilling label. Deliberately narrow: `ordrenummer`
+    # alone would also match plenty of invoices, and document type is
+    # single-valued, so an over-broad rule here steals documents from Faktura.
+    matching_algorithm: 4
+    match: ordrebekreftelse|order confirmation|takk for (din )?bestilling
   - name: Billett
     # Flight/train/event tickets and their receipts. Regex and bilingual on
     # purpose: travel documents arrive in English far more often than Norwegian
@@ -321,6 +327,91 @@ storage_paths:
   # thing the global format was chosen to avoid.
   #
   # Add one only when you have a concrete reason to file a subset differently.
+
+mail_rules:
+  # Gmail ingestion. The mail ACCOUNT (server, username, app password) is created
+  # by hand in the UI and is not managed here — it holds a credential. The rules
+  # reference it by name and contain no secrets, so they live in Git.
+  #
+  # Enum values, from paperless_mail/models.py:
+  #   action:                    1=delete 2=move 3=mark-read 4=flag 5=tag
+  #   assign_title_from:         1=subject 2=attachment filename 3=none
+  #   assign_correspondent_from: 1=none 2=email address 3=name 4=fixed
+  #   attachment_type:           1=attachments only 2=include inline attachments
+  #   consumption_scope:         1=attachments only 2=.eml only 3=.eml + attachments
+  #
+  # See gmail.md for why each non-default value is what it is. The short version:
+  # action 3 (the default) skips mail that was already read, which would silently
+  # drop over half the archive; attachment_type 2 turns every email-signature logo
+  # into a document.
+  #
+  # Staged rollout: only the first rule is enabled. Flip `enabled: true` on the
+  # others and re-run seed.py once the first has been verified.
+
+  - name: Kvitteringer
+    account: gmail
+    enabled: true
+    order: 10
+    folder: _viktig/_Kvitteringer
+    maximum_age: 30 # days; set 0 for the full backfill once verified
+    action: 5
+    action_parameter: paperless # becomes a Gmail label on consumed mail
+    consumption_scope: 3
+    attachment_type: 1
+    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
+    assign_title_from: 1
+    assign_correspondent_from: 3
+    assign_document_type: Kvittering
+
+  - name: Fakturaer
+    account: gmail
+    enabled: false
+    order: 20
+    folder: _viktig/_faktura
+    maximum_age: 30
+    action: 5
+    action_parameter: paperless
+    consumption_scope: 3
+    attachment_type: 1
+    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
+    assign_title_from: 1
+    assign_correspondent_from: 3
+    assign_document_type: Faktura
+
+  - name: Billetter
+    account: gmail
+    enabled: false
+    order: 30
+    folder: _viktig/_billetter
+    maximum_age: 30
+    action: 5
+    action_parameter: paperless
+    consumption_scope: 3
+    attachment_type: 1
+    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
+    assign_title_from: 1
+    assign_correspondent_from: 3
+    assign_document_type: Billett
+    assign_tags:
+      - Reise
+
+  - name: Bestillinger
+    account: gmail
+    enabled: false
+    # Lowest priority: a Gmail message can carry several labels, and paperless
+    # records the first rule that consumes it. An order confirmation that is also
+    # labelled _Kvitteringer should be filed as the receipt, so this runs last.
+    order: 40
+    folder: _viktig/_bestilling
+    maximum_age: 30
+    action: 5
+    action_parameter: paperless
+    consumption_scope: 3
+    attachment_type: 1
+    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
+    assign_title_from: 1
+    assign_correspondent_from: 3
+    assign_document_type: Ordrebekreftelse
 
 saved_views:
   # rule_type reference: 3=correspondent is  4=document type is  5=is in inbox

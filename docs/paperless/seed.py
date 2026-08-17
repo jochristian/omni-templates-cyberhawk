@@ -50,6 +50,22 @@ COMPARE = {
     # views as drifted (None -> True) and changed nothing. Their real home is
     # per-user UiSettings; see sync_view_visibility().
     "saved_views": ["sort_field", "sort_reverse", "filter_rules"],
+    "mail_rules": [
+        "account",
+        "enabled",
+        "order",
+        "folder",
+        "maximum_age",
+        "action",
+        "action_parameter",
+        "consumption_scope",
+        "attachment_type",
+        "filter_attachment_filename_exclude",
+        "assign_title_from",
+        "assign_correspondent_from",
+        "assign_document_type",
+        "assign_tags",
+    ],
 }
 
 # Keys the ui_settings GET injects server-side on every read. They are not real
@@ -158,6 +174,52 @@ def sync(
         else:
             api.unchanged += 1
     return ids
+
+
+def resolve_mail_rules(
+    api: Paperless, rules: list[dict], type_ids: dict, tag_ids: dict
+) -> list[dict]:
+    """Turn the by-name references in mail_rules into the ids the API expects.
+
+    The mail ACCOUNT is not managed here — it holds an app password and is created
+    by hand in the UI. Rules reference it by name, so a missing account is a clear
+    error rather than a silently broken rule.
+    """
+    if not rules:
+        return []
+    accounts = {a["name"]: a["id"] for a in api.list_all("mail_accounts")}
+    out = []
+    for rule in rules:
+        payload = dict(rule)
+        account = payload["account"]
+        if account not in accounts:
+            raise SystemExit(
+                f"Mail rule {payload['name']!r} references account {account!r}, "
+                f"which does not exist. Known accounts: {sorted(accounts) or 'none'}. "
+                "Create it in paperless under Settings -> Mail; it holds a "
+                "credential and is deliberately not managed by this script."
+            )
+        payload["account"] = accounts[account]
+
+        doc_type = payload.get("assign_document_type")
+        if doc_type is not None:
+            if doc_type not in type_ids:
+                raise SystemExit(
+                    f"Mail rule {payload['name']!r} assigns document type "
+                    f"{doc_type!r}, which is not in the taxonomy."
+                )
+            payload["assign_document_type"] = type_ids[doc_type]
+
+        tags = payload.get("assign_tags")
+        if tags:
+            missing = [t for t in tags if t not in tag_ids]
+            if missing:
+                raise SystemExit(
+                    f"Mail rule {payload['name']!r} assigns unknown tag(s): {missing}"
+                )
+            payload["assign_tags"] = [tag_ids[t] for t in tags]
+        out.append(payload)
+    return out
 
 
 def sync_view_visibility(
@@ -436,6 +498,26 @@ def main() -> int:
         label="view",
     )
     sync_view_visibility(api, views, view_ids)
+
+    # --- Mail rules ---------------------------------------------------------
+    mail_rules = tax.get("mail_rules") or []
+    if mail_rules:
+        print("\nMail rules")
+        if api.apply:
+            sync(
+                api,
+                "mail_rules",
+                resolve_mail_rules(api, mail_rules, type_ids, tag_ids),
+                label="rule",
+            )
+        else:
+            # Dry run: the referenced types/tags may not exist yet, so their ids
+            # cannot be resolved. Report intent rather than fail on the
+            # chicken-and-egg.
+            for rule in mail_rules:
+                state = "enabled" if rule.get("enabled") else "disabled"
+                print(f"  + rule: {rule['name']}  ({rule['folder']}, {state})")
+                api.created += 1
 
     print(
         f"\n{'Created' if api.apply else 'Would create'}: {api.created}   "
