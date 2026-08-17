@@ -1,0 +1,312 @@
+# paperless-ngx baseline taxonomy — cyberhawk-talos-k8s
+#
+# Generic by design: this file contains no personal data and is safe in a public
+# repo. Correspondents (your bank, employer, doctor) are deliberately NOT here —
+# see correspondents.example.yaml and the README.
+#
+# Labels are Norwegian because the documents are. Match strings are what actually
+# does the work, and they are matched against Norwegian OCR text regardless of
+# what the labels say — renaming a label never breaks a match rule.
+#
+# matching_algorithm: 0=none 1=any 2=all 3=literal 4=regex 5=fuzzy 6=auto
+#
+# Everything below starts on `any`/`literal`, never `auto`. Per the upstream docs,
+# auto-matching (a) ignores any document still carrying an inbox tag, (b) needs a
+# meaningful number of positive AND negative examples, and (c) cannot learn
+# subjective tags at all. On an empty install it would mislabel nearly everything.
+# Revisit once you are past ~100 filed documents; see the README.
+
+document_types:
+  # Broad and few on purpose. Upstream guidance is ~10-15 types doing the heavy
+  # lifting alongside correspondents, rather than 50 narrow ones. If you find
+  # yourself wanting "Strømfaktura", that is a Faktura + the Strøm tag.
+  - name: Faktura
+    matching_algorithm: 1
+    match: fakturanummer fakturadato forfallsdato
+  - name: Kvittering
+    matching_algorithm: 1
+    match: kvittering kjøpskvittering salgskvittering
+  - name: Kontoutskrift
+    matching_algorithm: 1
+    match: kontoutskrift kontoutdrag kontoutskift
+  - name: Årsoppgave
+    matching_algorithm: 1
+    match: årsoppgave årsoppgåve årsavregning
+  - name: Lønnsslipp
+    matching_algorithm: 1
+    match: lønnsslipp lønnsspesifikasjon lønnsutbetaling
+  - name: Skattedokument
+    matching_algorithm: 1
+    match: skattemelding skatteoppgjør skattekort selvangivelse
+  - name: Kontrakt
+    matching_algorithm: 1
+    match: avtaledokument kontraktsvilkår leiekontrakt
+  - name: Forsikringsdokument
+    matching_algorithm: 1
+    match: forsikringsbevis forsikringsavtale forsikringspolise
+  - name: Purring
+    # Worth its own type rather than a tag: it is the one document class where
+    # "did I miss this?" is the whole question, and a saved view on it is useful.
+    matching_algorithm: 1
+    match: purring inkassovarsel betalingsoppfordring inkassokrav
+  - name: Attest
+    matching_algorithm: 1
+    match: attest vitnemål karakterutskrift sertifikat
+  - name: Garantibevis
+    matching_algorithm: 1
+    match: garantibevis garantivilkår reklamasjonsrett
+  - name: Bruksanvisning
+    matching_algorithm: 1
+    match: bruksanvisning brukerhåndbok brukerveiledning
+  - name: Brev
+    # No match: far too generic to auto-assign. This is the manual fallback for
+    # anything that is simply a letter.
+    matching_algorithm: 0
+    match: ""
+
+tags:
+  # ~30 tags, nested two deep. Upstream guidance is to keep tags relatively few
+  # and let correspondent + document type carry most of the meaning. Nesting is
+  # a v2.19+ feature: adding a child automatically adds its parents, so tagging
+  # a document "Strøm" also files it under "Bolig" without extra clicks.
+  #
+  # Max nesting depth is 5. This template uses 2.
+
+  # ---- Workflow tags (never auto-matched) --------------------------------
+  - name: Innboks
+    color: "#d32f2f"
+    is_inbox_tag: true
+    matching_algorithm: 0
+    match: ""
+  - name: TODO
+    # Something is required of you: pay it, sign it, dispute it, cancel it.
+    # Cannot be auto-matched — the docs call this out explicitly, since nothing
+    # in the document text distinguishes "I still need to act on this".
+    color: "#f57c00"
+    matching_algorithm: 0
+    match: ""
+
+  # ---- Subject areas ------------------------------------------------------
+  - name: Økonomi
+    color: "#1976d2"
+    matching_algorithm: 0
+    match: ""
+  - name: Bank
+    parent: Økonomi
+    color: "#1976d2"
+    matching_algorithm: 0
+    match: ""
+  - name: Lån
+    parent: Økonomi
+    color: "#1976d2"
+    matching_algorithm: 1
+    match: lånenummer nedbetalingsplan terminbeløp
+  - name: Sparing
+    parent: Økonomi
+    color: "#1976d2"
+    matching_algorithm: 0
+    match: ""
+  - name: Pensjon
+    parent: Økonomi
+    color: "#1976d2"
+    matching_algorithm: 1
+    match: pensjonsbeholdning pensjonskapitalbevis tjenestepensjon
+  - name: Investering
+    parent: Økonomi
+    color: "#1976d2"
+    matching_algorithm: 1
+    match: verdipapir aksjesparekonto fondsandeler
+
+  - name: Bolig
+    color: "#388e3c"
+    matching_algorithm: 0
+    match: ""
+  - name: Strøm
+    parent: Bolig
+    color: "#388e3c"
+    matching_algorithm: 1
+    match: strømforbruk nettleie kwh strømregning
+  - name: Kommunale avgifter
+    parent: Bolig
+    color: "#388e3c"
+    matching_algorithm: 1
+    match: kommunale avgifter renovasjon vann og avløp feiing
+  - name: Internett og TV
+    parent: Bolig
+    color: "#388e3c"
+    matching_algorithm: 1
+    match: bredbånd fiberabonnement tv-pakke
+  - name: Vedlikehold
+    parent: Bolig
+    color: "#388e3c"
+    matching_algorithm: 0
+    match: ""
+  - name: Borettslag
+    parent: Bolig
+    color: "#388e3c"
+    matching_algorithm: 1
+    match: felleskostnader borettslag sameie andelsnummer
+
+  - name: Kjøretøy
+    color: "#7b1fa2"
+    matching_algorithm: 0
+    match: ""
+  - name: Bil
+    parent: Kjøretøy
+    color: "#7b1fa2"
+    matching_algorithm: 1
+    match: registreringsnummer kjøretøy vognkort
+  - name: Verksted
+    parent: Kjøretøy
+    color: "#7b1fa2"
+    matching_algorithm: 1
+    match: eu-kontroll periodisk kjøretøykontroll verkstedregning
+  - name: Bompenger
+    parent: Kjøretøy
+    color: "#7b1fa2"
+    matching_algorithm: 1
+    match: bompenger autopass ferjekort
+
+  - name: Forsikring
+    color: "#0097a7"
+    matching_algorithm: 1
+    match: forsikringsnummer forsikringspremie egenandel
+  - name: Helse
+    color: "#c2185b"
+    matching_algorithm: 1
+    match: egenandel frikort helsenorge resept henvisning
+  - name: Jobb
+    color: "#5d4037"
+    matching_algorithm: 0
+    match: ""
+  - name: Skatt
+    color: "#455a64"
+    matching_algorithm: 1
+    match: skatteetaten skattemelding restskatt skattekort
+  - name: Familie
+    color: "#ad1457"
+    matching_algorithm: 0
+    match: ""
+  - name: Abonnement
+    color: "#00796b"
+    matching_algorithm: 1
+    match: abonnement bindingstid oppsigelsesfrist
+  - name: Offentlig
+    color: "#616161"
+    matching_algorithm: 1
+    match: nav altinn folkeregisteret politiet lånekassen
+
+  # ---- Retention axis -----------------------------------------------------
+  # The one thing the correspondent/type model does not capture: how long this
+  # needs to exist. Paperless will never delete anything on its own, so these are
+  # purely a filter for your own periodic cleanout. Assign by hand; there is no
+  # text in a document that says how long to keep it, so no match rules here.
+  #
+  # Rule of thumb only, not legal advice: 5 år covers the window in which tax
+  # documentation is normally expected to be producible. Permanent is for things
+  # that are painful or impossible to reissue.
+  - name: Oppbevaring
+    color: "#795548"
+    matching_algorithm: 0
+    match: ""
+  - name: Permanent
+    # Vitnemål, skjøte, testament, fødselsattest, vigselsattest, pensjonsbevis.
+    parent: Oppbevaring
+    color: "#795548"
+    matching_algorithm: 0
+    match: ""
+  - name: 5 år
+    parent: Oppbevaring
+    color: "#795548"
+    matching_algorithm: 0
+    match: ""
+  - name: 1 år
+    parent: Oppbevaring
+    color: "#795548"
+    matching_algorithm: 0
+    match: ""
+
+custom_fields:
+  # data_type: string url date boolean integer float monetary documentlink select
+  - name: Beløp
+    data_type: monetary
+  - name: Forfallsdato
+    data_type: date
+  - name: Fakturanummer
+    data_type: string
+  - name: Kontonummer
+    data_type: string
+  - name: Garanti utløper
+    data_type: date
+  - name: Oppbevares til
+    data_type: date
+
+storage_paths:
+  # Deliberately empty.
+  #
+  # PAPERLESS_FILENAME_FORMAT in 3-apps/paperless/02-configmap.yaml already lays
+  # the media tree out as {{ created_year }}/{{ correspondent }}/{{ created }}_{{ title }},
+  # which is what makes a restore-from-restic browsable without the database.
+  # A storage path OVERRIDES that format for the documents it matches, so adding
+  # them piecemeal gives you a media tree with two competing layouts — the exact
+  # thing the global format was chosen to avoid.
+  #
+  # Add one only when you have a concrete reason to file a subset differently.
+
+saved_views:
+  # rule_type reference: 3=correspondent is  4=document type is  5=is in inbox
+  # 6=has tag  7=has any tag  17=does not have tag
+  - name: Innboks
+    show_on_dashboard: true
+    show_in_sidebar: true
+    sort_field: created
+    sort_reverse: true
+    rules:
+      - rule_type: 5
+        value: "true"
+
+  - name: Må følges opp
+    show_on_dashboard: true
+    show_in_sidebar: true
+    sort_field: created
+    sort_reverse: true
+    rules:
+      - rule_type: 6
+        value: "@tag:TODO"
+
+  - name: Purringer
+    # Cheap insurance. If one of these ever shows up, you want to know today.
+    show_on_dashboard: true
+    show_in_sidebar: true
+    sort_field: created
+    sort_reverse: true
+    rules:
+      - rule_type: 4
+        value: "@document_type:Purring"
+
+  - name: Uten tagger
+    # Hygiene view: filed but uncategorised. Should trend to empty.
+    show_on_dashboard: false
+    show_in_sidebar: true
+    sort_field: added
+    sort_reverse: true
+    rules:
+      - rule_type: 7
+        value: "false"
+
+  - name: Uten dokumenttype
+    # Hygiene view. Also the shortlist for "which document types am I missing?"
+    show_on_dashboard: false
+    show_in_sidebar: true
+    sort_field: added
+    sort_reverse: true
+    rules:
+      - rule_type: 4
+        value: null
+
+  - name: Sist lagt til
+    show_on_dashboard: false
+    show_in_sidebar: true
+    sort_field: added
+    sort_reverse: true
+    rules: []

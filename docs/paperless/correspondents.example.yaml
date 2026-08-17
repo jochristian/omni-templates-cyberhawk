@@ -1,0 +1,52 @@
+# EXAMPLE ONLY — placeholder entries, safe to commit.
+#
+# Your real correspondent list names your bank, employer, insurer, landlord and
+# doctor. This repo is public on GitHub, so the real file lives OUTSIDE it:
+#
+#     ~/paperless-seed/correspondents.yaml
+#
+# Same arrangement as ~/netbox-seed. Point the seeder at it with:
+#
+#     ./seed.py --correspondents ~/paperless-seed/correspondents.yaml
+#
+# ---------------------------------------------------------------------------
+# A note on whether to bother at all: correspondents are the one part of the
+# taxonomy that is genuinely better grown than seeded. You only want entries for
+# entities you actually receive documents from, and you will not know that list
+# until documents start arriving. Seeding twenty guesses gives you twenty
+# correspondents with zero documents and a match rule you never tuned.
+#
+# The pragmatic path is to seed the five or six you are certain about, and add
+# the rest from the document detail page as they show up.
+# ---------------------------------------------------------------------------
+#
+# matching_algorithm: 0=none 1=any 2=all 3=literal 4=regex 5=fuzzy 6=auto
+#
+# `literal` is the right default here. A correspondent's name appears verbatim
+# on its own documents, and unlike a tag there is rarely ambiguity — so an exact
+# string beats a fuzzy guess. Use the organisation number where the trading name
+# is generic enough to collide.
+
+correspondents:
+  - name: Eksempelbanken
+    matching_algorithm: 3
+    match: Eksempelbanken ASA
+
+  - name: Eksempel Strøm
+    matching_algorithm: 3
+    match: Eksempel Strøm AS
+
+  - name: Eksempel Kommune
+    matching_algorithm: 3
+    match: Eksempel kommune
+
+  - name: Skatteetaten
+    # A real one, and safe to publish: everyone in Norway has this correspondent.
+    matching_algorithm: 3
+    match: Skatteetaten
+
+  - name: NAV
+    # Also safe to publish for the same reason. `literal` rather than `any` —
+    # "nav" as a loose token would match navigasjon, navn, and similar.
+    matching_algorithm: 3
+    match: NAV
