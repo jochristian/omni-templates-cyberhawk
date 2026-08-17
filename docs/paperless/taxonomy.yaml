@@ -360,8 +360,16 @@ mail_rules:
     account: gmail
     enabled: true
     order: 10
+    # NOTE the two spellings of a nested Gmail label. Here it is the IMAP folder
+    # name, with `/`. In Gmail's own *search* box the same label is written
+    # `label:_viktig-_kvitteringer`, with a hyphen. Both are correct; only the
+    # slash form works as a rule folder.
     folder: _viktig/_Kvitteringer
-    maximum_age: 30 # days; set 0 for the full backfill once verified
+    # Widened from 30 after the first run proved the pipeline. Gmail reports ~201
+    # threads in this label over 365 days (~230+ messages), and consumption_scope
+    # 3 yields roughly 1.6 documents per mail, so expect ~350-400 documents.
+    # Set 0 for the full 769 once this run is judged.
+    maximum_age: 365
     action: 5
     action_parameter: paperless # becomes a Gmail label on consumed mail
     consumption_scope: 3
