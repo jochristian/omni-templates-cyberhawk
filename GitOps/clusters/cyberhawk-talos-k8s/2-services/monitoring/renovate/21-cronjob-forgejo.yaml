@@ -39,8 +39,9 @@ spec:
                   value: /tmp
                 - name: LOG_LEVEL
                   value: info
-                # Forgejo PAT. Renovate's gitea platform clones and opens PRs over
-                # HTTPS with this token, so no SSH key is needed here.
+                # Forgejo PAT. Renovate's forgejo platform clones and opens PRs
+                # over HTTPS with this token, so no SSH key is needed here.
+                # Scopes: read:user, read:organization, write:issue, write:repository.
                 - name: RENOVATE_TOKEN
                   valueFrom:
                     secretKeyRef:

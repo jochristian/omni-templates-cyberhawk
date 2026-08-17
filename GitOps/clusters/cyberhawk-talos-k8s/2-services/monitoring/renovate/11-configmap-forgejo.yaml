@@ -7,9 +7,13 @@ data:
   # self-hosted Forgejo repos need their own config + CronJob alongside the
   # GitHub one in 10-configmap.yaml. Dependency policy still lives in each
   # repo's own renovate.json.
+  #
+  # platform=forgejo, not gitea: against a Forgejo instance the gitea platform
+  # logs "please use 'forgejo' platform instead". The native platform calls
+  # GET /api/v1/orgs/{org}, so the bot token additionally needs read:organization.
   config.json: |
     {
-      "platform": "gitea",
+      "platform": "forgejo",
       "endpoint": "https://git.cyberhawk.no/api/v1/",
       "repositories": ["cyberhawk/cyberhawk-gitops-private"],
       "autodiscover": false,

@@ -7,7 +7,7 @@ data:
   # package rules live in the repo-root renovate.json so they're reviewable in-repo.
   #
   # GitHub repos only. cyberhawk-gitops-private moved to self-hosted Forgejo and
-  # is handled by the gitea-platform run in 11-configmap-forgejo.yaml.
+  # is handled by the forgejo-platform run in 11-configmap-forgejo.yaml.
   config.json: |
     {
       "platform": "github",
