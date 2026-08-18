@@ -68,3 +68,94 @@ spec:
     machine:
       network:
         hostname: worker-02
+---
+# Pinned upstream nameservers. Without these, resolvers come from DHCP, which
+# handed lørenskog 192.168.254.254 but gave blix nothing -- so the blix nodes
+# silently fell back to Talos' built-in 1.1.1.1/8.8.8.8 and never saw the
+# internal split-horizon zones. CoreDNS runs dnsPolicy: Default, so each replica
+# inherited its own node's list and cluster DNS answers differed by node.
+#
+# Both sites now use the same pair, ordered site-local first:
+#   blix      -> 10.50.1.1        (primary), 192.168.254.254 (fallback)
+#   lorenskog -> 192.168.254.254  (primary), 10.50.1.1       (fallback)
+# The fallback is cross-site over the WireGuard link; both were verified
+# reachable and answering from both zones before pinning.
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-64103ded-7c53-4324-b956-f88eb1cbb3d2-nameservers
+  labels:
+    omni.sidero.dev/machine: 64103ded-7c53-4324-b956-f88eb1cbb3d2
+  annotations:
+    name: nameservers-ctrl-00
+spec:
+  data: |
+    machine:
+      network:
+        nameservers:
+          - 10.50.1.1
+          - 192.168.254.254
+---
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-10282cde-8218-42b3-95e8-8bbfb0f7a28a-nameservers
+  labels:
+    omni.sidero.dev/machine: 10282cde-8218-42b3-95e8-8bbfb0f7a28a
+  annotations:
+    name: nameservers-ctrl-01
+spec:
+  data: |
+    machine:
+      network:
+        nameservers:
+          - 10.50.1.1
+          - 192.168.254.254
+---
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-8aca3283-3fd7-4058-ba8a-fe380c3b5698-nameservers
+  labels:
+    omni.sidero.dev/machine: 8aca3283-3fd7-4058-ba8a-fe380c3b5698
+  annotations:
+    name: nameservers-worker-02
+spec:
+  data: |
+    machine:
+      network:
+        nameservers:
+          - 10.50.1.1
+          - 192.168.254.254
+---
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-763db095-e7f9-4c9e-91f6-693d4963c5c3-nameservers
+  labels:
+    omni.sidero.dev/machine: 763db095-e7f9-4c9e-91f6-693d4963c5c3
+  annotations:
+    name: nameservers-ctrl-02
+spec:
+  data: |
+    machine:
+      network:
+        nameservers:
+          - 192.168.254.254
+          - 10.50.1.1
+---
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-7854b10a-1081-4688-9cd5-f32595861e45-nameservers
+  labels:
+    omni.sidero.dev/machine: 7854b10a-1081-4688-9cd5-f32595861e45
+  annotations:
+    name: nameservers-worker-01
+spec:
+  data: |
+    machine:
+      network:
+        nameservers:
+          - 192.168.254.254
+          - 10.50.1.1
