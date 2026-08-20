@@ -35,7 +35,7 @@ images:
   # 1-system/kube-system/cilium/Chart.yaml. A skewed hubble client still streams
   # flows but mis-renders newer enum fields.
   - name: quay.io/cilium/cilium
-    newTag: v1.20.0
+    newTag: v1.20.1
 
 labels:
   - includeSelectors: true
