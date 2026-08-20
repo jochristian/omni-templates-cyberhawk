@@ -26,7 +26,7 @@ resources:
 
 images:
   - name: librenms/librenms
-    newTag: "26.7.0"
+    newTag: "26.8.1"
   - name: valkey/valkey
     newTag: "9.1-alpine"
   - name: crazymax/rrdcached
