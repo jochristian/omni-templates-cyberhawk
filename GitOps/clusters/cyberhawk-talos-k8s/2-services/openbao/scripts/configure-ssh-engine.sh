@@ -67,7 +67,7 @@ $BAO_EXEC bao write ssh-host-signer/roles/linux-hosts - <<'EOF'
   "algorithm_signer": "rsa-sha2-256",
   "ttl": "87600h",
   "allow_host_certificates": true,
-  "allowed_domains": "*.cyberhawk.no,*.upcloud.cyberhawk.no,*.netsecurity.no,localhost",
+  "allowed_domains": "*.cyberhawk.no,*.upcloud.cyberhawk.no,localhost",
   "allow_subdomains": true
 }
 EOF
