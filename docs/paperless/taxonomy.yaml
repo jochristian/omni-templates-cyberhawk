@@ -15,6 +15,14 @@
 # meaningful number of positive AND negative examples, and (c) cannot learn
 # subjective tags at all. On an empty install it would mislabel nearly everything.
 # Revisit once you are past ~100 filed documents; see the README.
+#
+# This is not theoretical. Two tags were created on `auto` in the web UI on
+# 2026-08-17, when 135 of 136 documents still carried Innboks and the classifier
+# therefore had almost no valid training data. It latched onto those two and
+# stamped them on EVERY document consumed for the next four days — Google Play
+# receipts, an Altibox order, a restaurant booking. seed.py now refuses to write
+# matching_algorithm 6; see the "auto matching" section of the README for how to
+# spot and undo it.
 
 document_types:
   # Broad and few on purpose. Upstream guidance is ~10-15 types doing the heavy
@@ -75,12 +83,20 @@ document_types:
     matching_algorithm: 4
     match: ordrebekreftelse|order confirmation|takk for (din )?bestilling
   - name: Billett
-    # Flight/train/event tickets and their receipts. Regex and bilingual on
-    # purpose: travel documents arrive in English far more often than Norwegian
-    # (an SAS e-ticket is issued entirely in English), so a Norwegian-only word
-    # list never matches them.
+    # Flight/train/event tickets. Regex and bilingual on purpose: travel
+    # documents arrive in English far more often than Norwegian (an SAS e-ticket
+    # is issued entirely in English), so a Norwegian-only word list never
+    # matches them.
+    #
+    # The bare token `billett` was removed 2026-08-22. It matched the merchant
+    # name "Billettservice AS" on an ordinary PayPal payment receipt, and
+    # "billettkjøp" in Ticketmaster order receipts — documents that state
+    # outright "Dette er kun en kvittering, og er ikke gyldig for inngang".
+    # A receipt FOR a ticket is a Kvittering; only the thing you present at the
+    # door is a Billett. Requiring ticket-document vocabulary took this from 15
+    # matches to the 11 that are genuinely tickets.
     matching_algorithm: 4
-    match: billett|itinerary|electronic ticket|e-?ticket|boarding pass
+    match: electronic ticket|e-?ticket|boarding pass|itinerary|ticket number|dette er din billett|gyldig billett|billettnummer
   - name: Brev
     # No match: far too generic to auto-assign. This is the manual fallback for
     # anything that is simply a letter.
@@ -88,7 +104,7 @@ document_types:
     match: ""
 
 tags:
-  # ~30 tags, nested two deep. Upstream guidance is to keep tags relatively few
+  # ~32 tags, nested two deep. Upstream guidance is to keep tags relatively few
   # and let correspondent + document type carry most of the meaning. Nesting is
   # a v2.19+ feature: adding a child automatically adds its parents, so tagging
   # a document "Strøm" also files it under "Bolig" without extra clicks.
@@ -258,9 +274,36 @@ tags:
     # Bilingual regex, same reason as the Billett type: these documents are
     # rarely in Norwegian, and a foreign transit statement may be in a third
     # language entirely.
+    #
+    # `electronic ticket`, `e-?ticket` and `booking reference` were removed
+    # 2026-08-22: that is generic TICKETING vocabulary, not travel vocabulary,
+    # and it put Reise on a Folketeateret theatre ticket. A tag is a subject
+    # area — "this is about travel" — so it must match the subject, not the
+    # delivery mechanism. `itinerary` and `boarding pass` stay: both are
+    # travel-only, and `itinerary` is what keeps the SAS "Electronic Ticket
+    # Itinerary" documents matching. Adding the Norwegian stems also caught a
+    # hotel invoice (Ankomstdato/Avreisedato) the old list missed entirely.
     color: "#ef6c00"
     matching_algorithm: 4
-    match: flybillett|reisedokument|itinerary|electronic ticket|e-?ticket|booking reference|boarding pass|travel product
+    match: flybillett|reisedokument|itinerary|boarding pass|travel product|flyreise|avreise|reiserute|hotellreservasjon
+
+  - name: Kultur
+    # Theatre, concerts, cinema, sport. Added 2026-08-22, when tightening Reise
+    # left event tickets with no subject area at all.
+    #
+    # `arrangement` was considered and dropped: over the corpus it matched the
+    # identical set of documents as the narrower list, so it bought nothing
+    # while being generic enough in Norwegian business prose to over-match
+    # later.
+    #
+    # `billettkjøp` IS here, deliberately, even though the Billett type rejects
+    # it. That is the type/tag split working as intended: a Ticketmaster
+    # "Kvittering på billettkjøp til D.D.E." is a receipt (type Kvittering, it
+    # says so itself) and it is about a concert (tag Kultur). The type answers
+    # "what is this piece of paper", the tag answers "what is it about".
+    color: "#c2185b"
+    matching_algorithm: 4
+    match: forestilling|konsert|teater|billettkjøp|festival|kampbillett
   - name: Offentlig
     color: "#616161"
     matching_algorithm: 1
@@ -355,6 +398,34 @@ mail_rules:
   #
   # Staged rollout: only the first rule is enabled. Flip `enabled: true` on the
   # others and re-run seed.py once the first has been verified.
+  #
+  # ---- assign_document_type is null on every rule (2026-08-22) --------------
+  #
+  # It used to be set per folder, on the assumption that a Gmail label is a good
+  # proxy for document type. It is not, and the field is an OVERRIDE rather than
+  # a default: whatever the rule names WINS over content matching, unconditionally.
+  #
+  # The result was that six SAS "Electronic Ticket Itinerary and Receipt" PDFs
+  # arriving in _Kvitteringer were all typed Kvittering, and the Billett type —
+  # which has a perfectly good regex written specifically for them — ended up on
+  # exactly one document in the whole archive. The type rules in this file were
+  # being silently overruled by the folder a mail happened to sit in.
+  #
+  # Leave it null. A Gmail label says where a mail was filed, not what the
+  # attachment is; let the document_types rules above decide from the content.
+  #
+  # ---- stop_processing on every rule but the last ---------------------------
+  #
+  # Gmail labels are not exclusive, so one message can appear in several IMAP
+  # folders and be consumed once per matching rule. This is NOT prevented by the
+  # Processed Mail record, which is keyed per (rule, uid, folder) — a second rule
+  # has its own key and consumes the message again. Observed: one Google Play
+  # receipt and one order confirmation, each imported twice on 2026-08-19/20
+  # because they carried both _Kvitteringer and _bestilling.
+  #
+  # stop_processing makes the first matching rule the only one, which is what the
+  # `order` field was always meant to express. The lowest order that matches wins,
+  # so the last rule does not need it.
 
   - name: Kvitteringer
     account: gmail
@@ -374,42 +445,72 @@ mail_rules:
     action_parameter: paperless # becomes a Gmail label on consumed mail
     consumption_scope: 3
     attachment_type: 1
-    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
+    stop_processing: true
+    # Generelle_vilkar / Angrerettskjema are the boilerplate PDFs a Norwegian
+    # order confirmation carries by law. They are identical every time and say
+    # nothing about the purchase. One Altibox mail produced six documents, two
+    # of which were these.
+    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg,Generelle_vilkar*,Angrerett*,*vilkår*,*Vilkar*"
     assign_title_from: 1
     assign_correspondent_from: 1
-    assign_document_type: Kvittering
+    assign_document_type: null
 
   - name: Fakturaer
     account: gmail
+    # PAUSED 2026-08-22 mid-backfill. The import drove paperless to ~95 concurrent
+    # Postgres connections against a max_connections of 100, and 28 mails failed
+    # with "remaining connection slots are reserved for roles with the SUPERUSER
+    # attribute". Re-enable once the cluster is on max_connections 200, then clear
+    # the FAILED ProcessedMail rows so those 28 are retried. See gmail.md.
     enabled: false
     order: 20
     folder: _viktig/_faktura
-    maximum_age: 30
+    # 0 = no limit; the date criterion is only applied when maximum_age > 0.
+    # Opened up 2026-08-22 to backfill all 416 messages in the label.
+    #
+    # Safe to combine with Kvitteringer's narrower 365-day window: stop_processing
+    # only fires on a rule that actually consumed something, so an invoice older
+    # than a year that also carries the _Kvitteringer label is skipped by rule 10
+    # and still reaches this one.
+    maximum_age: 0
     action: 5
     action_parameter: paperless
     consumption_scope: 3
     attachment_type: 1
-    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
+    stop_processing: true
+    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg,Generelle_vilkar*,Angrerett*,*vilkår*,*Vilkar*"
     assign_title_from: 1
     assign_correspondent_from: 1
-    assign_document_type: Faktura
+    assign_document_type: null
 
   - name: Billetter
     account: gmail
+    # PAUSED 2026-08-22 mid-backfill, same as Fakturaer. Not a problem with this
+    # rule: every mail it fetched failed with PermissionError because the fetch
+    # was triggered by hand via `kubectl exec` (uid 0) instead of the scheduled
+    # task (uid 1000). See "Never run mail_fetcher as root" in gmail.md.
     enabled: false
     order: 30
     folder: _viktig/_billetter
-    maximum_age: 30
+    # 0 = no limit. Enabled 2026-08-22 to backfill the whole label: 147 messages,
+    # and heavily weighted to the past — only 31 fall inside a year and 2 inside
+    # 30 days, so the default window would have imported almost nothing.
+    maximum_age: 0
     action: 5
     action_parameter: paperless
     consumption_scope: 3
     attachment_type: 1
-    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
+    stop_processing: true
+    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg,Generelle_vilkar*,Angrerett*,*vilkår*,*Vilkar*"
     assign_title_from: 1
     assign_correspondent_from: 1
-    assign_document_type: Billett
-    assign_tags:
-      - Reise
+    assign_document_type: null
+    # Was [Reise]. This folder mixes flights with theatre and concert tickets,
+    # so a blanket travel tag was wrong for a large share of its 147 messages —
+    # it is the same mistake as assign_document_type, one folder standing in for
+    # a judgement that belongs to the content. Reise and Kultur both have regexes
+    # that make the call per document.
+    assign_tags: []
 
   - name: Bestillinger
     account: gmail
@@ -417,9 +518,13 @@ mail_rules:
     # next ./seed.py --apply. Change it here instead. (If you would rather toggle
     # rules from the UI, drop "enabled" from COMPARE["mail_rules"] in seed.py.)
     enabled: true
-    # Lowest priority: a Gmail message can carry several labels, and paperless
-    # records the first rule that consumes it. An order confirmation that is also
-    # labelled _Kvitteringer should be filed as the receipt, so this runs last.
+    # Lowest priority: a Gmail message can carry several labels. An order
+    # confirmation that is also labelled _Kvitteringer should be filed by the
+    # receipt rule, so this runs last.
+    #
+    # Note the earlier rules carry stop_processing, which is what actually makes
+    # "runs last" mean "does not run at all for a mail the receipt rule took".
+    # Ordering alone never did that — see the block comment above.
     order: 40
     folder: _viktig/_bestilling
     maximum_age: 30
@@ -427,10 +532,12 @@ mail_rules:
     action_parameter: paperless
     consumption_scope: 3
     attachment_type: 1
-    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg"
+    # Last rule, so nothing follows it to stop.
+    stop_processing: false
+    filter_attachment_filename_exclude: "*.png,*.gif,*.jpg,*.svg,Generelle_vilkar*,Angrerett*,*vilkår*,*Vilkar*"
     assign_title_from: 1
     assign_correspondent_from: 1
-    assign_document_type: Ordrebekreftelse
+    assign_document_type: null
 
 saved_views:
   # rule_type reference: 3=correspondent is  4=document type is  5=is in inbox
@@ -492,6 +599,20 @@ saved_views:
     rules:
       - rule_type: 4
         value: "@document_type:Purring"
+
+  - name: Billetter
+    # Everything you present at a door or a gate, flights and events together.
+    # Filtering on the type rather than on Reise/Kultur is deliberate: the tags
+    # answer "what is this about" and would drag in hotel invoices and concert
+    # receipts, while the question this view exists to answer is "where is the
+    # actual ticket".
+    show_on_dashboard: false
+    show_in_sidebar: true
+    sort_field: created
+    sort_reverse: true
+    rules:
+      - rule_type: 4
+        value: "@document_type:Billett"
 
   - name: Sist lagt til
     show_on_dashboard: false

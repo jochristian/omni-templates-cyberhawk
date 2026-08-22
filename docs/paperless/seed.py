@@ -65,6 +65,11 @@ COMPARE = {
         "assign_correspondent_from",
         "assign_document_type",
         "assign_tags",
+        # Gmail labels are not exclusive, and the Processed Mail record is keyed
+        # per (rule, uid, folder) — so it does NOT stop a second rule consuming
+        # the same message. Only stop_processing does. Managed here because
+        # getting it wrong silently doubles documents rather than erroring.
+        "stop_processing",
     ],
 }
 
@@ -201,6 +206,10 @@ def resolve_mail_rules(
             )
         payload["account"] = accounts[account]
 
+        # `assign_document_type: null` is meaningful and must survive to the
+        # PATCH: it is how a rule stops overriding content-based type matching.
+        # Leaving the key out of the YAML instead would make drift() skip the
+        # field and silently keep whatever is already live.
         doc_type = payload.get("assign_document_type")
         if doc_type is not None:
             if doc_type not in type_ids:
@@ -210,6 +219,8 @@ def resolve_mail_rules(
                 )
             payload["assign_document_type"] = type_ids[doc_type]
 
+        # Same for `assign_tags: []` — an empty list clears the rule's tags,
+        # whereas an absent key leaves them alone.
         tags = payload.get("assign_tags")
         if tags:
             missing = [t for t in tags if t not in tag_ids]
@@ -359,6 +370,34 @@ def lint_matches(tax: dict) -> list[str]:
     return problems
 
 
+def check_no_auto_matching(tax: dict) -> None:
+    """Refuse to write matching_algorithm 6 (auto).
+
+    Hard error rather than a warning, because the failure mode is quiet and
+    retrospective. Auto-matching learns from whatever is already filed, and it
+    ignores anything still carrying an inbox tag — so on a young archive it
+    trains on almost nothing and then labels everything with high confidence.
+
+    Two `auto` tags added by hand in the UI on 2026-08-17 were applied to every
+    document consumed over the following four days, across unrelated senders.
+    Nothing warns you: the tags simply appear, and they keep appearing until the
+    matching algorithm is changed and the classifier pickle is deleted.
+    """
+    offenders = [
+        f"{section[:-1]} {item['name']!r}"
+        for section in ("document_types", "tags", "correspondents", "storage_paths")
+        for item in tax.get(section) or []
+        if item.get("matching_algorithm") == 6
+    ]
+    if offenders:
+        raise SystemExit(
+            "matching_algorithm 6 (auto) is not allowed in this taxonomy:\n  "
+            + "\n  ".join(offenders)
+            + "\n\nSee the 'auto matching' section of README.md. Use 1 (any), "
+            "3 (literal) or 4 (regex) instead."
+        )
+
+
 def check_view_references(views: list[dict], tax: dict) -> None:
     """Catch typos in @tag:/@document_type: references before touching the API."""
     known = {
@@ -406,6 +445,7 @@ def main() -> int:
         return 2
 
     tax = yaml.safe_load(args.taxonomy.read_text(encoding="utf-8")) or {}
+    check_no_auto_matching(tax)
     check_view_references(tax.get("saved_views") or [], tax)
 
     for problem in lint_matches(tax):
@@ -462,6 +502,8 @@ def main() -> int:
     if args.correspondents:
         print("\nCorrespondents")
         data = yaml.safe_load(args.correspondents.read_text(encoding="utf-8")) or {}
+        # The out-of-repo file gets the same guard; it is edited by hand too.
+        check_no_auto_matching(data)
         sync(
             api,
             "correspondents",

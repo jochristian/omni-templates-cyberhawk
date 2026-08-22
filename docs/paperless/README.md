@@ -5,7 +5,7 @@ Deployment lives in `GitOps/clusters/cyberhawk-talos-k8s/3-apps/paperless/`.
 
 | File | What it is |
 |---|---|
-| `taxonomy.yaml` | Document types, tags, custom fields, saved views. Generic, no personal data. |
+| `taxonomy.yaml` | Document types, tags, custom fields, saved views, mail rules. Generic, no personal data. |
 | `correspondents.example.yaml` | Placeholders. The real list lives outside this repo. |
 | `seed.py` | Creates/updates the above over the REST API. Dry-run by default. |
 
@@ -23,6 +23,12 @@ cd docs/paperless
 Generate the token while logged in as the account you want to own these objects —
 paperless assigns ownership from the token, so seeding as `admin` and then working
 as `jochristian@cyberhawk.no` leaves you editing another user's objects.
+
+A dry run always lists every mail rule as `+ rule: ...`, even when all of them are
+already correct. Mail rules reference document types and tags by name, and those
+ids are not knowable before the objects exist, so the dry run reports intent
+rather than diffing. `--apply` does the real comparison; that is where you find
+out a rule was unchanged. Nothing else in the plan behaves this way.
 
 Re-running is safe. The seeder matches on name, creates what is missing, patches
 only the fields `taxonomy.yaml` actually specifies, and **never deletes anything** —
@@ -46,7 +52,7 @@ keys alone. Posting a partial object would wipe every other UI preference you ha
 
 ## Why it is shaped this way
 
-**Few, broad document types (13).** Upstream guidance is ~10–15 doing the heavy
+**Few, broad document types (15).** Upstream guidance is ~10–15 doing the heavy
 lifting alongside correspondents, not 50 narrow ones. "Strømfaktura" is not a type;
 it is a `Faktura` carrying the `Strøm` tag. Narrow types fragment into categories
 with one document each, and every new bill provokes a naming decision.
@@ -61,6 +67,8 @@ number of positive *and negative* examples, and cannot learn subjective tags lik
 TODO at all. On an empty install it would confidently mislabel nearly everything,
 and — worse — it learns from whatever you let through, so early mistakes compound.
 Everything here starts on `any` or `literal`. Revisit at ~100 filed documents.
+`seed.py` now refuses to write `matching_algorithm: 6` at all — see
+"Auto matching poisoned the archive once" below.
 
 **No storage paths.** `PAPERLESS_FILENAME_FORMAT` already lays the media tree out
 as `{{ created_year }}/{{ correspondent }}/{{ created }}_{{ title }}`, which is what
@@ -154,13 +162,109 @@ else identifies:
   collected with the insurance premium rather than as a separate state bill. Both
   are matched, since the archive will contain documents from before the change.
 
-Two rules of thumb learned the hard way here:
+Rules of thumb learned the hard way here:
 
 1. **Match what identifies the document, not what appears in its small print.**
    `purring` fails this — it is in the payment terms of ordinary invoices.
 2. **Prefer stems via regex where Norwegian inflects.** `\bbompenger\b` misses
    "bompengepassering"; `bompeng` catches every form. Word lists are fine for
    fixed nouns like `skattemelding`.
+3. **A type says what the document *is*; a tag says what it is *about*.** Keep the
+   vocabulary on the right side of that line. `Reise` originally matched
+   `e-?ticket` and `booking reference`, which is how a Folketeateret theatre ticket
+   ended up tagged as travel — those words describe how a ticket was *delivered*,
+   not what it is about. `itinerary` and `boarding pass` are safe because nothing
+   but travel uses them. The same cut in the other direction: the `Billett` type
+   dropped the bare token `billett`, which was matching the merchant name
+   "Billettservice AS" and the word "billettkjøp" on Ticketmaster receipts that
+   say, in the document itself, *"Dette er kun en kvittering, og er ikke gyldig for
+   inngang"*. A receipt for a ticket is a `Kvittering` that happens to be about
+   `Kultur`.
+4. **A merchant name is a correspondent, never a tag.** `Elkjøp` existed as both,
+   which is how a vendor ended up as a subject area.
+
+Test a rule change before you commit to it. Matching is pure text — you can score a
+candidate regex against the whole archive without writing anything:
+
+```bash
+kubectl -n paperless exec deploy/paperless -- python3 manage.py shell -c "
+import re
+from documents.models import Document
+rx = 'your|candidate|regex'
+for d in Document.objects.all():
+    if re.search(rx, d.content or '', re.IGNORECASE):
+        print(d.pk, d.correspondent, repr(d.title[:60]))"
+```
+
+Diffing that against the current rule's hits is how the `Reise` change above was
+justified: it lost exactly the two theatre tickets and gained a hotel invoice the
+old list had been missing.
+
+## Auto matching poisoned the archive once
+
+On 2026-08-17 two tags, `Elkjøp` and `TV`, were created in the web UI on
+`matching_algorithm: 6` (Automatic). At that moment 135 of 136 documents still
+carried `Innboks` — and auto-matching *skips* inbox documents when training, so the
+classifier had essentially no examples. It latched onto those two tags and applied
+them to **every single document consumed over the next four days**: Google Play
+receipts, an Altibox order confirmation, a restaurant booking, a marketing email.
+
+What makes this worth a section rather than a footnote:
+
+- **Nothing warns you.** There is no error and no log line. The tags simply appear
+  on things they have no business being on, and they keep appearing.
+- **It spreads on contact.** `document_retagger` re-applies the classifier, so the
+  obvious "let me clean this up by re-running the matcher" makes it worse — a dry
+  run showed `+Elkjøp, +TV` proposed across the entire back catalogue.
+- **The trained model outlives the config.** Changing the algorithm is not enough;
+  `data/classification_model.pickle` has to go too.
+
+Undoing it, in order:
+
+```bash
+# 1. what is on auto right now? (should print 0 for all four)
+kubectl -n paperless exec deploy/paperless -- python3 manage.py shell -c "
+from documents.models import Tag, DocumentType, Correspondent, StoragePath
+for m in (Tag, DocumentType, Correspondent, StoragePath):
+    print(m.__name__, m.objects.filter(matching_algorithm=6).count())"
+
+# 2. strip the bad assignments, then set the objects to matching None (0)
+#    or delete them -- see the tag-tree warning below before deleting
+
+# 3. drop the trained model; it is rebuilt on a schedule and is harmless
+#    once nothing is set to Automatic
+kubectl -n paperless exec deploy/paperless -- \
+  rm -f /usr/src/paperless/data/classification_model.pickle
+```
+
+The archive is the training data. Do not turn this on until the inbox is worked
+down and the tags on filed documents are ones you would defend.
+
+## Deleting a nested tag deletes its children
+
+Tags are a `django-treenode` tree, and the parent FK cascades. Deleting `Økonomi`
+in the API or the ORM silently takes `Bank`, `Lån`, `Sparing`, `Pensjon` and
+`Investering` with it — five tags, no confirmation beyond the one you clicked, no
+mention of the subtree.
+
+This is easy to walk into precisely because the parent tags look disposable: they
+have no match rule and no documents of their own, which is what a parent node in
+this taxonomy is *supposed* to look like. `Bolig`, `Kjøretøy`, `Økonomi` and
+`Oppbevaring` are all structural, not dead weight.
+
+`seed.py` never deletes anything, so this is only reachable by hand. If you do it
+anyway, `auditlog` records the full field set of every deleted row and is enough to
+reconstruct them, parent links included:
+
+```bash
+kubectl -n paperless exec deploy/paperless -- python3 manage.py shell -c "
+from auditlog.models import LogEntry
+for e in LogEntry.objects.filter(content_type__model='tag', action=2).order_by('-timestamp')[:10]:
+    print(e.timestamp, e.object_pk, e.object_repr, e.changes_dict.get('tn_parent'))"
+```
+
+Restoring with the original `pk` is worth the extra effort — saved views reference
+tags and document types by id.
 
 ## Duplicate detection can lose a race
 
@@ -205,8 +309,11 @@ deletes go to the trash and are recoverable for `trash_delay` days (30 here).
   ordinary invoices as reminders. Match the inkasso-stage words instead. The same
   logic applies to any word that appears in the small print rather than the
   subject of the document.
-- **Mail rules** (`/settings/mail`). Most bills arrive by email and never touch a
-  scanner. Bigger practical win than anything scanner-related.
+- **Finish the mail import.** Most bills arrive by email and never touch a
+  scanner, so this is the biggest remaining win. ~2,060 of the 2,285 labelled
+  messages are still unimported: `maximum_age` caps every rule, and `Fakturaer`
+  and `Billetter` are still disabled. Do one label at a time and check for
+  duplicates between stages — see `gmail.md`.
 - **ASN + physical binder.** If you keep paper: write an ascending number on each
   sheet before scanning, file by that number only, and never sort the binder any
   other way. Retrieval is then always search → read ASN → grab.

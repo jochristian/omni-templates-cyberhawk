@@ -5,6 +5,22 @@ metadata:
 spec:
   instances: 1
   imageName: ghcr.io/cloudnative-pg/postgresql:17 # renovate: docker=ghcr.io/cloudnative-pg/postgresql
+  postgresql:
+    parameters:
+      # CNPG defaults to 100. A bulk mail import drove paperless to ~95 concurrent
+      # connections on 2026-08-22 and 28 mails then failed to consume with
+      # "remaining connection slots are reserved for roles with the SUPERUSER
+      # attribute" — which reads like an auth error and is not one.
+      #
+      # Paperless opens connections per celery consume task, so the ceiling is a
+      # function of how much is being ingested at once, not of steady-state use
+      # (idle sat around 20 before the import). 200 leaves room for a full-label
+      # backfill without having to stage it around the connection limit.
+      #
+      # NOTE: max_connections is a postmaster-level setting. CNPG can only apply
+      # it by restarting the instance, and instances is 1, so this change means a
+      # short database outage when it syncs.
+      max_connections: "200"
   inheritedMetadata:
     labels:
       app.kubernetes.io/name: paperless
@@ -30,9 +46,15 @@ spec:
                 operator: In
                 values:
                   - blix
+  # Raised with max_connections. A Postgres backend is a process: 200 of them
+  # cost real memory on top of shared_buffers (128Mi here), and work_mem is
+  # per-sort, so the worst case scales with the connection count too. At 94
+  # connections the pod was already using 281Mi of the old 1Gi limit — doubling
+  # the ceiling without doubling the limit risks OOMKilling the only instance,
+  # which is a worse failure than the connection errors this is fixing.
   resources:
     requests:
-      memory: 512Mi
+      memory: 1Gi
       cpu: 200m
     limits:
-      memory: 1Gi
+      memory: 2Gi
