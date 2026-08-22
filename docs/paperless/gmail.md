@@ -8,10 +8,32 @@ maps almost directly onto the taxonomy:
 |---|---|---|---|
 | `_viktig/_Kvitteringer` | 773 | Kvitteringer, enabled, `maximum_age: 365` | 210 |
 | `_viktig/_bestilling` | 949 | Bestillinger, enabled, `maximum_age: 30` | 16 |
-| `_viktig/_faktura` | 416 | Fakturaer, **paused mid-backfill** | 209 mails, ~0 docs |
+| `_viktig/_faktura` | 416 | Fakturaer, **disabled — no value** | 0 documents (see below) |
 | `_viktig/_billetter` | 147 | Billetter, enabled, `maximum_age: 0` | backfilling |
 
 ~2,285 messages in total. Import them in stages, not in one go — see below.
+
+### `_faktura` contains no invoices
+
+Settled 2026-08-22 by a clean run over the whole label: **416 of 416 messages are
+eFaktura notifications** — "Melding om eFaktura fra Hafslund Strøm AS", the bank
+saying an invoice is waiting in nettbank. No attachment, no invoice. 402 were
+skipped as having nothing consumable, and the 14 that did produce documents were
+older (2014–2018) notifications in a different format, each landing with no
+correspondent and no document type. They were deleted and the rule is now disabled
+permanently.
+
+The invoices live in nettbank and never reach this mailbox, so no rule tuning
+helps. The grouping is what makes it obvious — the same handful of senders,
+monthly, for years:
+
+    15 x  Melding om eFaktura fra 3036 Sameiet ...
+    14 x  Melding om eFaktura fra SEB Kort/Circle K MasterCard
+    14 x  Melding om eFaktura fra Hafslund Fakturaservice AS
+    14 x  Melding om eFaktura fra Volkswagen Møller Bilfinans AS
+
+Worth doing that `group by subject` on any label before concluding a rule is
+broken: a label that produces nothing may simply contain nothing.
 
 The labels deliberately no longer map to a document type. That was the original
 design and it was wrong: `assign_document_type` on a mail rule *overrides* content
@@ -151,11 +173,18 @@ the archive at once.
 
 ### A bulk import can exhaust the Postgres connection pool
 
-Paperless opens a database connection per celery consume task, so the connection
-count tracks how much is being ingested at once rather than steady-state use — it
-sat around 20 idle before the `_faktura` backfill and hit ~95 during it. CNPG
-defaults `max_connections` to 100, so the backfill ran into the ceiling and mails
-began failing with:
+A backfill can exhaust the pool, but **check what is actually consuming the
+connections before blaming volume**. The `_faktura` backfill hit ~95 connections
+against a `max_connections` of 100 and that was read as ingestion concurrency. It
+was not: the same label re-run cleanly afterwards peaked at **5**. The difference
+was that the first run was failing on every mail, and it was the failure/retry
+churn — not the ingestion — that consumed the pool. Fixing the underlying error
+removed the pressure entirely.
+
+`max_connections` is nonetheless pinned to 200 in `10-cnpg-cluster.yaml`, because
+headroom is cheap and the memory limit was raised alongside it. Just do not assume
+a connection spike means you need a bigger ceiling; it more often means something
+is failing in a loop. The error to look for:
 
     FATAL: remaining connection slots are reserved for roles with the SUPERUSER attribute
 

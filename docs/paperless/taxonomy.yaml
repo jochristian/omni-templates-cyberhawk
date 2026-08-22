@@ -457,11 +457,22 @@ mail_rules:
 
   - name: Fakturaer
     account: gmail
-    # PAUSED 2026-08-22 mid-backfill. The import drove paperless to ~95 concurrent
-    # Postgres connections against a max_connections of 100, and 28 mails failed
-    # with "remaining connection slots are reserved for roles with the SUPERUSER
-    # attribute". Re-enable once the cluster is on max_connections 200, then clear
-    # the FAILED ProcessedMail rows so those 28 are retried. See gmail.md.
+    # DISABLED PERMANENTLY 2026-08-22, after a clean run over the whole label
+    # proved it has nothing to archive. All 416 messages are eFaktura
+    # NOTIFICATIONS -- "Melding om eFaktura fra Hafslund Strom AS", the bank
+    # telling you an invoice is waiting in nettbank. They carry no attachment and
+    # no invoice. 402 were correctly skipped as having nothing consumable; the 14
+    # that did produce documents were older (2014-2018) notifications in a
+    # different format, and every one of them landed with no correspondent and no
+    # document type. Those 14 were deleted.
+    #
+    # The invoices themselves live in nettbank and never reach this mailbox, so
+    # no amount of rule tuning makes this label useful. Left defined rather than
+    # removed so this finding is not rediscovered the hard way; re-enabling it
+    # only re-imports notification chatter.
+    #
+    # If the mailbox ever does start receiving real invoices, add
+    # filter_subject to exclude "Melding om eFaktura" before turning this on.
     enabled: false
     order: 20
     folder: _viktig/_faktura

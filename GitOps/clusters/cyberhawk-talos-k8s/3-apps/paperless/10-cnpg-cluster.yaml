@@ -12,10 +12,16 @@ spec:
       # "remaining connection slots are reserved for roles with the SUPERUSER
       # attribute" — which reads like an auth error and is not one.
       #
-      # Paperless opens connections per celery consume task, so the ceiling is a
-      # function of how much is being ingested at once, not of steady-state use
-      # (idle sat around 20 before the import). 200 leaves room for a full-label
-      # backfill without having to stage it around the connection limit.
+      # Follow-up: that spike was NOT ingestion volume, which is what it looked
+      # like at the time. The same 416-message label re-run cleanly afterwards
+      # peaked at 5 connections. The first run was failing on every mail, and the
+      # failure/retry churn is what consumed the pool -- fixing the underlying
+      # error removed the pressure entirely.
+      #
+      # 200 is kept anyway: headroom is cheap, it removes a whole class of
+      # incident from bulk imports, and the memory limit below was raised to
+      # match. But do not read a connection spike as "needs a bigger ceiling"
+      # without first checking whether something is failing in a loop.
       #
       # NOTE: max_connections is a postmaster-level setting. CNPG can only apply
       # it by restarting the instance, and instances is 1, so this change means a
