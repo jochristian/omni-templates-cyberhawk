@@ -23,7 +23,7 @@ resources:
 helmCharts:
   - name: tetragon
     repo: https://helm.cilium.io
-    version: 1.7.0 # renovate: helm=tetragon repo=https://helm.cilium.io
+    version: 1.7.1 # renovate: helm=tetragon repo=https://helm.cilium.io
     releaseName: tetragon
     namespace: tetragon
     includeCRDs: true
