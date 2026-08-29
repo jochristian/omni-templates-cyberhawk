@@ -14,7 +14,9 @@ spec:
       labels:
         app: pdns
     spec:
-      # The democratic-csi iSCSI target (192.168.141.150) is blix-side. Scheduling a
+      # The democratic-csi iSCSI target is blix-side: 10.50.1.150 on the node network
+      # for volumes provisioned from 2026-08-29 on, 192.168.141.150 via OPNsense for
+      # older ones (the portal is baked into each PV and is immutable). Scheduling a
       # pod with an iSCSI PVC onto lørenskog sends all block I/O across the inter-site
       # WireGuard link, where a single blip produces an EIO storm that flips ext4 to
       # emergency_ro — and democratic-csi never fscks on NodeStage, so the volume stays

@@ -5,11 +5,10 @@ metadata:
     namespace: kube-system
 type: Opaque
 stringData:
-    driver-config-file.yaml: ENC[AES256_GCM,data:/kVEN7yGMKBnUvyacnsh/B/K3ssb1A37AeipXymrROwTVz0H3IyrZT+wLYuypifcmBIaQeQAjKV27fpGVupWTueOjLfPueB7i3cs9jLlq0FQP0Juc21pXl95UJz8JGyMnorL3lruvBh2DiFKDLdxLOiCQfNQwHmut/+7PFpcXTqWxiEd2bcKqHZ9vixaz27Mun85v6lEOZ6JCn/WjodCJ11jGNUc9qqgBX+ZVdcyd1ll2hubKbkIpiy3ziJRJksMJLYozHdszEVA9wc70N/Il6YEKVyXnPs6on5GPTZGYKhZfYTsIC1JZomay6loQUmCceK1yHrE2NRghYcs46D4+egRUpcy23FQwOofkaczH/TL9erDSGuxJJrx8BCggqICgAELWIz3/BFSeI+g7kQFf8v+jXSoAaPYUh3ypuji9Bwg7kj+vw5CRvke+2LWwAACSEHHWA5zkx9K0zuBgHH5KDbUinJSejYFQ+VnlCir9S++A6cuH/v3GTK9AA/8K3KFa8sNUcagWwIWKCIEAGDxQaFRqPciIvCUDLwOXoxN78aD8VhhoVSHy81LxfH40HZR89nSIiYFhwvo4R9DffN/kOTJtgJSCZQ+l2qkDyhO4I8n0eU2blF6myyJW3c4prElO4388sidbVKgwI15wPqEq1o0c4xuTjajexfOpPWl0zB2UEqewgpNiCmzznWGRVfPFmdYBabPkMNjENnHtHq8xQNAfC4tnBcxGRQlsBhzdR0ynFyx5P+Gttiq42+CCaVVOrqO8J22dM+YuwJIx6syzqrqoIajb5H71wPcDQ63oaUs/ubQpoLKcpcE1zzcmRwDlKHSJBmBO1bXvK7y771sCq7l7HJV4PbHeoilzEcKeHe1DaftGzCnTchJ76l9bTHqSBu/9Tin5iQaMMQlqk169zIMRIXVWx0BOtj2HdfqM0/GDaTZ3Ura2fU1lbE+Vdo0otRgCiof0+e51PrZNJT1pHO7vy0hEQjVl6toUMVjTm9IMPFGaiJmVpE3RboJ4zOfkrNrb9scgRnLDH7OXKHh7C2oYKE/dwlKXLg2NXkFQ/0leAD805K3V+Dpn35nykaXwKEN1E+1sWiUnw==,iv:eemjj19KGXyMTgF/wqeHl1CLiJ/TNUamP363d8Ba/uc=,tag:DSkopMKi7e7vV4svRXjPXw==,type:str]
+    driver-config-file.yaml: ENC[AES256_GCM,data:FjxaAxA4E+YSwTPB9YMkxOolPvYoGlEI1jOafpchf6TsjV8O81YAEQ0H8gytEVsrC0emPr66hX9d8GUC3ySIBA6tLVbTeWjYb2+suDszeIVynQiQ5v8lKqZ9+NhEgpjjEFyiMm98AzSaGvkO2WhT/pLmVebWLCjl3HrDbKi2wDXy6kzBqhTbnKXbriPnkNNd+FM1f+2V3mqjnty+WzY7ibIWF74tc+yIRmvgiIf5fKWKLebnoUPEl972e8mmZsia64M4wcZoNpVnes/iHbiLAuPBgTGDM+S2dUTwQfX4HdcQgmmPoIukqz5ZjsB2wIApQPrU9HxNadUcHrj9rueOdDx6eijhQxg3UMS5aqJP9Xfs1tf35PqTYyN5KyQoLKzZQI6WosdmI4de9K5WS3JQOqenjwr08K5gCktGz3Jsb26oi28S3d17nyD21fUTXaLCESdQd71YvJnI8xsxhzAJFUhXzRmKsyweP5GK334eKl9rpiQ0I8oH+dueSw/mb8qyFz8QIFWe4rqHR//8dH0veoGtqjP+7hDjHfKKs1kjbQHb6ebtOSMW1EFO+x4nCqDhqrSDJTpzdJJTrP7eQrv2ezCDgwF6bxerxzSwW//7RuCRvm7jQb5HnLaDbO3t+YCPlvPb4NStUNA0h+vn1JYHjQqoiWkKmfM1Hpj00rDCEo0XB3k843zNDYHuH/XtYKeV+d1eEfXVsSyNeGNpgSKDFFV4PwCVYpREWQLtOVL+MZe6/ptU5FEG3MG+Pa0nJzXdr0u28WRu4tqDWP9oD7oWrInmGFUFId5QxO2D2UYBavfpW1m0REer++MlRWX/6mAiaRqbqCbqqrNXaUWawv1lhkkVE2vieA7VNaOs/VHYuJYsCVb6Egp2yH6bSFxxkOkzBVt/aK7XPShpbI1WQ2KDytd2TP8IUrv/II6w8l5gEInL+CxYshinxZw+3tAVIQWHytNckqTlDSTU8+6qyTBfWspZo6t1Wy2oK9/idC6SZ1VBS1oDqf8wOLACOKRvf7nESVA0hZT9e9WBTk/9pAvPrSlalIqAKDlnOBpXll2oEtMQXbsrRIGWY5sHZ/TQR0YUziA=,iv:h2q1lQlMYpauIutaenR0CDKEtI7UAF+xyJHoh/CyLt8=,tag:AEoLLXzwnozRtlFFBN5ztw==,type:str]
 sops:
     age:
-        - recipient: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk
-          enc: |
+        - enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
             YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBPMEptSEM2K0I1UG1kc012
             SXVDcjhIZ1N5b08rTm0vRXErdStCY1ZTNUcwCmhvWE1Lb0hJWFF5eUNsNDdwamx5
@@ -17,7 +16,8 @@ sops:
             dTBZeWtyTGVlREE5aWs3T0F4WER4NFkKcMHM9jvKGzBqgL1L7R0Ic9yDlPgH84Gx
             thKuKRZmfCwtIfI5aPTcYcaGE0IHopTYISfAj/1yR24h6XnhljXuyQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-04-11T14:43:23Z"
-    mac: ENC[AES256_GCM,data:FAXne5Ej7HWeMbHtuMy4NbaAO6GXuHSCl7E6o6OxW+SOVtOA9/yobJinhVHde11Y9ndFozyqS4IVvY2OULzT3tfYQK3vw2PI8wk9mr/tf97buGi4Voo69lVH1qn/4WE1/ysGKJL2UPH4e6EWMM4UeC+GoQ2yMtKLDxkGDERGkTo=,iv:4kYIQ6tQGNwZWPR2cNw25zPG+i2hPLiWe8EupPRfUTg=,tag:sZl4nIPwyvu0bXW4raP7qw==,type:str]
+          recipient: age102rv5x9lk7d694qlelkx8j8yxxtx20vfymkx042xgenqdw2ytyssr83usk
     encrypted_regex: ^(data|stringData)$
-    version: 3.12.2
+    lastmodified: "2026-08-29T10:29:57Z"
+    mac: ENC[AES256_GCM,data:AdnjF0EURq2LQ0l7QI8c6gbS/GNMu3ssmE79mfJNdrBvlA1GCqBAO5qnHa0rjfERKwYJR1tS/sSck/VTfNqA7miYy7o3TLRf5/XkEi1DBNOPylLp+r0sHQG/du7ImTswdr0lYUeioxufEWax/rJr68RWhAEXqCq+E6Y38S+OzRo=,iv:dw+DsAd4eRQr6LBpT8KKHHhp1gCxDYvav1ss37WJm18=,tag:EbT5wjg3xE+c7z1NHl51Zw==,type:str]
+    version: 3.13.3
