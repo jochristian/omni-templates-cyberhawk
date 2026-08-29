@@ -1,9 +1,12 @@
 # iSCSI storage network
 
-## The path
+> **2026-08-29: an attempt to move iSCSI onto the node network caused a
+> cluster-wide storage outage.** Read "The incident" before touching any of this.
+
+## The current path
 
 TrueNAS (Proxmox VMID 450), OPNsense (405) and worker-02 (850) are all VMs on the
-same host, `pve-blix-01`. Until 2026-08-29 all cluster block I/O took this route:
+same host, `pve-blix-01`. All cluster block I/O takes this route:
 
 ```
 worker-02 (vmbr3, 10.50.1.60)
@@ -14,41 +17,74 @@ worker-02 (vmbr3, 10.50.1.60)
 ```
 
 Two VMs on one physical box, with a stateful firewall in the block-I/O path.
+TrueNAS has a second vNIC (`net1`, bridge `vmbr3`) that is attached but **must stay
+unconfigured** unless the policy-routing fix below is in place first.
 
-TrueNAS's second vNIC (`net1`, bridge `vmbr3`) was already attached but unconfigured.
-It now carries **10.50.1.150/24** as `enp6s19`, directly on the Kubernetes node
-network — one bridge hop, no firewall.
+The firewall hop costs about **0.17 ms** — direct 0.372 ms avg vs 0.55 ms via
+OPNsense, measured interleaved over 3x60 packets, same delta at 1400 B. Modest.
+The better arguments for moving are that an OPNsense reboot currently stalls all
+blix block storage and that pf state sits in the I/O path — not raw latency.
 
-Measured from worker-02 (interleaved, 3x60 packets, stable across rounds):
+## The incident (2026-08-29)
 
-| target | path | min | avg |
-|---|---|---|---|
-| `10.50.1.150` | direct on vmbr3 | 0.22 ms | **0.372 ms** |
-| `192.168.141.150` | via OPNsense | 0.35 ms | **0.55 ms** |
+Adding `10.50.1.150/24` to `enp6s19` — with `192.168.141.150` still live on
+`enp6s18` and still the portal in every PV — **took down all 21 iSCSI volumes on
+worker-02 and corrupted 17 filesystems.**
 
-Same delta at 1400 B payload. The latency win is real but modest; the larger
-benefits are that an OPNsense reboot or upgrade no longer stalls blix block
-storage, and pf state tracking is out of the I/O path.
+Why: TrueNAS's default route stays on `enp6s18`, but `10.50.1.0/24` becomes
+directly connected on `enp6s19`. Requests from worker-02 still arrived via
+OPNsense, while replies took the new direct route. OPNsense saw only one half of
+each flow, pf dropped the packets as out-of-state, and the initiator timed out:
 
-No TrueNAS-side changes were needed beyond the address: iSCSI portal 1 already
-listens on `0.0.0.0:3260`, and initiator group 2 is allow-all (`initiators: []`).
+```
+connection12:0: ping timeout of 5 secs expired
+connection12:0: detected conn error (1022)
+sd 8:0:0:0: Power-on or device reset occurred
+EXT4-fs (sdX): Remounting filesystem read-only
+```
 
-## The trap: the portal is immutable per PV
+**Two things made it worse:**
+
+1. **Downing the link is not enough.** `enp6s19` was set link-down but kept its
+   address, so TrueNAS still held a connected route for `10.50.1.0/24` out a dead
+   interface and black-holed every reply to worker-02. Storage stayed down until
+   the *address* was deleted. Always remove the alias, never just the link.
+2. **Downing the interface caused a second damage wave** as in-flight I/O errored
+   out. Seven more filesystems went read-only at that moment.
+
+Recovery took ~90 minutes: 17 `e2fsck` runs plus one `valkey-check-aof --fix`.
+No data was lost, but that was luck as much as anything.
+
+## If you try this again
+
+Do **not** dual-home TrueNAS without one of these:
+
+- **Policy routing on TrueNAS**, so replies sourced from `192.168.141.150` keep
+  using `enp6s18`. Persist as a TrueNAS init script — it must survive reboots:
+  ```
+  ip rule add from 192.168.141.150 lookup 100
+  ip route add default via 192.168.141.1 dev enp6s18 table 100
+  ```
+  Verify with `ip route get 10.50.1.60 from 192.168.141.150` before touching k8s.
+- **Or a full cutover with everything stopped** — scale all iSCSI workloads to 0
+  (see the Argo caveat below), bring up the new address, migrate all PVs, restart.
+  No overlap window means no asymmetry.
+
+## The other trap: the portal is immutable per PV
 
 democratic-csi bakes the portal into every PV at provision time, and Kubernetes
 refuses to change it:
 
 ```
-$ kubectl patch pv pvc-... --type=json \
-    -p='[{"op":"replace","path":"/spec/csi/volumeAttributes/portal","value":"10.50.1.150:3260"}]'
-The PersistentVolume "pvc-..." is invalid: spec.persistentvolumesource:
-Forbidden: spec.persistentvolumesource is immutable after creation
+spec.persistentvolumesource: Forbidden: spec.persistentvolumesource is immutable
+after creation
 ```
 
-**Editing the driver-config secret only affects newly provisioned volumes.** The 31
-`democratic-csi-iscsi` PVs that existed on 2026-08-29 keep `192.168.141.150:3260`
-until their PV object is recreated. Keep 192.168.141.150 alive for as long as any
-of them remain — non-cluster consumers (`loke`) use it too.
+**Editing the driver-config secret only affects newly provisioned volumes.** And
+because the config drives the *controller's* API host too, pointing it at an
+unreachable address breaks provisioning and detach for every volume — which is
+exactly what happened here when the address was removed but the config still said
+`10.50.1.150`.
 
 Which portal a volume is on:
 
@@ -58,44 +94,67 @@ kubectl get pv -o json | jq -r '.items[]
   | "\(.spec.csi.volumeAttributes.portal)\t\(.spec.claimRef.namespace)/\(.spec.claimRef.name)"' | sort
 ```
 
-## Migrating an existing volume (phase 2)
+## Argo reverts `kubectl scale`
 
-Both iSCSI storage classes are `reclaimPolicy: Retain`, so the ZFS zvol survives PV
-deletion. Per volume, in a window:
+Every deployment scaled to 0 was back at `replicas: 1` within a minute.
+`selfHeal: false` does not protect you: the manual change makes the app OutOfSync
+and `automated: true` syncs `replicas` back from git on the next refresh.
 
-1. Scale the workload to 0 and confirm the `VolumeAttachment` is gone — this makes
-   the node log out of the old portal cleanly.
-2. Record the PV: `volumeHandle`, `iqn`, `lun`, capacity, `fsType`, claimRef.
-3. Delete the PVC, then the PV.
-4. Recreate the PV with the same `volumeHandle`/`iqn`/`lun` and
-   `portal: 10.50.1.150:3260`, then recreate the PVC bound to it by name.
-5. Scale up and confirm the new session:
-   `kubectl -n kube-system exec <csi-node-pod> -c csi-driver -- iscsiadm -m session`
+**To hold a blix workload down, cordon `worker-02` and delete the pod.** Cordoned,
+the blix-pinned pod has nowhere to reschedule and stays Pending regardless of what
+Argo sets. CNPG's `cnpg.io/hibernation: on` annotation also survives, because it
+isn't in git.
 
-Worth doing for the sync-write volumes (the CNPG clusters, `storage-mariadb-*`,
-`timescaledb-data-timescaledb-0`, `data-openbao-*`); the rest can migrate whenever
-they are next rebuilt.
+## Repair procedure
 
-## Cross-site exposure
+Filesystem state across all iSCSI volumes:
+
+```bash
+kubectl -n kube-system exec democratic-csi-iscsi-node-<id> -c csi-driver -- sh -c '
+for l in /dev/disk/by-path/*iscsi*lun-0; do
+  dev=$(readlink -f "$l")
+  echo "$l $(dumpe2fs -h "$dev" 2>/dev/null | grep "Filesystem state:")"
+done'
+```
+
+Per damaged volume, with the workload held down and the VolumeAttachment gone:
+
+```bash
+IQN=$(kubectl get pv "$PV" -o jsonpath='{.spec.csi.volumeAttributes.iqn}')
+# in the csi-driver container on the node:
+iscsiadm -m discovery -t st -p 192.168.141.150:3260
+iscsiadm -m node -T "$IQN" -p 192.168.141.150:3260 --login
+DEV=$(readlink -f /dev/disk/by-path/ip-192.168.141.150:3260-iscsi-$IQN-lun-0)
+e2fsck -fy "$DEV"
+iscsiadm -m node -T "$IQN" -p 192.168.141.150:3260 --logout
+iscsiadm -m node -T "$IQN" -p 192.168.141.150:3260 -o delete
+```
+
+Device letters are reassigned on every login/logout — **always resolve the device
+through `/dev/disk/by-path`, never assume a previous `sdX`.** `e2fsck` refuses to
+run on a mounted device, which is the safety net if a volume re-attached.
+
+fsck repairs the filesystem but not file *contents*. Applications that were
+mid-write need their own repair — here, valkey's incr AOF had a corrupt 60 KB tail
+and needed `valkey-check-aof --fix <file>` run from a helper pod sharing the same
+RWO PVC on the same node (RWO permits this; access is per-node, not per-pod).
+
+## Cross-site
 
 `10.50.1.0/24` is routed over the inter-site WireGuard link, so lørenskog nodes
-reach both portals (~2.9-3.1 ms either way). The change is transparent there and
-buys nothing — the WAN RTT dwarfs the firewall hop.
+reach the portal at ~2.9-3.1 ms. `ctrl-02` mounts iSCSI today: `data-openbao-2`
+and `audit-openbao-2`, because OpenBao's 3-node raft puts one replica on each
+control plane. See [[project_crosssite_iscsi_emergency_ro]].
 
-`ctrl-02` (lørenskog) does mount iSCSI today: `data-openbao-2` and
-`audit-openbao-2`. OpenBao's 3-node raft puts one replica on each control plane,
-so this is structural. Those are the volumes that needed the manual
-`iscsiadm`/`e2fsck` repair in `docs/../democratic-csi fsck procedure` on
-2026-07-07. See [`project_crosssite_iscsi_emergency_ro`] for the failure mode.
+**Open idea (not implemented):** restrict the portal to `10.50.1.0/24` so a
+misscheduled pod fails to mount loudly instead of silently flipping ext4 to
+`emergency_ro`. Only worth doing as part of a properly sequenced migration.
 
-**Open idea (not implemented):** restrict `10.50.1.150:3260` to `10.50.1.0/24`
-(TrueNAS initiator-group ACL, or an OPNsense rule) so a misscheduled pod fails to
-mount loudly instead of silently flipping ext4 to `emergency_ro` weeks later. This
-would turn the blix pins into a network-enforced invariant. OpenBao is
-automatically exempt while its PVs still point at the old portal.
+## Building this kustomization
 
-## Rollback
+`kustomize build` here renders the KSOPS secrets as **nothing at all — silently,
+exit 0, no stderr** unless `--enable-exec` is passed:
 
-Re-point both configs back and restart the controllers; removing 10.50.1.150 from
-`enp6s19` reverts the network side. Volumes provisioned while the new portal was
-active would then need migrating back.
+```bash
+kustomize build --enable-helm --enable-alpha-plugins --enable-exec .
+```
