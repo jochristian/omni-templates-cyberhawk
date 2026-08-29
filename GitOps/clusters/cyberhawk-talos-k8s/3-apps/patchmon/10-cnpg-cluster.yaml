@@ -4,6 +4,15 @@ metadata:
   name: patchmon-db
 spec:
   instances: 1
+  # Single instance, pinned to zone blix — where worker-02 is the only
+  # schedulable node. CNPG's `<cluster>-primary` PDB (minAvailable 1) can
+  # therefore never be satisfied during a node drain: the evicted pod has
+  # nowhere to reschedule, ALLOWED DISRUPTIONS stays 0, and the drain deadlocks
+  # (Talos upgrades then fail with "client rate limiter Wait returned an error"
+  # once the eviction retries exhaust the drain deadline). The PDB guards
+  # nothing here — there is no second node to fail over to — so drop it and let
+  # Omni upgrades roll through. Revisit if a second blix worker is added.
+  enablePDB: false
   imageName: ghcr.io/cloudnative-pg/postgresql:17 # renovate: docker=ghcr.io/cloudnative-pg/postgresql
   inheritedMetadata:
     labels:

@@ -37,6 +37,19 @@ spec:
           env:
             - name: MEILI_NO_ANALYTICS
               value: "true"
+            # Migrate the on-disk index in place when the engine is newer than
+            # the database format. Meilisearch refuses to start otherwise, and
+            # since Renovate bumps this tag unattended the pod would crashloop at
+            # its next restart on every format-crossing bump (v1.48 -> v1.53 did
+            # exactly that on 2026-08-29, surfacing only when a node drain
+            # restarted a pod that had been running the old binary for weeks).
+            #
+            # Safe to leave on: the migration is a no-op when the versions match,
+            # and this index is derived data — karakeep can reindex from its own
+            # database, which is why the meilisearch PVC is deliberately not in
+            # VolSync (karakeep-backup covers karakeep-data only).
+            - name: MEILI_UPGRADE_DB
+              value: "true"
             - name: MEILI_MASTER_KEY
               valueFrom:
                 secretKeyRef:

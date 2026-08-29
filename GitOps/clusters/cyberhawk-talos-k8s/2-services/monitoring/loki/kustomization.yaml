@@ -58,6 +58,12 @@ helmCharts:
           reporting_enabled: false
       singleBinary:
         replicas: 1
+        # iSCSI PVC: must stay on blix, where the target lives. A lørenskog pod
+        # runs its block I/O over the inter-site WireGuard link and a blip leaves
+        # the volume stuck read-only. Same pin as gatus/pdns/mariadb — this was
+        # missing until a worker-02 drain relocated loki-0 to worker-01.
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
         persistence:
           enabled: true
           storageClass: democratic-csi-iscsi

@@ -24,8 +24,11 @@ images:
 - name: ghcr.io/karakeep-app/karakeep
   newTag: "0.33.2" # renovate: docker=ghcr.io/karakeep-app/karakeep
 - name: getmeili/meilisearch
-  # v1.49+ refuses to open the v1.48 database; upgrading needs a dump/restore
-  # (or wiping the PVC and letting karakeep reindex). Held back until done.
+  # Bumps across a database-format boundary are handled by MEILI_UPGRADE_DB in
+  # 11-meilisearch-deployment.yaml (dumpless upgrade). The older note here said
+  # v1.49+ needed a dump/restore and was "held back" — Renovate bumped past the
+  # comment anyway, because a comment is not a version constraint. If this ever
+  # does need pinning, add a real packageRules entry in repo-root renovate.json.
   newTag: "v1.53.1" # renovate: docker=getmeili/meilisearch
 - name: gcr.io/zenika-hub/alpine-chrome
   newTag: "124" # renovate: docker=gcr.io/zenika-hub/alpine-chrome
