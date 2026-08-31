@@ -2,6 +2,25 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: monitoring
 
+# --- Out-of-band device state (lives in the LibreNMS DB, NOT in Git) ---------
+# 192.168.100.1 (sysName "4g-router", OS detected as `generic`) has the
+# `netstats` poller module disabled via its devices_attribs row
+# (poll_netstats = 0), set from the web UI -> device -> Modules tab.
+#
+# Why: the router answers snmpwalk fine but times out on the netstats counter
+# OIDs (icmp/ip/ip_forward/snmp/udp/tcp). Those snmpgets burned 42.9s of a 47.3s
+# poll -- half the whole poll budget -- to produce 4 RRD updates. Disabling it
+# took the device to 4.5s and the dispatcher from ~0.25 to ~0.14 cores.
+#
+# Do NOT try to express this as
+#   $config['os']['generic']['poller_modules']['netstats'] = false;
+# in a /data/config/*.php ConfigMap. ConfigRepository::getCombined() ends with
+# array_unique(array_merge($global, $os)), which collapses the boolean module
+# map; every key it drops falls through to `?? false`, silently disabling
+# ports/sensors/everything except core. The per-device attrib is the only safe
+# route, and it has to be re-applied if this instance is ever rebuilt.
+# ----------------------------------------------------------------------------
+
 generators:
   - 01-secret.yaml
   - 60-volsync-secret.yaml
