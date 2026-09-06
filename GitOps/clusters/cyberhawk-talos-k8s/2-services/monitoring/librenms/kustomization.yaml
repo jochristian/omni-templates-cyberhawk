@@ -41,6 +41,7 @@ resources:
   - 32-librenms-service.yaml
   - 33-librenms-dispatcher-deployment.yaml
   - 34-librenms-snmp-scan-cronjob.yaml
+  - 40-httproute.yaml
 
 
 images:
