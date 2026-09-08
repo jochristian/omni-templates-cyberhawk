@@ -29,7 +29,7 @@ images:
   # v1.49+ needed a dump/restore and was "held back" — Renovate bumped past the
   # comment anyway, because a comment is not a version constraint. If this ever
   # does need pinning, add a real packageRules entry in repo-root renovate.json.
-  newTag: "v1.53.1" # renovate: docker=getmeili/meilisearch
+  newTag: "v1.53.2" # renovate: docker=getmeili/meilisearch
 - name: gcr.io/zenika-hub/alpine-chrome
   newTag: "124" # renovate: docker=gcr.io/zenika-hub/alpine-chrome
 
