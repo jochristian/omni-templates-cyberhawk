@@ -41,7 +41,7 @@ images:
   - name: ghcr.io/cloudnative-pg/postgresql
     newTag: "17" # renovate: docker=ghcr.io/cloudnative-pg/postgresql
   - name: gotenberg/gotenberg
-    newTag: "8.36.0" # renovate: docker=gotenberg/gotenberg
+    newTag: "8.37.0" # renovate: docker=gotenberg/gotenberg
   - name: apache/tika
     # Four-part version (Tika release + image revision). The `-full` variants add
     # OCR and extra parsers that paperless does not need for mail bodies.
