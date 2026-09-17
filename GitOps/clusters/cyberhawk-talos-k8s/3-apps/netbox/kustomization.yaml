@@ -21,7 +21,6 @@ resources:
   - 31-netbox-deployment.yaml
   - 32-netbox-service.yaml
   - 33-worker-deployment.yaml
-  - 34-housekeeping-cronjob.yaml
   - 40-httproute.yaml
   - 50-networkpolicies.yaml
   - 51-servicemonitor.yaml
