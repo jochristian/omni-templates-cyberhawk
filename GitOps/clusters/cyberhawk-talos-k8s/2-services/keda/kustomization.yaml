@@ -33,6 +33,16 @@ helmCharts:
       crds:
         install: true
 
+      # Never actually pinned before -- caught 2026-09-17 when a routine resource
+      # edit rolled the pods and the scheduler placed them on lørenskog. KEDA's
+      # operator holds a lease and watches the k8s API continuously; per the
+      # 2026-08-07 incident
+      # (docs/superpowers/specs/2026-09-16-worker-placement-rebalance-design.md),
+      # that flaps into a restart storm on an inter-site link blip. Single shared
+      # key: applies to operator, metricServer and webhooks alike.
+      nodeSelector:
+        topology.kubernetes.io/zone: blix
+
       # Chart defaults request 100m CPU per component; actual usage is a few ms
       # each (2026-09-17 worker placement rebalance, phase 1 — see
       # docs/superpowers/specs/2026-09-16-worker-placement-rebalance-design.md).

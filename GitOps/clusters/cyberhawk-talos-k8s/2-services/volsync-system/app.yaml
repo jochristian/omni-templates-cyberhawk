@@ -20,6 +20,14 @@ spec:
         resources:
           requests:
             cpu: 25m
+        # Never actually pinned before -- caught 2026-09-17, phase 2, when the
+        # cpu edit above rolled the pod and the scheduler placed it on lørenskog.
+        # volsync's operator holds a lease and watches the k8s API continuously;
+        # per the 2026-08-07 incident in the same spec, that flaps into a restart
+        # storm on an inter-site link blip. (The per-app mover pods it spawns are
+        # unaffected -- they're pinned per-app via base/volsync-backup already.)
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
   destination:
     server: https://kubernetes.default.svc
     namespace: volsync-system

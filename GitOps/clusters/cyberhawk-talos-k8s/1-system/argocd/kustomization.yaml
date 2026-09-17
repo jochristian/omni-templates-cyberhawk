@@ -21,3 +21,4 @@ patches:
       kind: Deployment
       name: argocd-repo-server
       version: v1
+  - path: argocd-controllers-blix-patch.yaml

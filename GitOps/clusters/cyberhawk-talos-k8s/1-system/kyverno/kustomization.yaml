@@ -59,14 +59,24 @@ helmCharts:
       # request headroom is worth keeping (2026-09-17 worker placement
       # rebalance, phase 1 — see
       # docs/superpowers/specs/2026-09-16-worker-placement-rebalance-design.md).
+      #
+      # All four controllers below: none had ever actually been pinned to blix
+      # despite being leader-elected/API-watching (caught 2026-09-17, phase 2,
+      # when a routine resource edit rolled the pods and three of them landed on
+      # lørenskog). Per the 2026-08-07 incident in the same spec, that flaps into
+      # a restart storm on an inter-site link blip.
       admissionController:
         replicas: 1
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
         serviceMonitor:
           enabled: true
           additionalLabels:
             release: monitoring
       backgroundController:
         replicas: 1
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
         resources:
           requests:
             cpu: 25m
@@ -76,6 +86,8 @@ helmCharts:
             release: monitoring
       reportsController:
         replicas: 1
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
         resources:
           requests:
             cpu: 25m
@@ -85,6 +97,8 @@ helmCharts:
             release: monitoring
       cleanupController:
         replicas: 1
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
         resources:
           requests:
             cpu: 25m

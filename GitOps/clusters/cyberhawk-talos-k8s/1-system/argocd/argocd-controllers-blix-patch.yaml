@@ -1,0 +1,27 @@
+# application-controller and applicationset-controller both hold leases and
+# watch the k8s API continuously; per the 2026-08-07 incident
+# (docs/superpowers/specs/2026-09-16-worker-placement-rebalance-design.md),
+# leader-elected controllers on lørenskog flap into restart storms on inter-site
+# link blips. Neither had ever actually been pinned -- they'd only stayed on
+# blix by scheduling luck until now. Hard pin, not soft: these are the tools
+# used to recover from a bad placement move, so they should not themselves be
+# at risk of the failure mode this whole rebalance is managing around.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: argocd-application-controller
+spec:
+  template:
+    spec:
+      nodeSelector:
+        topology.kubernetes.io/zone: blix
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-applicationset-controller
+spec:
+  template:
+    spec:
+      nodeSelector:
+        topology.kubernetes.io/zone: blix
