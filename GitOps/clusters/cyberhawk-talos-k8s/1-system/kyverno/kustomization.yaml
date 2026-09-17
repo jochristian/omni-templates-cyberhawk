@@ -54,6 +54,11 @@ helmCharts:
       # requests/limits are already modest: 100m/64Mi req, 128Mi limit).
       # ServiceMonitors need `release: monitoring` to be selected by the
       # kube-prometheus-stack Prometheus.
+      # admissionController is left at the chart's 100m CPU request — it sits in
+      # the pod-creation path, unlike the other three controllers, so its
+      # request headroom is worth keeping (2026-09-17 worker placement
+      # rebalance, phase 1 — see
+      # docs/superpowers/specs/2026-09-16-worker-placement-rebalance-design.md).
       admissionController:
         replicas: 1
         serviceMonitor:
@@ -62,18 +67,27 @@ helmCharts:
             release: monitoring
       backgroundController:
         replicas: 1
+        resources:
+          requests:
+            cpu: 25m
         serviceMonitor:
           enabled: true
           additionalLabels:
             release: monitoring
       reportsController:
         replicas: 1
+        resources:
+          requests:
+            cpu: 25m
         serviceMonitor:
           enabled: true
           additionalLabels:
             release: monitoring
       cleanupController:
         replicas: 1
+        resources:
+          requests:
+            cpu: 25m
         serviceMonitor:
           enabled: true
           additionalLabels:

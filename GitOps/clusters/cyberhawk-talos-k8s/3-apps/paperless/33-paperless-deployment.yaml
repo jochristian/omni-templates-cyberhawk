@@ -124,7 +124,7 @@ spec:
               add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           resources:
             requests:
-              cpu: 500m
+              cpu: 50m
               memory: 1Gi
             limits:
               # OCR is bursty: a multi-page scan runs tesseract at

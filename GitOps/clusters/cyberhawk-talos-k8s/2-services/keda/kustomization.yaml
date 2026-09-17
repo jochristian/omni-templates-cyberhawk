@@ -33,6 +33,21 @@ helmCharts:
       crds:
         install: true
 
+      # Chart defaults request 100m CPU per component; actual usage is a few ms
+      # each (2026-09-17 worker placement rebalance, phase 1 — see
+      # docs/superpowers/specs/2026-09-16-worker-placement-rebalance-design.md).
+      # Memory requests are left at chart defaults.
+      resources:
+        operator:
+          requests:
+            cpu: 25m
+        metricServer:
+          requests:
+            cpu: 25m
+        webhooks:
+          requests:
+            cpu: 25m
+
       # ---- Prometheus / kube-prometheus-stack integration ----
       prometheus:
         operator:
