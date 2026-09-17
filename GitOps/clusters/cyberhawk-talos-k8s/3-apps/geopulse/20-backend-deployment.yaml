@@ -15,15 +15,22 @@ spec:
         app: geopulse-backend
     spec:
       automountServiceAccountToken: false
+      # No PVC and no lease to hold, so it's lørenskog-eligible under the worker
+      # placement rebalance (2026-09-17, phase 2 -- see
+      # docs/superpowers/specs/2026-09-16-worker-placement-rebalance-design.md).
+      # Soft preference, not a hard requirement: falls back to blix if lørenskog
+      # is unavailable. It does call the CNPG cluster on blix per request --
+      # measured cross-site RTT is ~2ms, an accepted trade for CPU/memory balance.
       affinity:
         nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
                   - key: topology.kubernetes.io/zone
                     operator: In
                     values:
-                      - blix
+                      - lorenskog
       securityContext:
         # Image supports arbitrary non-root UIDs; numeric uid declared so the
         # kubelet can verify runAsNonRoot.

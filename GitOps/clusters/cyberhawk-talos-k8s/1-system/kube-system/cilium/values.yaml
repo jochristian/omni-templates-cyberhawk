@@ -130,8 +130,31 @@ cilium:
             release: monitoring
       relay:
         enabled: true
+        # No PVC and no lease to hold -- lørenskog-eligible, worker placement
+        # rebalance phase 2 (2026-09-17). Soft preference: falls back to blix if
+        # lørenskog is unavailable.
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                preference:
+                  matchExpressions:
+                    - key: topology.kubernetes.io/zone
+                      operator: In
+                      values:
+                        - lorenskog
       ui:
         enabled: true
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                preference:
+                  matchExpressions:
+                    - key: topology.kubernetes.io/zone
+                      operator: In
+                      values:
+                        - lorenskog
         service:
           annotations:
             # Enable Omni Workload Proxying for this service

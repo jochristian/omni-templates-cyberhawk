@@ -17,18 +17,24 @@ spec:
         app: gotenberg
     spec:
       automountServiceAccountToken: false
-      # No storage of its own, but paperless calls it synchronously per document.
-      # Keeping it on blix avoids putting the inter-site WireGuard link in the
-      # middle of every consume.
+      # No storage of its own -- lørenskog-eligible, worker placement rebalance
+      # phase 2 (2026-09-17). Previously hard-pinned to blix to keep the
+      # inter-site link out of paperless's synchronous per-document call; revisited
+      # once cross-site latency was actually measured at ~2ms RTT
+      # (docs/superpowers/specs/2026-09-16-worker-placement-rebalance-design.md),
+      # which is negligible next to a multi-second document conversion. Soft
+      # preference, not a hard requirement: falls back to blix if lørenskog is
+      # unavailable.
       affinity:
         nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
                   - key: topology.kubernetes.io/zone
                     operator: In
                     values:
-                      - blix
+                      - lorenskog
       securityContext:
         # Deliberately no runAsNonRoot: the image declares USER as the *name*
         # "gotenberg" rather than a uid, and the kubelet refuses to start a

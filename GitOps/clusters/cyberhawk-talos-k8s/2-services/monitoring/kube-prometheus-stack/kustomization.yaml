@@ -68,6 +68,19 @@ helmCharts:
                     - 10.50.1.51:2381
                     - 192.168.155.10:2381
       grafana:
+        # No PVC and no lease to hold -- lørenskog-eligible, worker placement
+        # rebalance phase 2 (2026-09-17). Soft preference: falls back to blix if
+        # lørenskog is unavailable.
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                preference:
+                  matchExpressions:
+                    - key: topology.kubernetes.io/zone
+                      operator: In
+                      values:
+                        - lorenskog
         grafana.ini:
           auth:
             disable_login_form: true
