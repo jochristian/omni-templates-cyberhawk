@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: volsync-auto-unlock
+  namespace: volsync-system
+  labels:
+    app.kubernetes.io/name: volsync-auto-unlock
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: volsync-auto-unlock
+  labels:
+    app.kubernetes.io/name: volsync-auto-unlock
+rules:
+  - apiGroups: ["volsync.backube"]
+    resources: ["replicationsources"]
+    verbs: ["get", "list", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: volsync-auto-unlock
+  labels:
+    app.kubernetes.io/name: volsync-auto-unlock
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: volsync-auto-unlock
+subjects:
+  - kind: ServiceAccount
+    name: volsync-auto-unlock
+    namespace: volsync-system

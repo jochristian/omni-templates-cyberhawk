@@ -1,0 +1,66 @@
+# Watchdog for orphaned restic locks on every ReplicationSource in the cluster
+# (see volsync-auto-unlock.sh). Stale locks wedged librenms (twice), patchmon
+# and tracearr between 2026-08 and 2026-09 until unlocked by hand.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: volsync-auto-unlock
+  namespace: volsync-system
+  labels:
+    app.kubernetes.io/name: volsync-auto-unlock
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: volsync-auto-unlock
+        spec:
+          serviceAccountName: volsync-auto-unlock
+          restartPolicy: Never
+          # Talks only to the API server; keep it on blix with the volsync
+          # operator rather than across the inter-site link.
+          nodeSelector:
+            topology.kubernetes.io/zone: blix
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: auto-unlock
+              image: docker.io/alpine/k8s
+              command: ["bash", "/scripts/volsync-auto-unlock.sh"]
+              env:
+                # kubectl writes its discovery cache under $HOME.
+                - name: HOME
+                  value: /tmp
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: scripts
+              configMap:
+                name: volsync-auto-unlock
+            - name: tmp
+              emptyDir: {}

@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - app.yaml
+  - 10-volsync-auto-unlock-rbac.yaml
+  - 20-volsync-auto-unlock-cronjob.yaml
+
+configMapGenerator:
+  - name: volsync-auto-unlock
+    namespace: volsync-system
+    files:
+      - volsync-auto-unlock.sh
+
+images:
+  - name: docker.io/alpine/k8s
+    newTag: 1.36.4
