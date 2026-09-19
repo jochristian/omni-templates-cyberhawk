@@ -23,7 +23,8 @@ spec:
       # which NetBox's ALLOWED_HOSTS rejects with 400 (same trap as the probes in
       # 31-netbox-deployment.yaml). ServiceMonitors can't set a Host header, so
       # scrape through the Service DNS name instead — it is in ALLOWED_HOSTS.
-      # `instance` still records the pod. Fine while netbox runs 1 replica; with
+      # `instance` becomes the Service address; the `pod` label still identifies
+      # the pod. Fine while netbox runs 1 replica; with
       # more, each scrape would hit whichever pod the Service picks.
       relabelings:
         - action: replace
