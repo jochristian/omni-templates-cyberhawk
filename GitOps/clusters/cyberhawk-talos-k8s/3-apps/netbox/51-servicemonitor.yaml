@@ -19,3 +19,13 @@ spec:
       path: /metrics
       interval: 60s
       scrapeTimeout: 30s
+      # Prometheus scrapes `<podIP>:8080`, so the request carries `Host: <podIP>`,
+      # which NetBox's ALLOWED_HOSTS rejects with 400 (same trap as the probes in
+      # 31-netbox-deployment.yaml). ServiceMonitors can't set a Host header, so
+      # scrape through the Service DNS name instead — it is in ALLOWED_HOSTS.
+      # `instance` still records the pod. Fine while netbox runs 1 replica; with
+      # more, each scrape would hit whichever pod the Service picks.
+      relabelings:
+        - action: replace
+          targetLabel: __address__
+          replacement: netbox.netbox.svc.cluster.local:8080
