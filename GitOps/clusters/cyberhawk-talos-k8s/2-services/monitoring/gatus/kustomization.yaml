@@ -23,7 +23,7 @@ configMapGenerator:
 
 images:
   - name: ghcr.io/twin/gatus
-    newTag: v5.36.0
+    newTag: v5.37.0
 
 labels:
   - includeSelectors: true
