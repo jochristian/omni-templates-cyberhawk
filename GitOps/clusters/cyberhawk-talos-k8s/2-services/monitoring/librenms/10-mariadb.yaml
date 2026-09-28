@@ -35,8 +35,11 @@ spec:
     - --character-set-server=utf8mb4
     - --collation-server=utf8mb4_unicode_ci
 
+  # 20Gi since 2026-09-28: 10Gi filled with never-expired binlogs and took
+  # the primary down. Binlog expiry is still TODO (see vault note) — adding it
+  # to args rolls the StatefulSet, which is unsafe until mariadb-0 is rebuilt.
   storage:
-    size: 10Gi
+    size: 20Gi
     storageClassName: democratic-csi-iscsi
 
   # Pin to Blix DC nodes — ctrl-00 and ctrl-01 carry zone=blix label
