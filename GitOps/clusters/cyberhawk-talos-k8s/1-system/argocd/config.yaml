@@ -8,3 +8,8 @@ metadata:
 data:
   application.resourceTrackingMethod: annotation
   kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
+  # mariadb-operator rewrites primary.podIndex on every switchover/failover;
+  # syncing Git's value back would force a switch back to the old primary.
+  resource.customizations.ignoreDifferences.k8s.mariadb.com_MariaDB: |
+    jsonPointers:
+      - /spec/replication/primary/podIndex
