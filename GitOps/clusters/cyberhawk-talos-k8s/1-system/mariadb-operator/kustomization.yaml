@@ -6,13 +6,13 @@ helmCharts:
   # CRDs must be installed before the operator
   - name: mariadb-operator-crds
     repo: https://helm.mariadb.com/mariadb-operator
-    version: 26.10.0
+    version: 26.10.1
     releaseName: mariadb-operator-crds
     namespace: mariadb-operator
 
   - name: mariadb-operator
     repo: https://helm.mariadb.com/mariadb-operator
-    version: 26.10.0
+    version: 26.10.1
     releaseName: mariadb-operator
     namespace: mariadb-operator
     valuesInline:
