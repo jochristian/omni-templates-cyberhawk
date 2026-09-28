@@ -34,10 +34,14 @@ spec:
     - --lower-case-table-names=0
     - --character-set-server=utf8mb4
     - --collation-server=utf8mb4_unicode_ci
+    # Binlogs never expire by default; on 2026-09-27 they filled the primary's
+    # 10Gi volume. 7 days is plenty for replica catch-up.
+    - --binlog-expire-logs-seconds=604800
+    # MariaDB 11.4+ skips auto-purge unless a replica is connected — a primary
+    # whose replica is broken would otherwise fill up again.
+    - --slave-connections-needed-for-purge=0
 
-  # 20Gi since 2026-09-28: 10Gi filled with never-expired binlogs and took
-  # the primary down. Binlog expiry is still TODO (see vault note) — adding it
-  # to args rolls the StatefulSet, which is unsafe until mariadb-0 is rebuilt.
+  # 20Gi since 2026-09-28 (binlog disk-full incident).
   storage:
     size: 20Gi
     storageClassName: democratic-csi-iscsi
