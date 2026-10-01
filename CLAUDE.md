@@ -146,9 +146,9 @@ chart) that Argo CD can build. Sync policy is automated with `prune: true` and
 - **Databases via operators.** MariaDB-backed apps reference `MariaDB`/`Database`/`User`/
   `Grant` CRs (mariadb-operator); Postgres uses CNPG. Don't hand-roll DB StatefulSets.
 - **Kyverno admission policies** (`1-system/kyverno/`): disallow-latest-tag,
-  require-labels, and restrict-image-registries run **Enforce in `karakeep`, Audit
-  everywhere else**; PSS-restricted is audit-only. New workloads should carry
-  `app.kubernetes.io/name` + pinned, allowed-registry images or they'll show up in
+  require-labels, and restrict-image-registries **Enforce** in the namespaces
+  listed in each policy's `failureActionOverrides` (Audit elsewhere); PSS-restricted
+  is audit-only. New workloads should carry `app.kubernetes.io/name` + pinned, allowed-registry images or they'll show up in
   PolicyReports (and be blocked in Enforce namespaces). Break-glass:
   `docs/kyverno/break-glass.md`.
 
@@ -181,7 +181,6 @@ cat keys.txt | kubectl -n argocd create secret generic argocd-sops-age-key --fro
 - This is a config/manifest repo — there is no build/test/lint suite. "Correctness" =
   the manifests render (`kustomize build <dir>`) and Argo CD reports the Application
   Synced/Healthy.
-- The user commits and pushes themselves; provide the commands rather than running them.
 - Argo CD reconciles from `HEAD` of `main` on
   `github.com/jochristian/omni-templates-cyberhawk`, so changes take effect only after
   they are pushed.
