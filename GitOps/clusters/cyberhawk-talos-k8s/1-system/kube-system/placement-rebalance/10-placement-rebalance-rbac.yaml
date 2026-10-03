@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: placement-rebalance
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: placement-rebalance
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: placement-rebalance
+  labels:
+    app.kubernetes.io/name: placement-rebalance
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: placement-rebalance
+  labels:
+    app.kubernetes.io/name: placement-rebalance
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: placement-rebalance
+subjects:
+  - kind: ServiceAccount
+    name: placement-rebalance
+    namespace: kube-system
