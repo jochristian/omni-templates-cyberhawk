@@ -114,7 +114,7 @@ helmCharts:
   # ALL namespaces so they are auto-loaded.
   - name: policy-reporter
     repo: https://kyverno.github.io/policy-reporter
-    version: 3.10.0 # renovate: helm=policy-reporter repo=https://kyverno.github.io/policy-reporter
+    version: 3.11.0 # renovate: helm=policy-reporter repo=https://kyverno.github.io/policy-reporter
     releaseName: policy-reporter
     namespace: kyverno
     skipTests: true
