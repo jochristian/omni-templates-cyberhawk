@@ -1,4 +1,10 @@
 cilium:
+  # The operator is leader-elected; keep it off the inter-site link (blix has three
+  # nodes for its two anti-affined replicas). Replaces the chart default selector.
+  operator:
+    nodeSelector:
+      kubernetes.io/os: linux
+      topology.kubernetes.io/zone: blix
   # Chart key is MTU (uppercase) — a lowercase `mtu:` here is silently ignored,
   # which left the pinned MTU undeclared and only present as a manual kubectl
   # edit on the live ConfigMap. Pinned for the inter-site WireGuard path.

@@ -51,6 +51,14 @@ server:
       operator: Exists
       effect: NoSchedule
 
+  # Raft data is on democratic-csi iSCSI, which is blix-only. The toleration above
+  # let openbao-1 land on ctrl-02 (lørenskog) and mount iSCSI over the inter-site
+  # link (2026-09-19 incident). blix has exactly three nodes (ctrl-00, ctrl-01,
+  # worker-02), enough for the one-per-node anti-affinity. updateStrategy is
+  # OnDelete, so this only affects where pods land when recreated.
+  nodeSelector:
+    topology.kubernetes.io/zone: blix
+
   # PSS restricted compliance. The chart's pod-level defaults (runAsNonRoot,
   # uid 100, seccompProfile RuntimeDefault) already apply; the container
   # context replaces the chart default, so allowPrivilegeEscalation must be

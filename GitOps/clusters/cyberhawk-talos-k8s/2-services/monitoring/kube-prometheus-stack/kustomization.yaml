@@ -35,6 +35,12 @@ helmCharts:
         service:
           selector:
             k8s-app: kube-scheduler
+      # kube-state-metrics restart-stormed on the 2026-08-07 lørenskog link flap; keep
+      # it on blix. prometheus/alertmanager stay unpinned: their nfs-csi volumes work
+      # fine from lørenskog.
+      kube-state-metrics:
+        nodeSelector:
+          topology.kubernetes.io/zone: blix
       alertmanager:
         alertmanagerSpec:
           storage:

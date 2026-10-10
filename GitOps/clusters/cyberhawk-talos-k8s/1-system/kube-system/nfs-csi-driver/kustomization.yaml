@@ -13,3 +13,9 @@ helmCharts:
         enabled: false
       controller:
         enableSnapshotter: true
+        # Leader-elected sidecars (provisioner/snapshotter) exit on lost leadership, so
+        # keep the controller off the inter-site link. NFS mounts themselves work from
+        # either site; the node DaemonSet is unaffected.
+        # (the chart template adds kubernetes.io/os itself; repeating it breaks the render)
+        nodeSelector:
+          topology.kubernetes.io/zone: blix

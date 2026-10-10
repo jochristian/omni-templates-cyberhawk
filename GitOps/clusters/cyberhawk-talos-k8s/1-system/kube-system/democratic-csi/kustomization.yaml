@@ -58,7 +58,7 @@ helmCharts:
         hostPID: true                    # Required for nsenter on Talos
         # Control-plane nodes carry the iscsi-tools extension too; the node
         # driver must run there so PVCs mount for pods that tolerate the CP
-        # taint (openbao-1 raft member on ctrl-02).
+        # taint (openbao raft members on ctrl-00/ctrl-01).
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             operator: Exists
