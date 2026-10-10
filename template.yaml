@@ -13,6 +13,8 @@ patches:
     file: patches/cni.yml
   - name: gvisor-sysctl
     file: patches/gvisor-sysctl.yaml
+  - name: filesystem-trim
+    file: patches/filesystem-trim.yaml
 
 features:
   enableWorkloadProxy: true

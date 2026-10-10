@@ -38,6 +38,7 @@ The cluster is multi-site: nodes in zones `lorenskog` and `blix` are joined over
 | `extraManifests.yml` | URLs for cluster add-ons: kubelet-serving-cert-approver, metrics-server, Gateway API CRDs, CSI external-snapshotter CRDs. Pinned to release tags; bumps tracked by Renovate. |
 | `monitoring.yaml` / `monitoring-controlplane.yaml` | Kubelet args for metrics scraping. |
 | `gvisor-sysctl.yaml` / `gvisor-runtime-class.yaml` | gVisor runtime class + sysctls. |
+| `filesystem-trim.yaml` | Talos `FilesystemTrimConfig` (weekly fstrim). Upgraded clusters don't get it by default (added 2026-10-10). |
 | `etcd-timeouts.yaml` | etcd heartbeat/election tuning for the multi-site links. |
 | `zswap.yaml`, `enable_helm.yaml` | **Unreferenced leftovers** — neither is wired into `template.yaml` anymore (zswap was dropped from the template; Argo CD renders kustomize `helmCharts` without a `--enable-helm` build option). Candidates for deletion. |
 
