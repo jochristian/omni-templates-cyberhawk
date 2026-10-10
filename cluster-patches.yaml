@@ -1,0 +1,25 @@
+# Cluster-wide ConfigPatches applied OUTSIDE the cluster template:
+#   omnictl apply -f cluster-patches.yaml
+# Kept out of template.yaml on purpose: a template sync also pushes the
+# regenerated Cilium/Argo CD inline manifests. Do NOT also add these documents
+# to template.yaml: two FilesystemTrimConfig documents make Talos reject the config.
+#
+# Filesystem trim (added 2026-10-10): Talos >= 1.14 ships FilesystemTrimConfig by
+# default only for clusters CREATED on 1.14+. This cluster was upgraded, so
+# trimming was off and the thin-provisioned VM disks never released freed blocks
+# (worker-01 on pve1: 51.9 GB written vs 27.7 GB used). No reboot needed; each
+# volume trims at a hashed offset within the interval.
+# Verify: talosctl -n <node> get volumetrimschedules
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 210-cluster-cyberhawk-talos-k8s-01-filesystem-trim
+  labels:
+    omni.sidero.dev/cluster: cyberhawk-talos-k8s-01
+  annotations:
+    name: filesystem-trim
+spec:
+  data: |
+    apiVersion: v1alpha1
+    kind: FilesystemTrimConfig
+    interval: 168h0m0s
