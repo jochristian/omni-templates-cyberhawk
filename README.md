@@ -38,6 +38,7 @@ The cluster is multi-site: nodes in zones `lorenskog` and `blix` are joined over
 | `extraManifests.yml` | URLs for cluster add-ons: kubelet-serving-cert-approver, metrics-server, Gateway API CRDs, CSI external-snapshotter CRDs. Pinned to release tags; bumps tracked by Renovate. |
 | `monitoring.yaml` / `monitoring-controlplane.yaml` | Kubelet args for metrics scraping. |
 | `gvisor-sysctl.yaml` / `gvisor-runtime-class.yaml` | gVisor runtime class + sysctls. |
+| `filesystem-trim.yaml` | Talos `FilesystemTrimConfig` (weekly fstrim). Upgraded clusters don't get it by default (added 2026-10-10). Must live in the template: a template sync deletes cluster ConfigPatches that are not in it. |
 | `etcd-timeouts.yaml` | etcd heartbeat/election tuning for the multi-site links. |
 | `zswap.yaml`, `enable_helm.yaml` | **Unreferenced leftovers** — neither is wired into `template.yaml` anymore (zswap was dropped from the template; Argo CD renders kustomize `helmCharts` without a `--enable-helm` build option). Candidates for deletion. |
 
@@ -72,7 +73,6 @@ helm template cilium GitOps/clusters/cyberhawk-talos-k8s/1-system/kube-system/ci
 # 3. Apply to Omni
 omnictl apply -f machineclass.yaml
 omnictl apply -f machine-patches.yaml   # per-machine ConfigPatches (topology labels, hostnames)
-omnictl apply -f cluster-patches.yaml   # cluster-wide ConfigPatches outside the template (filesystem trim)
 omnictl cluster template sync --file template.yaml
 ```
 

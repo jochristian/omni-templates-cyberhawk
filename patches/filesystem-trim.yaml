@@ -1,0 +1,9 @@
+# Periodic fstrim of Talos volumes (EPHEMERAL etc.), added 2026-10-10.
+# Talos >= 1.14 ships this document by default only for clusters CREATED on
+# 1.14+; this cluster was upgraded, so trimming was off and the thin-provisioned
+# VM disks never released freed blocks (worker-01 on pve1: 51.9 GB written vs
+# 27.7 GB used). No reboot needed; each volume trims at a hashed offset within
+# the interval. Verify: talosctl -n <node> get volumetrimschedules
+apiVersion: v1alpha1
+kind: FilesystemTrimConfig
+interval: 168h0m0s
