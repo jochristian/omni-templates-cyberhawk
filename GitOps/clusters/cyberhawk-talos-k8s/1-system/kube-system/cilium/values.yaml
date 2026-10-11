@@ -7,8 +7,10 @@ cilium:
       topology.kubernetes.io/zone: blix
   # Chart key is MTU (uppercase) — a lowercase `mtu:` here is silently ignored,
   # which left the pinned MTU undeclared and only present as a manual kubectl
-  # edit on the live ConfigMap. Pinned for the inter-site WireGuard path.
-  MTU: 1450
+  # edit on the live ConfigMap. Pinned for the inter-site WireGuard path:
+  # wg10 MTU 1440 minus 50 bytes VXLAN. Existing pods keep their old veth MTU
+  # until restarted; cilium DaemonSet needs a rollout restart (no rollOutCiliumPods).
+  MTU: 1390
   kubeProxyReplacement: true
   # Talos specific
   k8sServiceHost: localhost
