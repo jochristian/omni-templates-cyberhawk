@@ -27,14 +27,89 @@ helmCharts:
           enabled: true
           port: 2381
           targetPort: 2381
+      # Scrape trimming (2026-10-11): serving /metrics was 13 % of kubelet CPU and the
+      # apiserver job alone held 194 k of 379 k head series, almost all histogram buckets
+      # nobody queries. Kept: apiserver_request_duration_seconds_bucket and
+      # apiserver_request_sli_duration_seconds_bucket (the chart's SLO/burn-rate rules
+      # use them; the chart's own bucket-thinning rule below stays). Overriding
+      # *MetricRelabelings replaces the chart list, so the chart defaults are copied in.
+      kubeApiServer:
+        serviceMonitor:
+          interval: 60s
+          metricRelabelings:
+            - action: drop
+              sourceLabels: [__name__]
+              regex: '(etcd_request_duration_seconds|apiserver_watch_list_duration_seconds|apiserver_watch_events_dispatch_duration_seconds|apiserver_watch_cache_read_wait_seconds|apiserver_storage_list_duration_seconds|apiserver_request_body_size_bytes|apiserver_response_sizes|apiserver_watch_events_sizes|apiserver_flowcontrol_[a-z_]+|apiserver_admission_[a-z_]+|apiserver_authentication_duration_seconds|apiserver_request_filter_duration_seconds|apiserver_cache_list_[a-z_]+|apiserver_storage_[a-z_]+|apiserver_selfrequest_[a-z_]+|apiserver_delegated_[a-z_]+|apiserver_audit_[a-z_]+|apiserver_envelope_[a-z_]+|apiserver_init_events_[a-z_]+|apiserver_tls_handshake_[a-z_]+|apiserver_egress_[a-z_]+|apiserver_webhooks_[a-z_]+|apiserver_validating_admission_[a-z_]+|apiserver_conversion_[a-z_]+|apiserver_encryption_[a-z_]+|workqueue_[a-z_]+|rest_client_[a-z_]+|authentication_[a-z_]+|authorization_[a-z_]+|field_validation_[a-z_]+|serviceaccount_[a-z_]+|aggregator_[a-z_]+|apiextensions_[a-z_]+|etcd_bookmark_[a-z_]+|etcd_lease_[a-z_]+|kube_apiserver_[a-z_]+)_bucket'
+            - action: drop
+              sourceLabels: [__name__]
+              regex: 'kubernetes_feature_enabled'
+            # chart default: thin the kept request/sli histograms
+            - action: drop
+              regex: (etcd_request|apiserver_request_slo|apiserver_request_sli|apiserver_request)_duration_seconds_bucket;(0\.15|0\.2|0\.3|0\.35|0\.4|0\.45|0\.6|0\.7|0\.8|0\.9|1\.25|1\.5|1\.75|2|3|3\.5|4|4\.5|6|7|8|9|15|20|40|45|50)(\.0)?
+              sourceLabels:
+                - __name__
+                - le
+      kubelet:
+        serviceMonitor:
+          # applies to /metrics, /metrics/cadvisor and /metrics/probes (the chart only
+          # uses cAdvisorInterval when interval is unset). cAdvisor was scraped every 10 s
+          # by default: the heaviest kubelet endpoint, 25 k series, 0.27 s per scrape.
+          interval: 60s
+          metricRelabelings:
+            - action: drop
+              sourceLabels: [__name__, le]
+              regex: (csi_operations|storage_operation_duration)_seconds_bucket;(0.25|2.5|15|25|120|600)(\.0)?
+            - action: drop
+              sourceLabels: [__name__]
+              regex: 'kubernetes_feature_enabled'
+          cAdvisorMetricRelabelings:
+            # chart defaults
+            - sourceLabels: [__name__]
+              action: drop
+              regex: 'container_cpu_(cfs_throttled_seconds_total|load_average_10s|system_seconds_total|user_seconds_total)'
+            - sourceLabels: [__name__]
+              action: drop
+              regex: 'container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)'
+            - sourceLabels: [__name__]
+              action: drop
+              regex: 'container_memory_(mapped_file|swap)'
+            - sourceLabels: [__name__]
+              action: drop
+              regex: 'container_(file_descriptors|tasks_state|threads_max)'
+            - sourceLabels: [__name__, scope]
+              action: drop
+              regex: 'container_memory_failures_total;hierarchy'
+            - sourceLabels: [__name__, interface]
+              action: drop
+              regex: 'container_network_.*;(cali|cilium|cni|lxc|nodelocaldns|tunl).*'
+            - sourceLabels: [__name__]
+              action: drop
+              regex: 'container_spec.*'
+            - sourceLabels: [id, pod]
+              action: drop
+              regex: '.+;'
+            # ours
+            - sourceLabels: [__name__]
+              action: drop
+              regex: 'container_(blkio_device_usage_total|memory_failures_total|network_(receive|transmit)_(packets_dropped|errors)_total)'
       kubeControllerManager:
         service:
           selector:
             k8s-app: kube-controller-manager
+        serviceMonitor:
+          metricRelabelings:
+            - action: drop
+              sourceLabels: [__name__]
+              regex: 'kubernetes_feature_enabled'
       kubeScheduler:
         service:
           selector:
             k8s-app: kube-scheduler
+        serviceMonitor:
+          metricRelabelings:
+            - action: drop
+              sourceLabels: [__name__]
+              regex: 'kubernetes_feature_enabled'
       # kube-state-metrics restart-stormed on the 2026-08-07 lørenskog link flap; keep
       # it on blix. prometheus/alertmanager stay unpinned: their nfs-csi volumes work
       # fine from lørenskog.
