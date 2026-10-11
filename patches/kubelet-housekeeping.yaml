@@ -1,0 +1,10 @@
+# cAdvisor housekeeping (per-container stats incl. a /proc walk for process counts)
+# every 10 s was the single largest kubelet CPU cost on the busy worker (36 % of a 20 s
+# kubelet profile, 2026-10-11). 30 s makes pod CPU/memory metrics 30 s granular.
+# `--housekeeping-interval` is a cAdvisor global flag the kubelet still registers in
+# Kubernetes 1.37 (cmd/kubelet/app/options/globalflags_linux.go); it is not in the
+# kubelet reference table, which only lists kubelet's own flags.
+machine:
+  kubelet:
+    extraArgs:
+      housekeeping-interval: 30s
