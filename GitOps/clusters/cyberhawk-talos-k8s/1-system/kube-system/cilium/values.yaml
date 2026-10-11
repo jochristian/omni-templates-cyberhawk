@@ -8,11 +8,11 @@ cilium:
   # Chart key is MTU (uppercase) — a lowercase `mtu:` here is silently ignored,
   # which left the pinned MTU undeclared and only present as a manual kubectl
   # edit on the live ConfigMap. Pinned for the inter-site WireGuard path:
-  # = wg10 MTU 1440. This is the DEVICE MTU; Cilium itself subtracts the 50-byte
-  # VXLAN overhead for the pod route MTU (pods send 1390). Existing pods pick the
+  # = wg10 MTU 1420 (IPv6 outer). This is the DEVICE MTU; Cilium subtracts the 50-byte
+  # VXLAN overhead for the pod route MTU (pods send 1370). Existing pods pick the
   # new value up on agent restart (verified 2026-10-11, no pod restart needed);
   # the cilium DaemonSet needs a rollout restart (no rollOutCiliumPods).
-  MTU: 1440
+  MTU: 1420
   kubeProxyReplacement: true
   # Talos specific
   k8sServiceHost: localhost
