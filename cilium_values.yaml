@@ -15,7 +15,7 @@
 # encryption are both intentionally disabled (no double-encryption). Do not "fix"
 # this by turning encryption on.
 cilium:
-  MTU: 1390
+  MTU: 1440
   kubeProxyReplacement: true
   # Talos specific
   k8sServiceHost: localhost
