@@ -3,6 +3,14 @@ global:
   tlsDisable: true
 
 server:
+  # httpGet instead of the chart's `bao status` exec probe: an exec probe is a runc exec
+  # through the containerd shim every period, measured as the cluster's largest runtime
+  # CPU cost (2026-10-11). Sealed/uninitialised still fail (503/501), standby is ready.
+  readinessProbe:
+    enabled: true
+    path: "/v1/sys/health?standbyok=true"
+    port: 8200
+    periodSeconds: 10
   image:
     registry: "quay.io"
     repository: "openbao/openbao"

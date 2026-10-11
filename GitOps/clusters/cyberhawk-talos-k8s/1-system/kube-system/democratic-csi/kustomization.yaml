@@ -134,3 +134,24 @@ helmCharts:
                 - matchExpressions:
                     - key: extensions.talos.dev/iscsi-tools
                       operator: Exists
+
+# The chart hardcodes an exec liveness probe (`--mode=kubelet-registration-probe`) on the
+# registrar at the 10 s default. Every exec probe is a runc exec through the containerd
+# shim; measured 2026-10-11 as the cluster's largest runtime CPU cost. 60 s is plenty
+# for a sidecar whose only job is to re-register the plugin after a kubelet restart.
+patches:
+  - target:
+      kind: DaemonSet
+      name: democratic-csi-.*-node
+    patch: |-
+      apiVersion: apps/v1
+      kind: DaemonSet
+      metadata:
+        name: unused
+      spec:
+        template:
+          spec:
+            containers:
+              - name: driver-registrar
+                livenessProbe:
+                  periodSeconds: 60

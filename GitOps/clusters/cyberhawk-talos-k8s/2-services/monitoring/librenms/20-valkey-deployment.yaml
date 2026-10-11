@@ -27,16 +27,21 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+          # tcpSocket instead of `valkey-cli ping`: an exec probe is a runc exec through
+          # the containerd shim every period, which was the cluster's largest runtime
+          # CPU cost (2026-10-11). A TCP accept proves the same thing for a single node.
           readinessProbe:
-            exec:
-              command: [valkey-cli, ping]
+            tcpSocket:
+              port: 6379
             initialDelaySeconds: 5
-            periodSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
-            exec:
-              command: [valkey-cli, ping]
+            tcpSocket:
+              port: 6379
             initialDelaySeconds: 15
-            periodSeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 3
           resources:
             requests:
               cpu: 25m

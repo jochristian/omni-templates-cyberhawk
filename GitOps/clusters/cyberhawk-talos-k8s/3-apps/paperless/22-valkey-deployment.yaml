@@ -63,23 +63,20 @@ spec:
               readOnly: true
             - name: data
               mountPath: /data
+          # tcpSocket instead of `valkey-cli ping`: an exec probe is a runc exec through
+          # the containerd shim every period, which was the cluster's largest runtime
+          # CPU cost (2026-10-11). A TCP accept proves the same thing for a single node.
           readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - valkey-cli -a "$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG
+            tcpSocket:
+              port: 6379
             initialDelaySeconds: 5
-            periodSeconds: 5
+            periodSeconds: 10
             timeoutSeconds: 3
           livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - valkey-cli -a "$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG
+            tcpSocket:
+              port: 6379
             initialDelaySeconds: 15
-            periodSeconds: 15
+            periodSeconds: 30
             timeoutSeconds: 3
       volumes:
         - name: config
