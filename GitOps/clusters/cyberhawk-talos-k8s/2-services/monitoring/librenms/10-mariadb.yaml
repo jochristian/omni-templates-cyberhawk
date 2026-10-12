@@ -17,6 +17,11 @@ spec:
 
   replicas: 2
 
+  # Both pods live on worker-02 (only blix worker): the operator's default
+  # minAvailable 50% PDB can never be met mid-drain and deadlocks Talos upgrades.
+  podDisruptionBudget:
+    maxUnavailable: 2
+
   replication:
     enabled: true
     primary:
@@ -46,9 +51,28 @@ spec:
     size: 20Gi
     storageClassName: democratic-csi-iscsi
 
-  # Pin to Blix DC nodes — ctrl-00 and ctrl-01 carry zone=blix label
+  # Pin to Blix DC nodes — ctrl-00 and ctrl-01 carry zone=blix label.
+  # worker-02 is the only blix worker, so one replica per node puts the other
+  # on a blix control plane (as openbao does); real HA instead of 2 pods on one node.
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
   affinity:
+    # antiAffinityEnabled is immutable on an existing MariaDB, so spell it out.
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: mariadb
     nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:

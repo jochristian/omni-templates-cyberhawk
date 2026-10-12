@@ -72,14 +72,14 @@ exactly this reason — with `instances: 1` on a single-node zone the primary PD
 protects nothing and only converts a 5-minute reboot into a permanent deadlock.
 Do not re-enable it without a second blix worker.
 
-`monitoring/mariadb` is the remaining blocker. `replicas: 2` is not real HA here
-— both pods land on worker-02 — and `spec.podDisruptionBudget.maxUnavailable: 1`
-does not help, because once the sibling is Pending the allowed disruptions drop
-to 0 again. Before an upgrade:
-
-```bash
-kubectl -n monitoring delete pdb mariadb    # mariadb-operator recreates it afterwards
-```
+`monitoring/mariadb` carries `spec.podDisruptionBudget.maxUnavailable: 2`
+(2026-10-12) and tolerates the control-plane taint with hostname anti-affinity,
+so one replica runs on worker-02 and the other on ctrl-00/ctrl-01. Before that
+both pods sat on worker-02, and the operator's default `minAvailable: 50%` (or `maxUnavailable: 1`) drops to
+0 allowed disruptions once the first pod is evicted and its sibling sits Pending.
+Do not scale it to `replicas: 1` blindly: the primary moves on failover (check
+`kubectl -n monitoring get mariadb mariadb -o jsonpath='{.status.currentPrimary}'`)
+and a scale-down deletes the highest ordinal.
 
 If more single-instance CNPG clusters get added, the generic CNPG lever is:
 
