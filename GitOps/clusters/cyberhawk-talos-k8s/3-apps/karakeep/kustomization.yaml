@@ -30,8 +30,8 @@ images:
   # comment anyway, because a comment is not a version constraint. If this ever
   # does need pinning, add a real packageRules entry in repo-root renovate.json.
   newTag: "v1.53.1" # renovate: docker=getmeili/meilisearch
-- name: gcr.io/zenika-hub/alpine-chrome
-  newTag: "124" # renovate: docker=gcr.io/zenika-hub/alpine-chrome
+- name: zenika/alpine-chrome
+  newTag: "124" # renovate: docker=zenika/alpine-chrome
 
 labels:
 - includeSelectors: true
