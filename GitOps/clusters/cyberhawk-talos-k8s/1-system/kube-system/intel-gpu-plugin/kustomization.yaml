@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kube-system
+
+resources:
+  - github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/base?ref=v0.37.1
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: intel-gpu-plugin
+    includeTemplates: true
+
+images:
+  - name: intel/intel-gpu-plugin
+    newTag: 0.37.1
+
+patches:
+  # Only worker-03 (NUC10) has an iGPU; the VM nodes have no /dev/dri.
+  - target:
+      kind: DaemonSet
+      name: intel-gpu-plugin
+    patch: |-
+      - op: add
+        path: /spec/template/spec/nodeSelector/kubernetes.io~1hostname
+        value: worker-03
