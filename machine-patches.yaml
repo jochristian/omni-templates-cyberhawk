@@ -159,3 +159,33 @@ spec:
         nameservers:
           - 192.168.254.254
           - 10.50.1.1
+---
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-38ab1825-ba94-c79d-d8b3-1c697a0fe2b1-hostname
+  labels:
+    omni.sidero.dev/machine: 38ab1825-ba94-c79d-d8b3-1c697a0fe2b1
+  annotations:
+    name: hostname-worker-03
+spec:
+  data: |
+    machine:
+      network:
+        hostname: worker-03
+---
+metadata:
+  namespace: default
+  type: ConfigPatches.omni.sidero.dev
+  id: 400-cm-38ab1825-ba94-c79d-d8b3-1c697a0fe2b1-nameservers
+  labels:
+    omni.sidero.dev/machine: 38ab1825-ba94-c79d-d8b3-1c697a0fe2b1
+  annotations:
+    name: nameservers-worker-03
+spec:
+  data: |
+    machine:
+      network:
+        nameservers:
+          - 192.168.254.254
+          - 10.50.1.1

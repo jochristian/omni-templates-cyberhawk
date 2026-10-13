@@ -75,6 +75,30 @@ patches:
   - name: monitoring
     file: patches/monitoring.yaml
 ---
+# Bare-metal lørenskog workers (NUC10). Own machine set so the iGPU extension
+# doesn't reboot the VM workers; a set-level list replaces the cluster-level one.
+kind: Workers
+name: lorenskog-metal-workers
+machineClass:
+  name: role-worker-lorenskog-metal
+  size: 1
+systemExtensions:
+  - siderolabs/i915
+  - siderolabs/intel-ucode
+  - siderolabs/iscsi-tools
+  - siderolabs/gvisor
+patches:
+  - name: lorenskog-labels
+    inline:
+      machine:
+        nodeLabels:
+          topology.kubernetes.io/zone: lorenskog
+          topology.kubernetes.io/region: onprem
+  - name: kubespan-enabled
+    file: patches/kubespan.yml
+  - name: monitoring
+    file: patches/monitoring.yaml
+---
 kind: Workers
 name: blix-static-workers
 machineClass:

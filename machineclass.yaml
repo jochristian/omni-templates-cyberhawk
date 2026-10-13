@@ -36,3 +36,11 @@ metadata:
 spec:
   matchlabels:
     - role = worker-blix
+---
+metadata:
+  namespace: default
+  type: MachineClasses.omni.sidero.dev
+  id: role-worker-lorenskog-metal
+spec:
+  matchlabels:
+    - role = worker-lorenskog-metal
