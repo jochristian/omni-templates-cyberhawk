@@ -12,6 +12,7 @@ resources:
   - patchmon.yaml
   - netbox.yaml
   - paperless.yaml
+  - gramps.yaml
 #  - portfolio.yaml
   - openbao.yaml
   - tracearr.yaml
