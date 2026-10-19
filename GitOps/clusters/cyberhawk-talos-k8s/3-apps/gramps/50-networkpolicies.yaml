@@ -1,0 +1,31 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: gramps
+spec:
+  endpointSelector:
+    matchLabels:
+      app: gramps
+  ingress:
+    # `ingress` is the Cilium Gateway API entity: the LAN path via the gateway VIP.
+    - fromEntities:
+        - host
+        - remote-node
+        - ingress
+    # newt carries the public path (internet -> pangolin -> newt -> Service) and
+    # matches neither `world` nor `ingress`.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: newt
+            app: newt
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP
+  # DNS only. Valkey is a localhost sidecar, and with no SMTP, OIDC or AI chat
+  # configured there is nothing outside the pod to reach.
+  egress:
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP

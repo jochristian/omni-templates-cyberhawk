@@ -1,0 +1,159 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gramps
+spec:
+  replicas: 1
+  # Web and celery share SQLite files on an RWO volume; two pods must never overlap.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gramps
+  template:
+    metadata:
+      labels:
+        app: gramps
+    spec:
+      automountServiceAccountToken: false
+      # The Service is called `gramps`; keep GRAMPS*_PORT style link vars out of the env.
+      enableServiceLinks: false
+      # gramps-data is iSCSI with a blix-side target.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - blix
+      securityContext:
+        # The image has no USER and keeps the tree under /root/.gramps, so the two
+        # gramps containers run as root. Valkey drops to 999 per-container below.
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: grampsweb
+          image: ghcr.io/gramps-project/grampsweb
+          imagePullPolicy: IfNotPresent
+          # No command: the image entrypoint runs `user migrate` on the user DB
+          # before starting gunicorn. Only this container may run it.
+          ports:
+            - name: http
+              containerPort: 5000
+          envFrom: &env-from
+            - secretRef:
+                name: gramps-secret
+          env: &env
+            - name: GRAMPSWEB_TREE
+              value: Gramps Web
+            - name: GRAMPSWEB_BASE_URL
+              value: https://gramps.cyberhawk.no
+            - name: GRAMPSWEB_REGISTRATION_DISABLED
+              value: "true"
+            - name: GRAMPSWEB_DISABLE_TELEMETRY
+              value: "true"
+            - name: GRAMPSWEB_CELERY_CONFIG__broker_url
+              value: redis://localhost:6379/0
+            - name: GRAMPSWEB_CELERY_CONFIG__result_backend
+              value: redis://localhost:6379/0
+            - name: GRAMPSWEB_RATELIMIT_STORAGE_URI
+              value: redis://localhost:6379/1
+            - name: GUNICORN_NUM_WORKERS
+              value: "2"
+          securityContext: &gramps-security
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 384Mi
+            limits:
+              memory: 1Gi
+          volumeMounts: &gramps-mounts
+            - name: data
+              mountPath: /root/.gramps/grampsdb
+              subPath: grampsdb
+            - name: data
+              mountPath: /app/users
+              subPath: users
+            - name: data
+              mountPath: /app/indexdir
+              subPath: indexdir
+            - name: data
+              mountPath: /app/media
+              subPath: media
+            - name: cache
+              mountPath: /app/cache
+              subPath: cache
+            - name: cache
+              mountPath: /app/thumbnail_cache
+              subPath: thumbnail_cache
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+        - name: celery
+          image: ghcr.io/gramps-project/grampsweb
+          imagePullPolicy: IfNotPresent
+          # `command` replaces the entrypoint, so celery skips the user DB migration
+          # and does not race grampsweb on the same SQLite file at startup.
+          command: ["celery", "-A", "gramps_webapi.celery", "worker", "--loglevel=INFO", "--concurrency=2"]
+          workingDir: /app
+          envFrom: *env-from
+          env: *env
+          securityContext: *gramps-security
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts: *gramps-mounts
+        # Celery broker and rate-limit store. Nothing here needs to survive a
+        # restart, so no persistence, and it only listens on the pod's loopback.
+        - name: valkey
+          image: valkey/valkey
+          imagePullPolicy: IfNotPresent
+          command: ["valkey-server", "--bind", "127.0.0.1", "--save", "", "--appendonly", "no"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: gramps-data
+        - name: cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

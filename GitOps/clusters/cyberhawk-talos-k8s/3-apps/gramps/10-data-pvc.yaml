@@ -1,0 +1,15 @@
+# Everything Gramps Web persists: the SQLite family tree, the SQLite user DB, the
+# search index and the media files, split into subPaths by 20-deployment.yaml.
+# SQLite must not live on NFS (locking), so this is iSCSI and the pod is pinned
+# to blix. Backed up by VolSync (gramps-backup in kustomization.yaml).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gramps-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: democratic-csi-iscsi

@@ -1,0 +1,47 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: gramps
+
+generators:
+  - 01-secret.yaml
+  - 60-volsync-secret.yaml
+
+components:
+  - ../../base/volsync-backup
+
+resources:
+  - 10-data-pvc.yaml
+  - 20-deployment.yaml
+  - 30-service.yaml
+  - 40-httproute.yaml
+  - 50-networkpolicies.yaml
+
+images:
+  - name: ghcr.io/gramps-project/grampsweb
+    # Frontend version; the image bundles the matching Gramps Web API release.
+    newTag: "26.10.1" # renovate: docker=ghcr.io/gramps-project/grampsweb
+  - name: valkey/valkey
+    newTag: "9.2-alpine" # renovate: docker=valkey/valkey
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: gramps
+
+patches:
+  - target:
+      kind: ReplicationSource
+      name: backup-placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: gramps-backup
+      - op: replace
+        path: /spec/sourcePVC
+        value: gramps-data
+      - op: replace
+        path: /spec/restic/repository
+        value: s3-backup-hetzner-gramps
+      - op: replace
+        path: /spec/trigger/schedule
+        value: "15 5 * * *"
