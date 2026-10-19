@@ -10,7 +10,7 @@ data:
   GEOPULSE_INVITATION_BASE_URL: "https://geopulse.cyberhawk.no"
   # Auth / cookies (host-only cookies: no GEOPULSE_COOKIE_DOMAIN set)
   GEOPULSE_AUTH_SECURE_COOKIES: "true"
-  GEOPULSE_JWT_ISSUER: "https://geopulse.cyberhawk.no"
+  GEOPULSE_CORS_ORIGINS: "https://geopulse.cyberhawk.no"
   # Locked down after the first (admin) account was created 2026-07-05.
   GEOPULSE_AUTH_REGISTRATION_ENABLED: "false"
   # Database (username/password come from the CNPG geopulse-db-app secret)

@@ -57,6 +57,11 @@
       "automergeType": "branch"
     },
     {
+      "description": "GeoPulse frontend and backend must run the same version (upstream requirement); separate PRs left the 1.x UI talking to the 2.0 backend for a few minutes on 2026-10-19 and broke login.",
+      "matchPackageNames": ["tess1o/geopulse-backend", "tess1o/geopulse-ui"],
+      "groupName": "geopulse"
+    },
+    {
       "description": "Never offer MAJOR bumps for the CloudNativePG postgres images. CNPG does not perform a major PostgreSQL upgrade in place: bumping a Cluster's imageName from 17 to 18 leaves the instance dead with 'database files are incompatible with server'. Both pins are bare majors (patchmon 'postgresql:17', geopulse 'postgis:17-3.5'), so a major bump would arrive looking like a routine image update. Minor/patch bumps still flow normally; a major is a deliberate manual CNPG procedure.",
       "matchPackageNames": [
         "ghcr.io/cloudnative-pg/postgresql",

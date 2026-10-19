@@ -2,7 +2,7 @@
 
 Forwards Home Assistant device-tracker updates (companion app, router
 tracking, …) to GeoPulse's native Home Assistant endpoint
-(`https://geopulse.cyberhawk.no/api/homeassistant`, Bearer-token auth).
+(`https://geopulse.cyberhawk.no/api/v1/gps/ingest/home-assistant`, Bearer-token auth).
 The endpoint sits under `/api`, so it rides the existing frontend→backend
 proxy path — no cluster changes needed.
 
@@ -27,7 +27,7 @@ One parameterized `rest_command` serves any number of trackers:
 ```yaml
 rest_command:
   geopulse_send_gps:
-    url: "https://geopulse.cyberhawk.no/api/homeassistant"
+    url: "https://geopulse.cyberhawk.no/api/v1/gps/ingest/home-assistant"
     method: POST
     headers:
       content-type: "application/json"

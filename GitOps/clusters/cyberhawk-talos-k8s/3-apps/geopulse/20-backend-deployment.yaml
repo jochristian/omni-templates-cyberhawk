@@ -74,7 +74,7 @@ spec:
               memory: 1Gi
           readinessProbe:
             httpGet:
-              path: /api/health
+              path: /api/v1/system/health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 5
@@ -82,7 +82,7 @@ spec:
             failureThreshold: 6
           livenessProbe:
             httpGet:
-              path: /api/health
+              path: /api/v1/system/health
               port: 8080
             initialDelaySeconds: 60
             periodSeconds: 10
