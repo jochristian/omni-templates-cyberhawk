@@ -15,26 +15,26 @@ spec:
       labels:
         app: chrome
     spec:
+      # Stands in for compose `init: true`: the pause container reaps Chrome's zombies.
+      shareProcessNamespace: true
       securityContext:
-        # Image runs as user "chrome" (uid 1000); numeric uid declared so the
-        # kubelet can verify runAsNonRoot (image USER is a name, not a uid).
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 65534
+        runAsGroup: 65534
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: chrome
-          image: zenika/alpine-chrome
+          image: ghcr.io/karakeep-app/karakeep-chrome
           imagePullPolicy: IfNotPresent
+          # The entrypoint adds --no-sandbox and forwards 9222 to Chrome's internal
+          # debugging port; passing --remote-debugging-* here breaks that.
           args:
-            - --headless
-            - --no-sandbox
             - --disable-gpu
             - --disable-dev-shm-usage
-            - --remote-debugging-address=0.0.0.0
-            - --remote-debugging-port=9222
             - --hide-scrollbars
+            - --disable-blink-features=AutomationControlled
+            - --window-size=1440,900
           ports:
             - containerPort: 9222
           securityContext:
