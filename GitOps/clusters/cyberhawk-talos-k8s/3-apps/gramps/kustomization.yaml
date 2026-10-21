@@ -19,7 +19,7 @@ resources:
 images:
   - name: ghcr.io/gramps-project/grampsweb
     # Frontend version; the image bundles the matching Gramps Web API release.
-    newTag: "26.10.1" # renovate: docker=ghcr.io/gramps-project/grampsweb
+    newTag: "26.10.2" # renovate: docker=ghcr.io/gramps-project/grampsweb
   - name: valkey/valkey
     newTag: "9.2-alpine" # renovate: docker=valkey/valkey
 
