@@ -20,7 +20,14 @@ spec:
       # over the inter-site link and a blip leaves the volume stuck read-only.
       nodeSelector:
         topology.kubernetes.io/zone: blix
+      # Image runs as `node` since v0.34.0 (/run owned by uid 1000); as root, s6
+      # tries to chown /run back and fails with all capabilities dropped.
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
       containers:
