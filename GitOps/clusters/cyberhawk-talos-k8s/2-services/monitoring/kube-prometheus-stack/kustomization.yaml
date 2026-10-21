@@ -29,17 +29,18 @@ helmCharts:
           targetPort: 2381
       # Scrape trimming (2026-10-11): serving /metrics was 13 % of kubelet CPU and the
       # apiserver job alone held 194 k of 379 k head series, almost all histogram buckets
-      # nobody queries. Kept: apiserver_request_duration_seconds_bucket and
-      # apiserver_request_sli_duration_seconds_bucket (the chart's SLO/burn-rate rules
-      # use them; the chart's own bucket-thinning rule below stays). Overriding
-      # *MetricRelabelings replaces the chart list, so the chart defaults are copied in.
+      # nobody queries. Kept: apiserver_request_sli_duration_seconds_bucket (the chart's
+      # SLO/burn-rate rules use it; the chart's own bucket-thinning rule below stays).
+      # 2026-10-21: also dropped apiserver_request_duration_seconds_bucket (16.5 k series),
+      # watch-cache-init and informer buckets: no rule or dashboard references them.
+      # Overriding *MetricRelabelings replaces the chart list, so the chart defaults are copied in.
       kubeApiServer:
         serviceMonitor:
           interval: 60s
           metricRelabelings:
             - action: drop
               sourceLabels: [__name__]
-              regex: '(etcd_request_duration_seconds|apiserver_watch_list_duration_seconds|apiserver_watch_events_dispatch_duration_seconds|apiserver_watch_cache_read_wait_seconds|apiserver_storage_list_duration_seconds|apiserver_request_body_size_bytes|apiserver_response_sizes|apiserver_watch_events_sizes|apiserver_flowcontrol_[a-z_]+|apiserver_admission_[a-z_]+|apiserver_authentication_duration_seconds|apiserver_request_filter_duration_seconds|apiserver_cache_list_[a-z_]+|apiserver_storage_[a-z_]+|apiserver_selfrequest_[a-z_]+|apiserver_delegated_[a-z_]+|apiserver_audit_[a-z_]+|apiserver_envelope_[a-z_]+|apiserver_init_events_[a-z_]+|apiserver_tls_handshake_[a-z_]+|apiserver_egress_[a-z_]+|apiserver_webhooks_[a-z_]+|apiserver_validating_admission_[a-z_]+|apiserver_conversion_[a-z_]+|apiserver_encryption_[a-z_]+|workqueue_[a-z_]+|rest_client_[a-z_]+|authentication_[a-z_]+|authorization_[a-z_]+|field_validation_[a-z_]+|serviceaccount_[a-z_]+|aggregator_[a-z_]+|apiextensions_[a-z_]+|etcd_bookmark_[a-z_]+|etcd_lease_[a-z_]+|kube_apiserver_[a-z_]+)_bucket'
+              regex: '(etcd_request_duration_seconds|apiserver_request_duration_seconds|apiserver_watch_cache_initialization_duration_seconds|informer_processing_latency_seconds|apiserver_watch_list_duration_seconds|apiserver_watch_events_dispatch_duration_seconds|apiserver_watch_cache_read_wait_seconds|apiserver_storage_list_duration_seconds|apiserver_request_body_size_bytes|apiserver_response_sizes|apiserver_watch_events_sizes|apiserver_flowcontrol_[a-z_]+|apiserver_admission_[a-z_]+|apiserver_authentication_duration_seconds|apiserver_request_filter_duration_seconds|apiserver_cache_list_[a-z_]+|apiserver_storage_[a-z_]+|apiserver_selfrequest_[a-z_]+|apiserver_delegated_[a-z_]+|apiserver_audit_[a-z_]+|apiserver_envelope_[a-z_]+|apiserver_init_events_[a-z_]+|apiserver_tls_handshake_[a-z_]+|apiserver_egress_[a-z_]+|apiserver_webhooks_[a-z_]+|apiserver_validating_admission_[a-z_]+|apiserver_conversion_[a-z_]+|apiserver_encryption_[a-z_]+|workqueue_[a-z_]+|rest_client_[a-z_]+|authentication_[a-z_]+|authorization_[a-z_]+|field_validation_[a-z_]+|serviceaccount_[a-z_]+|aggregator_[a-z_]+|apiextensions_[a-z_]+|etcd_bookmark_[a-z_]+|etcd_lease_[a-z_]+|kube_apiserver_[a-z_]+)_bucket'
             - action: drop
               sourceLabels: [__name__]
               regex: 'kubernetes_feature_enabled'
@@ -109,15 +110,20 @@ helmCharts:
           metricRelabelings:
             - action: drop
               sourceLabels: [__name__]
-              regex: 'kubernetes_feature_enabled'
+              regex: 'kubernetes_feature_enabled|scheduler_plugin_execution_duration_seconds_bucket'
       # kube-state-metrics restart-stormed on the 2026-08-07 lørenskog link flap; keep
-      # it on blix. prometheus/alertmanager stay unpinned: their nfs-csi volumes work
-      # fine from lørenskog.
+      # it on blix.
       kube-state-metrics:
         nodeSelector:
           topology.kubernetes.io/zone: blix
+      # prometheus/alertmanager: hard blix pin (2026-10-21). Their nfs-csi volumes live on
+      # blix (10.50.1.200); from lørenskog a link blip hung Prometheus' TSDB I/O and it was
+      # killed by its liveness probe (2026-10-21 17:26 UTC). If blix is down the data is
+      # unreachable anyway, so a lørenskog fallback buys nothing.
       alertmanager:
         alertmanagerSpec:
+          nodeSelector:
+            topology.kubernetes.io/zone: blix
           storage:
             volumeClaimTemplate:
               spec:
@@ -127,6 +133,16 @@ helmCharts:
                     storage: 10Gi
       prometheus:
         prometheusSpec:
+          nodeSelector:
+            topology.kubernetes.io/zone: blix
+          # Was BestEffort (first to be evicted under node memory pressure).
+          # ~1.1 Gi working set at 205 k head series.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 1536Mi
+            limits:
+              memory: 3Gi
           storageSpec:
             volumeClaimTemplate:
               spec:
