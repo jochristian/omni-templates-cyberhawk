@@ -17,9 +17,9 @@ resources:
 
 images:
   - name: tess1o/geopulse-backend
-    newTag: "2.0.0-jvm" # renovate: docker=tess1o/geopulse-backend
+    newTag: "2.1.0-jvm" # renovate: docker=tess1o/geopulse-backend
   - name: tess1o/geopulse-ui
-    newTag: "2.0.0" # renovate: docker=tess1o/geopulse-ui
+    newTag: "2.1.0" # renovate: docker=tess1o/geopulse-ui
 
 labels:
   - includeSelectors: true
