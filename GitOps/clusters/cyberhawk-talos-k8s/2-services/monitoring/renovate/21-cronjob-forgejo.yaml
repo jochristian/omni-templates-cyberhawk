@@ -20,13 +20,17 @@ spec:
           automountServiceAccountToken: false
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
+            # The image's own user: nix needs a passwd entry for its home directory.
+            runAsUser: 12021
+            runAsGroup: 0
             seccompProfile:
               type: RuntimeDefault
           containers:
             - name: renovate
-              image: renovate/renovate
+              # full: nix preinstalled (flake.lock in nixos-config); the slim image's
+              # on-demand install fails on the read-only root filesystem.
+              image: renovate/renovate:full
+              imagePullPolicy: Always
               env:
                 # Bot config (platform/repos/onboarding) from the ConfigMap.
                 - name: RENOVATE_CONFIG_FILE
@@ -64,7 +68,8 @@ spec:
                   cpu: 100m
                   memory: 256Mi
                 limits:
-                  memory: 1Gi
+                  # nix flake update was OOMKilled at 1Gi.
+                  memory: 3Gi
               volumeMounts:
                 - name: config
                   mountPath: /etc/renovate
