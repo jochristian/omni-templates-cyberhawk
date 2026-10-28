@@ -15,7 +15,7 @@ data:
     {
       "platform": "forgejo",
       "endpoint": "https://git.cyberhawk.no/api/v1/",
-      "repositories": ["cyberhawk/cyberhawk-gitops-private"],
+      "repositories": ["cyberhawk/cyberhawk-gitops-private", "jochristian/nixos-config"],
       "autodiscover": false,
       "onboarding": false,
       "requireConfig": "required",
