@@ -22,7 +22,7 @@ resources:
 
 images:
 - name: ghcr.io/karakeep-app/karakeep
-  newTag: "0.34.0" # renovate: docker=ghcr.io/karakeep-app/karakeep
+  newTag: "0.34.1" # renovate: docker=ghcr.io/karakeep-app/karakeep
 - name: getmeili/meilisearch
   # Bumps across a database-format boundary are handled by MEILI_UPGRADE_DB in
   # 11-meilisearch-deployment.yaml (dumpless upgrade). The older note here said
