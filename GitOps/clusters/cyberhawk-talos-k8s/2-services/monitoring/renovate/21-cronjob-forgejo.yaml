@@ -28,9 +28,9 @@ spec:
           containers:
             - name: renovate
               # full: nix preinstalled (flake.lock in nixos-config); the slim image's
-              # on-demand install fails on the read-only root filesystem.
-              image: renovate/renovate:full
-              imagePullPolicy: Always
+              # on-demand install fails on the read-only root filesystem. ghcr name so
+              # the kustomization can pin it apart from the slim renovate/renovate.
+              image: ghcr.io/renovatebot/renovate
               env:
                 # Bot config (platform/repos/onboarding) from the ConfigMap.
                 - name: RENOVATE_CONFIG_FILE
