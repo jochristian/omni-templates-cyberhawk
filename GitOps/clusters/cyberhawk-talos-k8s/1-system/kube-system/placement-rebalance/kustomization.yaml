@@ -13,4 +13,4 @@ configMapGenerator:
 
 images:
   - name: docker.io/alpine/k8s
-    newTag: 1.37.1
+    newTag: 1.37.2
