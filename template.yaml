@@ -7,7 +7,7 @@ labels:
 kubernetes:
   version: v1.37.1
 talos:
-  version: v1.14.2
+  version: v1.14.5
 patches:
   - name: cni
     file: patches/cni.yml
@@ -98,6 +98,16 @@ patches:
     file: patches/kubespan.yml
   - name: monitoring
     file: patches/monitoring.yaml
+  # Built as modules in Talos and not autoloaded, and containers can't load them. CI netns tests on this node
+  # need GRE, ip6gre and VRF.
+  - name: kernel-modules-ci
+    inline:
+      machine:
+        kernel:
+          modules:
+            - name: ip_gre
+            - name: ip6_gre
+            - name: vrf
 ---
 kind: Workers
 name: blix-static-workers
