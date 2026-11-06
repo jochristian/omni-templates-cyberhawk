@@ -15,9 +15,10 @@ data:
     {
       "platform": "forgejo",
       "endpoint": "https://git.cyberhawk.no/api/v1/",
-      "repositories": ["cyberhawk/cyberhawk-gitops-private", "jochristian/nixos-config"],
+      "repositories": ["cyberhawk/cyberhawk-gitops-private", "jochristian/nixos-config", "cyberhawk/varde"],
       "autodiscover": false,
       "onboarding": false,
       "requireConfig": "required",
-      "gitAuthor": "Renovate Bot <renovate@cyberhawk.no>"
+      "gitAuthor": "Renovate Bot <renovate@cyberhawk.no>",
+      "allowedCommands": ["^scripts/tool-sha (golangci-lint|grype|gitleaks|syft) [0-9]+\\.[0-9]+\\.[0-9]+$"]
     }
