@@ -31,7 +31,7 @@ images:
   # does need pinning, add a real packageRules entry in repo-root renovate.json.
   newTag: "v1.53.1" # renovate: docker=getmeili/meilisearch
 - name: ghcr.io/karakeep-app/karakeep-chrome
-  newTag: "154.0.8037.57-r1" # renovate: docker=ghcr.io/karakeep-app/karakeep-chrome
+  newTag: "157.0.8103.38-r1" # renovate: docker=ghcr.io/karakeep-app/karakeep-chrome
 
 labels:
 - includeSelectors: true
