@@ -99,7 +99,7 @@ patches:
   - name: monitoring
     file: patches/monitoring.yaml
   # Built as modules in Talos and not autoloaded, and containers can't load them. CI netns tests on this node
-  # need GRE, ip6gre and VRF.
+  # need GRE, ip6gre, VRF and nftables flowtable offload.
   - name: kernel-modules-ci
     inline:
       machine:
@@ -108,6 +108,8 @@ patches:
             - name: ip_gre
             - name: ip6_gre
             - name: vrf
+            - name: nf_flow_table_inet
+            - name: nft_flow_offload
 ---
 kind: Workers
 name: blix-static-workers
