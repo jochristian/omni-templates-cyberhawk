@@ -19,7 +19,7 @@ images:
     newTag: "43.288.0" # renovate: docker=renovate/renovate
   # Forgejo run only (nix preinstalled); the kustomize manager bumps it like the line above.
   - name: ghcr.io/renovatebot/renovate
-    newTag: "43.288.0-full"
+    newTag: "44.239.1-full"
 
 labels:
   - includeSelectors: true
